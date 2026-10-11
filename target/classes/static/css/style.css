@@ -1,0 +1,430 @@
+/* =========================================================
+   Trip Planner & Route Optimization Design System
+   Modern, Clean, Professional & Practical UI
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --secondary: #0f172a;
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --success-light: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-light: #fffbeb;
+    --danger: #ef4444;
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Navbar */
+.navbar-custom {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.85rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navbar-brand i {
+    font-size: 1.5rem;
+}
+
+/* Card Styling */
+.card-modern {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.card-modern:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Hero Section */
+.hero-section {
+    background: radial-gradient(circle at top right, #e0f2fe 0%, #f8fafc 60%);
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    color: var(--secondary);
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* Metric / KPI Cards */
+.metric-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    transition: var(--transition);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.metric-icon.blue { background: #dbeafe; color: #1d4ed8; }
+.metric-icon.green { background: #d1fae5; color: #047857; }
+.metric-icon.amber { background: #fef3c7; color: #b45309; }
+.metric-icon.purple { background: #f3e8ff; color: #7e22ce; }
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--secondary);
+}
+
+.metric-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+/* Dynamic Destination Input Rows */
+.destination-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #f1f5f9;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.destination-number {
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+/* Route Segments Table & Flow */
+.route-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.route-node {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.route-arrow {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+/* Segment Pill */
+.segment-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.65rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.segment-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--secondary);
+}
+
+.segment-stats {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* Timeline / Itinerary View */
+.timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 11px;
+    width: 2px;
+    background: #cbd5e1;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -2rem;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--primary);
+}
+
+.timeline-dot.visited {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.timeline-dot.meal {
+    border-color: #f97316;
+    color: #f97316;
+}
+
+.timeline-dot.hotel {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+}
+
+.timeline-content {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.1rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.timeline-content.is-visited {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.timeline-content.is-visited .place-title {
+    color: #166534;
+}
+
+/* Sightseeing Recommendation Cards */
+.place-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.1rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.place-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.place-category-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Category Filter Pills */
+.filter-pill {
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-muted);
+    transition: var(--transition);
+    user-select: none;
+}
+
+.filter-pill:hover, .filter-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Map Container */
+#mapContainer {
+    height: 540px;
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    z-index: 1;
+}
+
+/* Visited Checkbox Toggle */
+.visited-checkbox {
+    cursor: pointer;
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+/* Progress bar modern */
+.progress-modern {
+    height: 12px;
+    border-radius: var(--radius-full);
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.progress-bar-modern {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.4s ease;
+}
+
+/* Alerts / Warnings Banner */
+.banner-alert {
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.banner-alert.warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.banner-alert.info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+
+/* Buttons */
+.btn-primary-custom {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1.2rem;
+    transition: var(--transition);
+}
+
+.btn-primary-custom:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    background: white;
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}

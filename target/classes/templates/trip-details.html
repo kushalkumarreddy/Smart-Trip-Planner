@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${trip.tripName + ' - TripPlanner'}">Trip Overview - TripPlanner</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Leaflet CSS for guaranteed interactive map rendering -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">
+                <i class="bi bi-compass text-primary"></i> TripPlanner
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/dashboard}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+                <a th:href="@{/create-trip}" class="btn btn-primary-custom btn-sm rounded-pill px-3">
+                    <i class="bi bi-plus-lg me-1"></i> New Trip
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container py-4 flex-grow-1">
+
+        <!-- Trip Header Banner -->
+        <div class="card card-modern p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            <span th:text="${trip.startDate + ' to ' + trip.endDate}"></span>
+                            (<span th:text="${trip.totalDays + ' Days'}"></span>)
+                        </span>
+                        <span class="badge bg-light border text-dark">
+                            <i class="bi bi-car-front me-1" th:if="${trip.transportMode == 'CAR'}"></i>
+                            <i class="bi bi-bicycle me-1" th:if="${trip.transportMode == 'BIKE'}"></i>
+                            <i class="bi bi-bus-front me-1" th:if="${trip.transportMode == 'PUBLIC_TRANSPORT'}"></i>
+                            <i class="bi bi-person-walking me-1" th:if="${trip.transportMode == 'WALKING'}"></i>
+                            <span th:text="${trip.transportMode}"></span>
+                        </span>
+                        <span class="badge bg-light border text-dark" th:if="${trip.hotelLocation}">
+                            <i class="bi bi-building me-1"></i> Hotel: <span th:text="${trip.hotelLocation}"></span>
+                        </span>
+                    </div>
+                    <h2 class="fw-bold mb-1" th:text="${trip.tripName}">Trip Itinerary</h2>
+                    <p class="text-muted mb-0 small">
+                        Starting from <strong class="text-dark" th:text="${trip.startLocation}"></strong> &bull; 
+                        Travel Style: <strong class="text-dark" th:text="${trip.travelStyle}"></strong> &bull; 
+                        Travelers: <strong class="text-dark" th:text="${trip.travelersCount}"></strong>
+                    </p>
+                </div>
+
+                <!-- Open Full Route in Real Google Maps -->
+                <div class="d-flex gap-2">
+                    <a th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" 
+                       class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Launch navigation directly in Google Maps">
+                        <i class="bi bi-google me-1"></i> Open in Google Maps
+                    </a>
+                </div>
+            </div>
+
+            <!-- Visited Progress Bar Header -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-bold text-secondary">
+                        <i class="bi bi-check2-circle text-success me-1"></i> Trip Completion Progress:
+                        <span id="visitedPlacesCountText" class="text-dark" th:text="${trip.visitedPlacesCount + '/' + trip.sightseeingPlacesCount}"></span> Places Visited
+                    </span>
+                    <span id="tripProgressText" class="fw-bold text-success" th:text="${trip.completionPercentage + '% Completed'}"></span>
+                </div>
+                <div class="progress-modern">
+                    <div id="tripProgressBar" class="progress-bar-modern" role="progressbar" 
+                         th:style="'width: ' + ${trip.completionPercentage} + '%;'"
+                         th:aria-valuenow="${trip.completionPercentage}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="metric-card">
+                    <div class="metric-icon blue">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div>
+                        <div class="metric-value" th:text="${trip.totalDistanceKm + ' km'}">0 km</div>
+                        <div class="metric-label">Total Distance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="metric-card">
+                    <div class="metric-icon amber">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <div class="metric-value" th:text="${trip.formattedTotalTravelTime}">0 hr</div>
+                        <div class="metric-label">Total Travel Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="metric-card">
+                    <div class="metric-icon green">
+                        <i class="bi bi-pin-map-fill"></i>
+                    </div>
+                    <div>
+                        <div class="metric-value" th:text="${trip.destinationsCount}">0</div>
+                        <div class="metric-label">Destinations</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="metric-card">
+                    <div class="metric-icon purple">
+                        <i class="bi bi-compass"></i>
+                    </div>
+                    <div>
+                        <div class="metric-value" th:text="${trip.sightseeingPlacesCount}">0</div>
+                        <div class="metric-label">Sightseeing Spots</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Route Optimization Recommendation Alert -->
+        <div th:if="${trip.routeSummary.optimizationRecommended}" class="banner-alert info mb-4">
+            <i class="bi bi-magic fs-4 text-primary"></i>
+            <div class="flex-grow-1">
+                <h6 class="fw-bold mb-1">Smart Route Optimization Available!</h6>
+                <p class="mb-2 small">
+                    Our routing algorithm calculated an alternative route order that avoids backtracking and saves 
+                    <strong class="text-dark" th:text="${trip.routeSummary.potentialSavingsKm + ' km'}"></strong> and 
+                    <strong class="text-dark" th:text="${trip.routeSummary.potentialSavingsMinutes + ' minutes'}"></strong> of travel time!
+                </p>
+                <div class="small mb-2">
+                    <span class="text-muted">Recommended sequence: </span>
+                    <strong class="text-dark" th:text="${#strings.listJoin(trip.routeSummary.recommendedOrder, ' → ')}"></strong>
+                </div>
+                <button type="button" id="btnApplyOptimization" class="btn btn-primary btn-sm rounded-pill px-3" 
+                        th:onclick="'applyOptimizedRoute(' + ${trip.id} + ')'">
+                    <i class="bi bi-check-circle me-1"></i> Use Recommended Route
+                </button>
+            </div>
+        </div>
+
+        <!-- Travel Fatigue & Health Warnings -->
+        <div th:if="${!trip.warnings.empty}" class="mb-4">
+            <div th:each="warning : ${trip.warnings}" class="banner-alert warning mb-2">
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                <div class="small fw-semibold" th:text="${warning}"></div>
+            </div>
+        </div>
+
+        <!-- Route Breakdown Flow & Segments -->
+        <div class="card card-modern p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-signpost-split text-primary me-2"></i> Route Breakdown & Segment Distances</h5>
+            
+            <!-- Route Sequence Breadcrumbs -->
+            <div class="route-flow mb-4">
+                <div class="route-node">
+                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                    <span th:text="${trip.startLocation}"></span>
+                </div>
+                <th:block th:each="dest, iterStat : ${trip.destinations}">
+                    <span class="route-arrow">→</span>
+                    <div class="route-node">
+                        <span class="badge bg-primary rounded-circle" style="width: 18px; height: 18px; font-size: 10px; padding: 2px;" th:text="${iterStat.count}"></span>
+                        <span th:text="${dest.name}"></span>
+                    </div>
+                </th:block>
+            </div>
+
+            <!-- Segment Distance Details -->
+            <div class="row g-2">
+                <div class="col-md-6 col-lg-4" th:each="seg : ${trip.routeSummary.segments}">
+                    <div class="segment-card">
+                        <div>
+                            <div class="segment-title">
+                                <span th:text="${seg.fromLocation}"></span> → <span th:text="${seg.toLocation}"></span>
+                            </div>
+                            <div class="segment-stats">
+                                <i class="bi bi-speedometer2 text-muted me-1"></i> <span th:text="${seg.summaryText}"></span>
+                            </div>
+                        </div>
+                        <a th:href="${seg.googleMapsSegmentUrl}" target="_blank" rel="noopener noreferrer" 
+                           class="btn btn-outline-secondary btn-sm rounded-circle" title="View segment in Google Maps">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls: View Mode Switcher -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0">Itinerary & Interactive Map</h4>
+            <div class="btn-group" role="group">
+                <button type="button" id="btnViewSplit" class="btn btn-outline-primary btn-sm active" onclick="setViewMode('split')">
+                    <i class="bi bi-layout-split me-1"></i> Split View
+                </button>
+                <button type="button" id="btnViewList" class="btn btn-outline-primary btn-sm" onclick="setViewMode('list')">
+                    <i class="bi bi-list-task me-1"></i> List View
+                </button>
+                <button type="button" id="btnViewMap" class="btn btn-outline-primary btn-sm" onclick="setViewMode('map')">
+                    <i class="bi bi-map me-1"></i> Map View
+                </button>
+            </div>
+        </div>
+
+        <!-- Dual Column: Timeline Itinerary + Interactive Map -->
+        <div class="row">
+
+            <!-- Itinerary Column -->
+            <div id="itineraryColumn" class="col-lg-7 mb-4">
+                <div th:each="day : ${trip.dayItineraries}" class="card card-modern p-4 mb-4">
+                    
+                    <!-- Day Header & Daily Summary -->
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom pb-3 mb-3 gap-2">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-primary">
+                                <i class="bi bi-calendar3 me-2"></i><span th:text="${day.title}">Day 1</span>
+                            </h5>
+                            <span class="text-muted small" th:text="${day.date}"></span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="badge" th:classappend="${day.status.contains('Long Day') ? 'bg-warning text-dark' : 'bg-success-subtle text-success'}" 
+                                  th:text="${day.status}">Balanced</span>
+                            <span class="badge bg-light border text-muted">
+                                <i class="bi bi-speedometer2 me-1"></i> <span th:text="${day.totalDistanceKm + ' km'}"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Daily Summary Stats -->
+                    <div class="p-2 mb-3 bg-light rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted">
+                        <div>
+                            <span>Travel Time:</span><br>
+                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.travelTimeMinutes)}"></strong>
+                        </div>
+                        <div>
+                            <span>Sightseeing:</span><br>
+                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.sightseeingTimeMinutes)}"></strong>
+                        </div>
+                        <div>
+                            <span>Breaks & Buffers:</span><br>
+                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.breakTimeMinutes)}"></strong>
+                        </div>
+                        <div>
+                            <span>Total Active:</span><br>
+                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong>
+                        </div>
+                    </div>
+
+                    <!-- Daily Long Day Warning if any -->
+                    <div th:if="${day.warningMessage}" class="alert alert-warning py-2 px-3 small mb-3">
+                        <i class="bi bi-exclamation-triangle me-1"></i> <span th:text="${day.warningMessage}"></span>
+                    </div>
+
+                    <!-- Day Timeline Items -->
+                    <div class="timeline-container">
+                        <div th:each="item : ${day.items}" class="timeline-item">
+                            
+                            <!-- Timeline Dot Icon -->
+                            <div class="timeline-dot" 
+                                 th:classappend="${(item.visited != null and item.visited) ? 'visited' : (item.activityType == 'MEAL' ? 'meal' : (item.activityType == 'HOTEL' ? 'hotel' : ''))}">
+                                <i class="bi bi-check" th:if="${item.visited != null and item.visited}"></i>
+                                <i class="bi bi-cup-hot" th:if="${(item.visited == null or !item.visited) and item.activityType == 'MEAL'}"></i>
+                                <i class="bi bi-building" th:if="${(item.visited == null or !item.visited) and item.activityType == 'HOTEL'}"></i>
+                                <i class="bi bi-car-front" th:if="${(item.visited == null or !item.visited) and item.activityType == 'ARRIVAL'}"></i>
+                                <i class="bi bi-geo-alt" th:if="${(item.visited == null or !item.visited) and item.activityType == 'SIGHTSEEING'}"></i>
+                                <i class="bi bi-compass" th:if="${(item.visited == null or !item.visited) and item.activityType == 'DEPARTURE'}"></i>
+                            </div>
+
+                            <!-- Timeline Item Content Card -->
+                            <div class="timeline-content" th:classappend="${(item.visited != null and item.visited) ? 'is-visited' : ''}">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div>
+                                        <span class="badge bg-secondary-subtle text-secondary me-1" 
+                                              th:text="${item.startTime + ' - ' + item.endTime}"></span>
+                                        <span class="fw-bold place-title text-dark" th:text="${item.activity}"></span>
+                                    </div>
+                                    
+                                    <!-- Visited Toggle Checkbox for Sightseeing -->
+                                    <div th:if="${item.placeId != null}" class="form-check ms-2">
+                                        <input class="form-check-input visited-checkbox" type="checkbox" 
+                                               th:id="'chk_' + ${item.placeId}"
+                                               th:checked="${item.visited != null and item.visited}"
+                                               th:onchange="'togglePlaceVisited(' + ${item.placeId} + ', this)'"
+                                               title="Mark as Visited">
+                                        <label class="form-check-label small fw-semibold" th:for="'chk_' + ${item.placeId}">
+                                            <span th:text="${(item.visited != null and item.visited) ? 'Visited' : 'Mark Visited'}"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="text-muted small mb-1">
+                                    <i class="bi bi-geo-alt text-primary me-1"></i> <span th:text="${item.location}"></span>
+                                    <th:block th:if="${item.rating != null}">
+                                        &bull; <span class="text-warning fw-bold">⭐ <span th:text="${item.rating}"></span></span>
+                                    </th:block>
+                                    <th:block th:if="${item.travelDistanceKm > 0}">
+                                        &bull; <span>Dist: <strong th:text="${item.travelDistanceKm + ' km'}"></strong></span>
+                                    </th:block>
+                                </div>
+
+                                <p th:if="${item.notes}" class="text-muted small mb-0 mt-1" th:text="${item.notes}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Column -->
+            <div id="mapColumn" class="col-lg-5 mb-4">
+                <div class="sticky-top" style="top: 85px; z-index: 10;">
+                    <div class="card card-modern p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0"><i class="bi bi-map-fill text-primary me-2"></i> Interactive Trip Map</h6>
+                            <span class="badge bg-light text-muted border">Real-Time Routing</span>
+                        </div>
+
+                        <!-- Map Render Container -->
+                        <div id="mapContainer"></div>
+
+                        <!-- Map Legend & Deep Link -->
+                        <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center small">
+                            <div class="d-flex align-items-center gap-3">
+                                <span><span class="badge rounded-circle p-1 me-1" style="background:#2563eb;">&nbsp;&nbsp;</span> Unvisited</span>
+                                <span><span class="badge rounded-circle p-1 me-1" style="background:#10b981;">&nbsp;&nbsp;</span> Visited</span>
+                            </div>
+                            <a th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" 
+                               class="btn btn-sm btn-outline-primary rounded-pill">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Google Maps
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Nearby Sightseeing Places Deck -->
+        <div class="card card-modern p-4 mt-2 mb-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="bi bi-compass-fill text-primary me-2"></i> Recommended Nearby Sightseeing Places</h4>
+                    <p class="text-muted mb-0 small">Curated attractions ranked by distance, ratings, user reviews, and your travel interests</p>
+                </div>
+
+                <!-- Sorting Dropdown -->
+                <div class="d-flex align-items-center gap-2">
+                    <label for="sortSelector" class="small fw-semibold text-muted text-nowrap">Sort By:</label>
+                    <select id="sortSelector" class="form-select form-select-sm rounded-pill" onchange="sortSightseeingPlaces(this.value)">
+                        <option value="popularity" selected>Popularity &amp; Match Score</option>
+                        <option value="rating">Top Rated (⭐ High to Low)</option>
+                        <option value="distance">Nearest Distance (km)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="filter-pill active" onclick="filterPlacesByCategory('ALL', this)">All Categories</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Historical', this)">🏛 Historical</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Nature', this)">🌲 Nature</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Waterfalls', this)">🌊 Waterfalls</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Temples', this)">🛕 Temples</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Parks', this)">🌳 Parks</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Museums', this)">🎨 Museums</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Adventure', this)">🧗 Adventure</span>
+                <span class="filter-pill" onclick="filterPlacesByCategory('Photography', this)">📷 Photography</span>
+            </div>
+
+            <!-- Places Cards Deck -->
+            <div id="recommendationsDeck" class="row g-3">
+                <div th:each="place : ${trip.recommendedNearbyPlaces}" 
+                     class="col-md-6 col-lg-4 recommendation-item"
+                     th:attr="data-category=${place.category}, data-distance=${place.distanceKm}, data-rating=${place.rating}, data-score=${place.matchScore}">
+                    
+                    <div class="place-card h-100">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="place-category-badge" th:text="${place.category}">Historical</span>
+                                <span class="badge bg-warning-subtle text-dark border">
+                                    ⭐ <strong th:text="${place.rating}">4.6</strong> (<span th:text="${place.reviewCount}"></span>)
+                                </span>
+                            </div>
+
+                            <h5 class="fw-bold mb-1" th:text="${place.name}">Attraction Name</h5>
+                            
+                            <div class="text-muted small mb-2">
+                                <i class="bi bi-geo-alt text-danger me-1"></i>
+                                Distance: <strong class="text-dark" th:text="${place.distanceKm + ' km'}">2.4 km</strong> &bull; 
+                                Est. Transit: <span th:text="${place.estimatedTravelTimeMinutes + ' min'}">8 min</span>
+                            </div>
+
+                            <p class="text-muted small mb-3" th:text="${place.description}"></p>
+
+                            <div class="small text-muted mb-3">
+                                <i class="bi bi-clock me-1"></i> <span th:text="${place.openingHours}"></span>
+                            </div>
+                        </div>
+
+                        <!-- Card Action Buttons -->
+                        <div class="pt-2 border-top d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
+                                    th:attr="data-name=${place.name}, data-category=${place.category}, data-rating=${place.rating}, data-reviews=${place.reviewCount}, data-distance=${place.distanceKm}, data-duration=${place.estimatedVisitDurationMinutes}, data-description=${place.description}, data-lat=${place.latitude}, data-lng=${place.longitude}"
+                                    th:onclick="'addPlaceItem(' + ${trip.id} + ', ' + ${trip.destinations[0].id} + ', this)'">
+                                <i class="bi bi-plus-circle me-1"></i> Add to Trip
+                            </button>
+                            <a th:href="@{https://www.google.com/maps/search/(api=1, query=${place.name + ' ' + place.destinationName})}"
+                               target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm" title="Open in Google Maps">
+                                <i class="bi bi-google"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-0 text-muted small">TripPlanner &bull; Built with Spring Boot, MySQL &amp; Google Maps Platform APIs</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS for guaranteed interactive map fallback -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Optional Google Maps JavaScript API (Loads if API Key is configured) -->
+    <script th:if="${isLiveMapsConfigured}" th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${googleMapsApiKey} + '&libraries=places'"></script>
+    <script th:inline="javascript">
+        window.googleMapsApiKeyAvailable = /*[[${isLiveMapsConfigured}]]*/ false;
+    </script>
+
+    <!-- Application JS Engine -->
+    <script th:src="@{/js/app.js}"></script>
+
+    <!-- Map Coordinate Initialization Script -->
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", () => {
+            const locations = [];
+
+            // Add starting point
+            /*[# th:if="${trip.startLat != null and trip.startLng != null}"]*/
+            locations.push({
+                name: /*[[${trip.startLocation}]]*/ 'Start',
+                lat: /*[[${trip.startLat}]]*/ 12.9716,
+                lng: /*[[${trip.startLng}]]*/ 77.5946,
+                isVisited: true
+            });
+            /*[/]*/
+
+            // Add destinations
+            /*[# th:each="d : ${trip.destinations}"]*/
+            locations.push({
+                name: /*[[${d.name}]]*/ 'Destination',
+                lat: /*[[${d.latitude}]]*/ 12.2958,
+                lng: /*[[${d.longitude}]]*/ 76.6394,
+                isVisited: /*[[${d.visited}]]*/ false
+            });
+            /*[/]*/
+
+            initTripMap("mapContainer", locations);
+        });
+    </script>
+</body>
+</html>
