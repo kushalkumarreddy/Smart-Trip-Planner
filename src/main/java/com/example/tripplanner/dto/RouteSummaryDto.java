@@ -17,11 +17,58 @@ public class RouteSummaryDto {
     private Boolean optimizationRecommended = false;
     private Double potentialSavingsKm = 0.0;
     private Integer potentialSavingsMinutes = 0;
+    private Double recommendedDistanceKm = 0.0;
+    private Integer recommendedTravelTimeMinutes = 0;
+    private String optimizationMessage;
+
+    // Calculation Status & Error Handling
+    private Boolean routeCalculationSuccess = true;
+    private String calculationErrorMessage;
 
     // Full trip navigation link in Google Maps
     private String googleMapsFullRouteUrl;
 
     public RouteSummaryDto() {
+    }
+
+    public Boolean getRouteCalculationSuccess() {
+        return routeCalculationSuccess;
+    }
+
+    public void setRouteCalculationSuccess(Boolean routeCalculationSuccess) {
+        this.routeCalculationSuccess = routeCalculationSuccess;
+    }
+
+    public String getCalculationErrorMessage() {
+        return calculationErrorMessage;
+    }
+
+    public void setCalculationErrorMessage(String calculationErrorMessage) {
+        this.calculationErrorMessage = calculationErrorMessage;
+    }
+
+    public Double getRecommendedDistanceKm() {
+        return recommendedDistanceKm;
+    }
+
+    public void setRecommendedDistanceKm(Double recommendedDistanceKm) {
+        this.recommendedDistanceKm = recommendedDistanceKm;
+    }
+
+    public Integer getRecommendedTravelTimeMinutes() {
+        return recommendedTravelTimeMinutes;
+    }
+
+    public void setRecommendedTravelTimeMinutes(Integer recommendedTravelTimeMinutes) {
+        this.recommendedTravelTimeMinutes = recommendedTravelTimeMinutes;
+    }
+
+    public String getOptimizationMessage() {
+        return optimizationMessage;
+    }
+
+    public void setOptimizationMessage(String optimizationMessage) {
+        this.optimizationMessage = optimizationMessage;
     }
 
     public String getTransportMode() {
@@ -104,11 +151,21 @@ public class RouteSummaryDto {
         this.potentialSavingsMinutes = potentialSavingsMinutes;
     }
 
+    private List<double[]> fullRouteGeometry = new ArrayList<>();
+
     public String getGoogleMapsFullRouteUrl() {
         return googleMapsFullRouteUrl;
     }
 
     public void setGoogleMapsFullRouteUrl(String googleMapsFullRouteUrl) {
         this.googleMapsFullRouteUrl = googleMapsFullRouteUrl;
+    }
+
+    public List<double[]> getFullRouteGeometry() {
+        return fullRouteGeometry;
+    }
+
+    public void setFullRouteGeometry(List<double[]> fullRouteGeometry) {
+        this.fullRouteGeometry = fullRouteGeometry;
     }
 }

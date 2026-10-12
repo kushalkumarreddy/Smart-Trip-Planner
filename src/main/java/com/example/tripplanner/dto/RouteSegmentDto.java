@@ -105,11 +105,21 @@ public class RouteSegmentDto {
         this.summaryText = summaryText;
     }
 
+    private java.util.List<double[]> geometryCoordinates = new java.util.ArrayList<>();
+
     public String getGoogleMapsSegmentUrl() {
         return googleMapsSegmentUrl;
     }
 
     public void setGoogleMapsSegmentUrl(String googleMapsSegmentUrl) {
         this.googleMapsSegmentUrl = googleMapsSegmentUrl;
+    }
+
+    public java.util.List<double[]> getGeometryCoordinates() {
+        return geometryCoordinates;
+    }
+
+    public void setGeometryCoordinates(java.util.List<double[]> geometryCoordinates) {
+        this.geometryCoordinates = geometryCoordinates;
     }
 }

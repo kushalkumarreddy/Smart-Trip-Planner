@@ -29,6 +29,7 @@ public class TripRequestDto {
     private String dailyStartTime = "08:00";
     private String dailyEndTime = "20:00";
     private String hotelLocation;
+    private List<String> destinationHotels = new ArrayList<>();
     private String budgetRange;
     private List<String> preferredInterests = new ArrayList<>();
 
@@ -129,6 +130,14 @@ public class TripRequestDto {
 
     public void setBudgetRange(String budgetRange) {
         this.budgetRange = budgetRange;
+    }
+
+    public List<String> getDestinationHotels() {
+        return destinationHotels;
+    }
+
+    public void setDestinationHotels(List<String> destinationHotels) {
+        this.destinationHotels = destinationHotels;
     }
 
     public List<String> getPreferredInterests() {

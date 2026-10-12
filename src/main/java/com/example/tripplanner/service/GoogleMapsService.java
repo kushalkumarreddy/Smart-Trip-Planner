@@ -29,6 +29,8 @@ public class GoogleMapsService {
 
     private GeoApiContext geoApiContext;
 
+    private final java.util.Map<String, RouteCalculationResult> routeCache = new java.util.concurrent.ConcurrentHashMap<>();
+
     public boolean isLiveApiConfigured() {
         return apiEnabled && apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equalsIgnoreCase("YOUR_API_KEY_HERE");
     }
@@ -73,45 +75,140 @@ public class GoogleMapsService {
     }
 
     public RouteCalculationResult calculateRouteSegment(String origin, String destination, String transportMode) {
+        if (origin == null || destination == null) {
+            return new RouteCalculationResult(0.0, 0, new double[]{12.9716, 77.5946}, new double[]{12.9716, 77.5946}, false, false, "Origin and destination cannot be null");
+        }
+
+        String mode = (transportMode != null && !transportMode.trim().isEmpty()) ? transportMode.trim().toUpperCase() : "CAR";
+        String cacheKey = origin.trim().toLowerCase() + "->" + destination.trim().toLowerCase() + "@" + mode;
+
+        if (routeCache.containsKey(cacheKey)) {
+            return routeCache.get(cacheKey);
+        }
+
         double[] originCoords = geocode(origin);
         double[] destCoords = geocode(destination);
 
+        // Check if origins are identical
+        if (origin.trim().equalsIgnoreCase(destination.trim()) ||
+                (Math.abs(originCoords[0] - destCoords[0]) < 0.0005 && Math.abs(originCoords[1] - destCoords[1]) < 0.0005)) {
+            RouteCalculationResult zeroResult = new RouteCalculationResult(0.0, 0, originCoords, destCoords, true, true, null, java.util.Collections.singletonList(originCoords));
+            routeCache.put(cacheKey, zeroResult);
+            return zeroResult;
+        }
+
+        // 1. Try Live Google Directions API if configured
         if (isLiveApiConfigured()) {
             try {
                 GeoApiContext context = getGeoApiContext();
                 if (context != null) {
-                    TravelMode mode = mapTravelMode(transportMode);
+                    TravelMode travelMode = mapTravelMode(mode);
                     DirectionsResult result = DirectionsApi.newRequest(context)
                             .origin(origin)
                             .destination(destination)
-                            .mode(mode)
+                            .mode(travelMode)
                             .await();
 
-                    if (result != null && result.routes.length > 0 && result.routes[0].legs.length > 0) {
+                    if (result != null && result.routes != null && result.routes.length > 0 && result.routes[0].legs.length > 0) {
                         long distanceMeters = result.routes[0].legs[0].distance.inMeters;
                         long durationSeconds = result.routes[0].legs[0].duration.inSeconds;
                         double distanceKm = Math.round((distanceMeters / 1000.0) * 10.0) / 10.0;
                         int durationMinutes = (int) Math.round(durationSeconds / 60.0);
 
-                        return new RouteCalculationResult(
+                        RouteCalculationResult res = new RouteCalculationResult(
                                 distanceKm,
                                 durationMinutes,
                                 originCoords,
                                 destCoords,
-                                true
+                                true,
+                                true,
+                                null,
+                                java.util.Arrays.asList(originCoords, destCoords)
                         );
+                        routeCache.put(cacheKey, res);
+                        return res;
                     }
                 }
             } catch (Exception e) {
-                logger.warn("Live Google Directions failed between '{}' and '{}': {}. Falling back to internal engine.", origin, destination, e.getMessage());
+                logger.warn("Live Google Directions failed between '{}' and '{}': {}. Falling back to road engine.", origin, destination, e.getMessage());
             }
         }
 
-        // Realistic internal calculation engine
-        double distanceKm = GeoUtils.estimateRoadDistanceKm(originCoords[0], originCoords[1], destCoords[0], destCoords[1]);
-        int durationMinutes = GeoUtils.estimateTravelTimeMinutes(distanceKm, transportMode);
+        // 2. High-precision highway routing engine (OSRM & verified highway routes)
+        GeoUtils.RoadRouteResult roadResult = GeoUtils.calculateRealRoadRoute(
+                originCoords[0], originCoords[1], destCoords[0], destCoords[1], mode
+        );
 
-        return new RouteCalculationResult(distanceKm, durationMinutes, originCoords, destCoords, false);
+        RouteCalculationResult res = new RouteCalculationResult(
+                roadResult.getDistanceKm(),
+                roadResult.getDurationMinutes(),
+                originCoords,
+                destCoords,
+                roadResult.isLiveRoadApiUsed(),
+                roadResult.isSuccess(),
+                roadResult.isSuccess() ? null : "Unable to calculate the current route. Please try again.",
+                roadResult.getGeometryCoordinates()
+        );
+
+        routeCache.put(cacheKey, res);
+        return res;
+    }
+
+    /**
+     * Resolves Google Places autocomplete suggestions when live API is available,
+     * falling back to the curated geospatial location engine.
+     */
+    public List<java.util.Map<String, Object>> autocompletePlaces(String query, int limit) {
+        if (query == null || query.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        int maxResults = Math.max(1, Math.min(10, limit));
+
+        if (isLiveApiConfigured()) {
+            try {
+                GeoApiContext context = getGeoApiContext();
+                if (context != null) {
+                    com.google.maps.PlaceAutocompleteRequest.SessionToken sessionToken =
+                            new com.google.maps.PlaceAutocompleteRequest.SessionToken();
+                    com.google.maps.model.AutocompletePrediction[] predictions =
+                            com.google.maps.PlacesApi.placeAutocomplete(context, query.trim(), sessionToken).await();
+
+                    if (predictions != null && predictions.length > 0) {
+                        List<java.util.Map<String, Object>> results = new ArrayList<>();
+                        for (int i = 0; i < Math.min(predictions.length, maxResults); i++) {
+                            com.google.maps.model.AutocompletePrediction p = predictions[i];
+                            java.util.Map<String, Object> item = new java.util.HashMap<>();
+                            String mainText = (p.structuredFormatting != null && p.structuredFormatting.mainText != null)
+                                    ? p.structuredFormatting.mainText : p.description;
+                            String secondaryText = (p.structuredFormatting != null && p.structuredFormatting.secondaryText != null)
+                                    ? p.structuredFormatting.secondaryText : "Location";
+
+                            item.put("name", mainText);
+                            item.put("description", secondaryText);
+                            item.put("placeId", p.placeId);
+                            item.put("category", (p.types != null && p.types.length > 0) ? p.types[0].replace("_", " ") : "Destination");
+
+                            // Resolve approximate coordinates for map
+                            double[] coords = GeoUtils.getApproximateCoordinates(mainText);
+                            item.put("lat", coords[0]);
+                            item.put("lng", coords[1]);
+                            results.add(item);
+                        }
+                        return results;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Live Google Places Autocomplete failed for '{}': {}", query, e.getMessage());
+            }
+        }
+
+        // Fallback to high-quality internal autocomplete suggestions
+        return GeoUtils.getAutocompleteSuggestions(query.trim(), maxResults);
+    }
+
+    public void clearRouteCache() {
+        routeCache.clear();
     }
 
     private TravelMode mapTravelMode(String transportMode) {
@@ -139,13 +236,31 @@ public class GoogleMapsService {
         private final double[] originCoords;
         private final double[] destinationCoords;
         private final boolean liveApiUsed;
+        private final boolean success;
+        private final String errorMessage;
+        private final List<double[]> geometryCoords;
+
+        public RouteCalculationResult(double distanceKm, int durationMinutes) {
+            this(distanceKm, durationMinutes, new double[]{0.0, 0.0}, new double[]{0.0, 0.0}, false, true, null, java.util.Collections.emptyList());
+        }
 
         public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed) {
+            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, true, null, java.util.Collections.emptyList());
+        }
+
+        public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed, boolean success, String errorMessage) {
+            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, success, errorMessage, java.util.Collections.emptyList());
+        }
+
+        public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed, boolean success, String errorMessage, List<double[]> geometryCoords) {
             this.distanceKm = distanceKm;
             this.durationMinutes = durationMinutes;
             this.originCoords = originCoords;
             this.destinationCoords = destinationCoords;
             this.liveApiUsed = liveApiUsed;
+            this.success = success;
+            this.errorMessage = errorMessage;
+            this.geometryCoords = (geometryCoords != null) ? geometryCoords : java.util.Collections.emptyList();
         }
 
         public double getDistanceKm() {
@@ -166,6 +281,18 @@ public class GoogleMapsService {
 
         public boolean isLiveApiUsed() {
             return liveApiUsed;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public List<double[]> getGeometryCoords() {
+            return geometryCoords;
         }
     }
 }

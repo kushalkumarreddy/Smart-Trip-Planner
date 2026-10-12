@@ -1,5 +1,5 @@
 -- =========================================================
--- Trip Planner & Route Optimization Database Schema
+-- VoyageCraft - AI Smart Travel Planner Database Schema
 -- MySQL 8.0+ Compatible
 -- =========================================================
 
@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS trips (
     preferred_interests TEXT,
     total_distance DOUBLE DEFAULT 0.0,
     total_travel_time_minutes INT DEFAULT 0,
+    share_code VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_trip_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS destinations (
     latitude DOUBLE,
     longitude DOUBLE,
     sequence_order INT NOT NULL,
+    hotel_name VARCHAR(255),
     distance_from_previous DOUBLE DEFAULT 0.0,
     travel_time_from_previous INT DEFAULT 0,
     visited BOOLEAN DEFAULT FALSE,
@@ -105,8 +107,36 @@ CREATE TABLE IF NOT EXISTS itineraries (
     CONSTRAINT fk_itinerary_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 6. Trip Collaborators Table
+CREATE TABLE IF NOT EXISTS trip_collaborators (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trip_id BIGINT NOT NULL,
+    user_id BIGINT NULL,
+    user_name VARCHAR(100) NOT NULL,
+    user_email VARCHAR(120),
+    role VARCHAR(50) DEFAULT 'EDITOR',
+    invited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_collab_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. Trip Suggestions Table
+CREATE TABLE IF NOT EXISTS trip_suggestions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trip_id BIGINT NOT NULL,
+    place_name VARCHAR(200) NOT NULL,
+    category VARCHAR(100) DEFAULT 'Sightseeing',
+    suggested_by_name VARCHAR(100) NOT NULL,
+    votes_count INT DEFAULT 1,
+    notes TEXT,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_suggestion_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Create Indexes for fast querying
 CREATE INDEX idx_trips_user ON trips(user_id);
 CREATE INDEX idx_destinations_trip ON destinations(trip_id);
 CREATE INDEX idx_places_destination ON places(destination_id);
 CREATE INDEX idx_itineraries_trip ON itineraries(trip_id);
+CREATE INDEX idx_collaborators_trip ON trip_collaborators(trip_id);
+CREATE INDEX idx_suggestions_trip ON trip_suggestions(trip_id);

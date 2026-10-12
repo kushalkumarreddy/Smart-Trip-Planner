@@ -22,6 +22,8 @@ public class TripResponseDto {
     private String hotelLocation;
     private Double hotelLat;
     private Double hotelLng;
+    private String budgetRange;
+    private String preferredInterests;
 
     // Metrics & KPIs
     private Double totalDistanceKm = 0.0;
@@ -35,6 +37,11 @@ public class TripResponseDto {
     // Feasibility & Warnings
     private String feasibilityStatus = "Optimal"; // Optimal, Busy, Difficult
     private List<String> warnings = new ArrayList<>();
+
+    // Collaboration & Sharing
+    private String shareCode;
+    private List<TripCollaboratorDto> collaborators = new ArrayList<>();
+    private List<TripSuggestionDto> suggestions = new ArrayList<>();
 
     // Detailed Data
     private List<DestinationDto> destinations = new ArrayList<>();
@@ -269,11 +276,51 @@ public class TripResponseDto {
         this.routeSummary = routeSummary;
     }
 
+    public String getShareCode() {
+        return shareCode;
+    }
+
+    public void setShareCode(String shareCode) {
+        this.shareCode = shareCode;
+    }
+
+    public List<TripCollaboratorDto> getCollaborators() {
+        return collaborators;
+    }
+
+    public void setCollaborators(List<TripCollaboratorDto> collaborators) {
+        this.collaborators = collaborators;
+    }
+
+    public List<TripSuggestionDto> getSuggestions() {
+        return suggestions;
+    }
+
+    public void setSuggestions(List<TripSuggestionDto> suggestions) {
+        this.suggestions = suggestions;
+    }
+
     public List<SightseeingPlaceDto> getRecommendedNearbyPlaces() {
         return recommendedNearbyPlaces;
     }
 
     public void setRecommendedNearbyPlaces(List<SightseeingPlaceDto> recommendedNearbyPlaces) {
         this.recommendedNearbyPlaces = recommendedNearbyPlaces;
+    }
+
+    public String getBudgetRange() {
+        return budgetRange;
+    }
+
+    public void setBudgetRange(String budgetRange) {
+        this.budgetRange = budgetRange;
+    }
+
+    public String getPreferredInterests() {
+        return preferredInterests;
+    }
+
+    public void setPreferredInterests(String preferredInterests) {
+        this.preferredInterests = preferredInterests;
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan New Trip - TripPlanner</title>
+    <title>Plan Your Journey — VoyageCraft</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -16,241 +16,338 @@
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" th:href="@{/}">
-                <i class="bi bi-compass text-primary"></i> TripPlanner
+                <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
             <div class="d-flex align-items-center gap-2">
-                <a th:href="@{/dashboard}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                <a th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
+                    <i class="bi bi-speedometer2 me-1"></i> My Journeys
                 </a>
             </div>
         </div>
     </nav>
 
     <!-- Main Container -->
-    <main class="container py-4">
-        <div class="row justify-content-center">
-            <div class="col-lg-9 col-xl-8">
-                
-                <!-- Title & Demo Helper Banner -->
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <main class="container py-4 flex-grow-1" style="max-width: 960px;">
+
+        <!-- Header -->
+        <div class="mb-4">
+            <span class="badge-sage mb-2 d-inline-block">
+                <i class="bi bi-compass me-1"></i> Itinerary Builder
+            </span>
+            <h2 class="fw-bold mb-1">Create Your Custom Journey</h2>
+            <p class="text-muted small mb-0">
+                Design a realistic road trip with verified highway mileage, flexible stops, and daily schedules.
+            </p>
+        </div>
+
+        <!-- AI-POWERED TRIP PLANNER BANNER -->
+        <div class="ai-planner-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
+                <span class="fw-bold text-dark small">Plan with Natural Language</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Type what kind of trip you want in plain words. Our AI extracts your exact starting location, destination stops, dates, and travel pace!
+            </p>
+            <div class="input-group mb-2 shadow-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-chat-quote-fill" style="color: var(--forest-green);"></i>
+                </span>
+                <input type="text" id="aiPromptInput" class="form-control border-start-0 py-2" 
+                       placeholder="e.g. 4 day trip from guntakal, calicut, munar, kodaikenal">
+                <button class="btn btn-forest px-4 fw-semibold" type="button" id="btnAiPlan" onclick="handleAiPlan()">
+                    <i class="bi bi-magic me-1"></i> Generate with AI
+                </button>
+            </div>
+
+            <!-- Quick Prompt Chips -->
+            <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                <span class="text-muted small fw-semibold me-1">Examples:</span>
+                <span class="ai-chip" onclick="applyAiPrompt('4 day trip from guntakal, calicut, munar, kodaikenal')">
+                    📍 Guntakal → Calicut, Munnar &amp; Kodaikanal
+                </span>
+                <span class="ai-chip" onclick="applyAiPrompt('Plan a 4-day family trip from Bengaluru to Coorg with waterfalls and relaxed driving')">
+                    🌿 Bengaluru → Coorg (Waterfalls)
+                </span>
+                <span class="ai-chip" onclick="applyAiPrompt('3-day weekend bike trip from Bengaluru to Wayanad with nature and scenic viewpoints')">
+                    🏍️ Bengaluru → Wayanad (Nature)
+                </span>
+            </div>
+
+            <!-- AI Result Alert Banner -->
+            <div id="aiPlanSuccessBanner" class="banner-alert info d-none mt-3 py-2 px-3 small" role="alert">
+                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                <div class="flex-grow-1" id="aiPlanSuccessMsg">
+                    Configured trip parameters from your prompt!
+                </div>
+            </div>
+        </div>
+
+        <!-- PROGRESSIVE TRIP CREATION FORM -->
+        <form id="tripCreationForm" onsubmit="handleTripSubmit(event)">
+
+            <!-- Step 1: Starting Location & Identity -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-num">1</div>
                     <div>
-                        <h2 class="fw-bold mb-1">Create Your Custom Trip</h2>
-                        <p class="text-muted mb-0">Set your starting city, destinations, preferred travel style, and transit mode</p>
+                        <h5 class="fw-bold mb-0">Journey Starting Point</h5>
+                        <div class="text-muted small">Where does your road journey begin?</div>
                     </div>
-                    <div>
-                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" onclick="fillExampleTrip()">
-                            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Load Example: Bengaluru → Ooty
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="startLocationInput" class="form-label fw-semibold small">
+                            Starting Location <span class="text-danger">*</span>
+                        </label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="startLocationInput" class="form-control" placeholder="e.g. Guntakal, Bengaluru, Hyderabad" required autocomplete="off">
+                        </div>
+                        <div class="form-text text-muted small">Type to search any city, town, or airport.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tripName" class="form-label fw-semibold small">Trip Name (Optional)</label>
+                        <input type="text" id="tripName" class="form-control" placeholder="e.g. Western Ghats Mountain Trail">
+                        <div class="form-text text-muted small">Auto-generated if left blank.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Dynamic Destinations -->
+            <div class="step-card">
+                <div class="step-header justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="step-num">2</div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Destinations to Visit</h5>
+                            <div class="text-muted small">Add your stops. Reorder up or down with arrows or drag-and-drop.</div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-forest btn-sm" onclick="checkAndOptimizePreview()">
+                            <i class="bi bi-shuffle me-1"></i> Optimize Route Order
+                        </button>
+                        <button type="button" class="btn btn-forest btn-sm" onclick="addDestinationInput()">
+                            <i class="bi bi-plus-lg me-1"></i> Add Destination
                         </button>
                     </div>
                 </div>
 
-                <div class="card card-modern p-4 p-md-5">
-                    <form id="tripCreationForm" onsubmit="handleTripSubmit(event)">
+                <!-- Dynamic rows container (No default destinations inserted) -->
+                <div id="destinationsContainer">
+                    <!-- Clean row slot generated dynamically or seeded via URL parameters -->
+                </div>
 
-                        <!-- 1. Trip Name & Starting Point -->
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3 text-secondary">
-                                <i class="bi bi-geo-alt-fill text-primary me-2"></i>1. Journey Origin
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="tripName" class="form-label fw-semibold small">Trip Name (Optional)</label>
-                                    <input type="text" id="tripName" class="form-control" placeholder="e.g. South India Road Trip">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="startLocationInput" class="form-label fw-semibold small">Starting Location <span class="text-danger">*</span></label>
-                                    <input type="text" id="startLocationInput" class="form-control" placeholder="e.g. Bengaluru" required list="placesDatalist">
-                                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <button type="button" class="btn btn-sand btn-sm px-3" onclick="addDestinationInput()">
+                        <i class="bi bi-plus-circle me-1"></i> + Add Another Stop
+                    </button>
+                    <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>At least one destination is required</span>
+                </div>
+            </div>
+
+            <!-- Step 3: Dates & Preferences -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-num">3</div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Travel Dates &amp; Style</h5>
+                        <div class="text-muted small">Set your schedule, transport mode, and interests.</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6 col-md-3">
+                        <label for="startDate" class="form-label fw-semibold small">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" id="startDate" class="form-control" required>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="endDate" class="form-label fw-semibold small">End Date <span class="text-danger">*</span></label>
+                        <input type="date" id="endDate" class="form-control" required>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="transportMode" class="form-label fw-semibold small">Transport Mode</label>
+                        <select id="transportMode" class="form-select">
+                            <option value="CAR" selected>🚗 Car / Driving</option>
+                            <option value="BIKE">🏍️ Bike / Motorcycle</option>
+                            <option value="PUBLIC_TRANSPORT">🚌 Public Transit / Bus</option>
+                            <option value="WALKING">🚶 Walking / Hiking</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="travelStyle" class="form-label fw-semibold small">Travel Pace</label>
+                        <select id="travelStyle" class="form-select">
+                            <option value="BALANCED" selected>Balanced (Standard sightseeing)</option>
+                            <option value="RELAXED">Relaxed (Slow pace &amp; rest buffers)</option>
+                            <option value="FAST_PACED">Fast-Paced (Maximum places)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6 col-md-3">
+                        <label for="travelersCount" class="form-label fw-semibold small">Travelers</label>
+                        <input type="number" id="travelersCount" class="form-control" value="2" min="1" max="50">
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="budgetRange" class="form-label fw-semibold small">Budget</label>
+                        <select id="budgetRange" class="form-select">
+                            <option value="Moderate" selected>Moderate / Standard</option>
+                            <option value="Budget">Budget-friendly</option>
+                            <option value="Luxury">Luxury / Premium</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="dailyStartTime" class="form-label fw-semibold small">Daily Start</label>
+                        <input type="time" id="dailyStartTime" class="form-control" value="08:00">
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label for="dailyEndTime" class="form-label fw-semibold small">Daily End</label>
+                        <input type="time" id="dailyEndTime" class="form-control" value="20:00">
+                    </div>
+                </div>
+
+                <!-- Sightseeing Interests Checklist -->
+                <div>
+                    <label class="form-label fw-semibold small">Sightseeing Interests (Select highlights you enjoy)</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catNat" value="Nature" checked>
+                            <label class="form-check-label small fw-semibold" for="catNat">🌲 Nature &amp; Scenery</label>
+                        </div>
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catWater" value="Waterfalls" checked>
+                            <label class="form-check-label small fw-semibold" for="catWater">🌊 Waterfalls</label>
+                        </div>
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catHist" value="Historical" checked>
+                            <label class="form-check-label small fw-semibold" for="catHist">🏛️ Heritage &amp; History</label>
+                        </div>
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catTemp" value="Temples">
+                            <label class="form-check-label small fw-semibold" for="catTemp">🛕 Temples &amp; Culture</label>
+                        </div>
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catPhoto" value="Photography" checked>
+                            <label class="form-check-label small fw-semibold" for="catPhoto">📷 Photography &amp; Viewpoints</label>
+                        </div>
+                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
+                            <input class="form-check-input interest-check" type="checkbox" id="catAdv" value="Adventure">
+                            <label class="form-check-label small fw-semibold" for="catAdv">🧗 Adventure &amp; Treks</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Accommodation / Stays (Optional & Separate) -->
+            <div class="step-card">
+                <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#hotelOptionalSection">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="step-num" style="background: var(--text-muted);">4</div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Accommodation &amp; Stays <span class="badge-sand ms-2">Optional</span></h5>
+                            <div class="text-muted small">Assign hotels or resorts to your destination stops now or later.</div>
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-down fs-5 text-muted"></i>
+                </div>
+
+                <div class="collapse mt-3 pt-3 border-top" id="hotelOptionalSection">
+                    <p class="text-muted small mb-3">
+                        You can specify desired hotels or resort stays for each stop below. If left blank, you can also easily add or change hotels inside the itinerary workspace later.
+                    </p>
+                    <div id="hotelStaysListContainer">
+                        <!-- Synced dynamically with destination names -->
+                        <div class="text-muted small fst-italic">Add destination stops above to configure accommodation per destination.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Action -->
+            <div class="mt-4 mb-5">
+                <button type="submit" id="btnSubmitTrip" class="btn btn-forest btn-lg w-100 py-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-compass fs-5"></i>
+                    <span class="fw-bold fs-6">Generate Trip Plan &amp; Calculate Route</span>
+                </button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Side-by-Side Smart Route Optimization Comparison Modal (Requirement 5) -->
+    <div class="modal fade" id="routeOptimizationModal" tabindex="-1" aria-labelledby="routeOptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="routeOptModalLabel">
+                        <i class="bi bi-shuffle text-success me-2"></i>Smart Route Optimization Comparison
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="routeOptSavingsAlert" class="savings-highlight mb-4">
+                        <i class="bi bi-lightning-charge-fill fs-4"></i>
+                        <div id="routeOptSavingsText">
+                            Calculated savings: 0 km &amp; 0 minutes.
+                        </div>
+                    </div>
+
+                    <!-- Side-by-side comparison -->
+                    <div class="opt-side-by-side">
+                        <!-- Original Route -->
+                        <div class="opt-box original">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-secondary text-white rounded-pill px-3 py-1">Current Order</span>
+                                <span class="small text-muted" id="originalDistanceText">0 km</span>
+                            </div>
+                            <div class="small fw-bold text-muted mb-2">Sequence:</div>
+                            <div id="originalSequencePills" class="mb-3">
+                                <!-- Pills -->
+                            </div>
+                            <div class="small text-muted" id="originalDurationText">
+                                Driving Duration: 0 hrs
                             </div>
                         </div>
 
-                        <hr class="text-muted my-4">
-
-                        <!-- 2. Dynamic Destinations Input -->
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0 text-secondary">
-                                    <i class="bi bi-pin-map-fill text-danger me-2"></i>2. Destinations to Visit
-                                </h5>
-                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addDestinationInput()">
-                                    <i class="bi bi-plus-lg me-1"></i> Add Destination
-                                </button>
+                        <!-- Recommended Route -->
+                        <div class="opt-box recommended">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success text-white rounded-pill px-3 py-1">Recommended Sequence</span>
+                                <span class="small fw-bold text-success" id="recommendedDistanceText">0 km</span>
                             </div>
-                            <p class="text-muted small mb-3">Enter the places you want to visit in order. You can dynamically add or remove stops.</p>
-
-                            <!-- Dynamic rows container -->
-                            <div id="destinationsContainer">
-                                <div class="destination-row">
-                                    <span class="destination-number">1</span>
-                                    <input type="text" name="destinationNames" class="form-control destination-input" placeholder="e.g. Mysore" value="Mysore" required list="placesDatalist">
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDestinationInput(this)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                                <div class="destination-row">
-                                    <span class="destination-number">2</span>
-                                    <input type="text" name="destinationNames" class="form-control destination-input" placeholder="e.g. Coorg" value="Coorg" required list="placesDatalist">
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDestinationInput(this)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                                <div class="destination-row">
-                                    <span class="destination-number">3</span>
-                                    <input type="text" name="destinationNames" class="form-control destination-input" placeholder="e.g. Wayanad" value="Wayanad" required list="placesDatalist">
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDestinationInput(this)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
+                            <div class="small fw-bold text-dark mb-2">Optimized Path:</div>
+                            <div id="recommendedSequencePills" class="mb-3">
+                                <!-- Pills -->
                             </div>
-
-                            <button type="button" class="btn btn-light border text-primary btn-sm mt-2 rounded-pill px-3" onclick="addDestinationInput()">
-                                <i class="bi bi-plus-circle me-1"></i> + Add Another Destination
-                            </button>
-                        </div>
-
-                        <hr class="text-muted my-4">
-
-                        <!-- 3. Dates & Timing -->
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3 text-secondary">
-                                <i class="bi bi-calendar-range text-success me-2"></i>3. Dates & Travel Schedule
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="startDate" class="form-label fw-semibold small">Start Date <span class="text-danger">*</span></label>
-                                    <input type="date" id="startDate" class="form-control" required>
-                                </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="endDate" class="form-label fw-semibold small">End Date <span class="text-danger">*</span></label>
-                                    <input type="date" id="endDate" class="form-control" required>
-                                </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="dailyStartTime" class="form-label fw-semibold small">Daily Start Time</label>
-                                    <input type="time" id="dailyStartTime" class="form-control" value="08:00">
-                                </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="dailyEndTime" class="form-label fw-semibold small">Daily End Time</label>
-                                    <input type="time" id="dailyEndTime" class="form-control" value="20:00">
-                                </div>
+                            <div class="small fw-bold text-dark" id="recommendedDurationText">
+                                Driving Duration: 0 hrs
                             </div>
                         </div>
+                    </div>
 
-                        <hr class="text-muted my-4">
-
-                        <!-- 4. Transportation & Preferences -->
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3 text-secondary">
-                                <i class="bi bi-sliders text-warning me-2"></i>4. Transportation & Travel Style
-                            </h5>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-4">
-                                    <label for="transportMode" class="form-label fw-semibold small">Transportation Mode</label>
-                                    <select id="transportMode" class="form-select">
-                                        <option value="CAR" selected>🚗 Car / Driving Routes</option>
-                                        <option value="BIKE">🏍️ Bike / Motorcycle</option>
-                                        <option value="PUBLIC_TRANSPORT">🚌 Public Transport / Transit</option>
-                                        <option value="WALKING">🚶 Walking / Pedestrian</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="travelStyle" class="form-label fw-semibold small">Travel Pace</label>
-                                    <select id="travelStyle" class="form-select">
-                                        <option value="BALANCED" selected>Balanced (Standard sightseeing)</option>
-                                        <option value="RELAXED">Relaxed (Slow pace, longer breaks)</option>
-                                        <option value="FAST_PACED">Fast-Paced (Cover maximum spots)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="travelersCount" class="form-label fw-semibold small">Number of Travelers</label>
-                                    <input type="number" id="travelersCount" class="form-control" value="2" min="1" max="50">
-                                </div>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="hotelLocation" class="form-label fw-semibold small">Accommodation / Hotel (Optional)</label>
-                                    <input type="text" id="hotelLocation" class="form-control" placeholder="e.g. Radisson Blu Mysore or ABC Resort" list="placesDatalist">
-                                    <div class="form-text text-muted small">Will be scheduled as your daily morning starting and evening end point.</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="budgetRange" class="form-label fw-semibold small">Budget Preference</label>
-                                    <select id="budgetRange" class="form-select">
-                                        <option value="Moderate" selected>Moderate / Standard</option>
-                                        <option value="Budget">Budget-friendly</option>
-                                        <option value="Luxury">Luxury / Premium</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 5. Sightseeing Interests Checklist -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold small">Sightseeing Interests (Select your favorites)</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catHist" value="Historical" checked>
-                                    <label class="form-check-label small fw-semibold" for="catHist">🏛 Historical</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catNat" value="Nature" checked>
-                                    <label class="form-check-label small fw-semibold" for="catNat">🌲 Nature</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catWater" value="Waterfalls" checked>
-                                    <label class="form-check-label small fw-semibold" for="catWater">🌊 Waterfalls</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catTemp" value="Temples">
-                                    <label class="form-check-label small fw-semibold" for="catTemp">🛕 Temples</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catMus" value="Museums">
-                                    <label class="form-check-label small fw-semibold" for="catMus">🎨 Museums</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catAdv" value="Adventure">
-                                    <label class="form-check-label small fw-semibold" for="catAdv">🧗 Adventure</label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded px-3 py-1 bg-light">
-                                    <input class="form-check-input interest-check" type="checkbox" id="catPhoto" value="Photography" checked>
-                                    <label class="form-check-label small fw-semibold" for="catPhoto">📷 Photography</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Submit Button -->
-                        <div class="mt-5">
-                            <button type="submit" id="btnSubmitTrip" class="btn btn-primary-custom btn-lg w-100 py-3 shadow">
-                                <i class="bi bi-magic me-2"></i> Generate Trip Plan & Optimize Route
-                            </button>
-                        </div>
-                    </form>
+                    <p class="text-muted small mt-3 mb-0">
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        The original route remains completely unchanged unless you click "Accept &amp; Apply Optimized Order".
+                    </p>
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">
+                        Keep Current Route
+                    </button>
+                    <button type="button" class="btn btn-forest px-4" onclick="applyPreviewOptimizedOrder()">
+                        <i class="bi bi-check2-circle me-1"></i> Accept &amp; Apply Optimized Order
+                    </button>
                 </div>
             </div>
         </div>
-    </main>
-
-    <!-- Datalist for autocomplete fallback -->
-    <datalist id="placesDatalist">
-        <option value="Bengaluru">
-        <option value="Mysore">
-        <option value="Coorg">
-        <option value="Wayanad">
-        <option value="Ooty">
-        <option value="Chikmagalur">
-        <option value="Hampi">
-        <option value="Goa">
-        <option value="Munnar">
-        <option value="Kochi">
-        <option value="Chennai">
-        <option value="Hyderabad">
-        <option value="Pondicherry">
-    </datalist>
+    </div>
 
     <!-- Footer -->
-    <footer class="text-center">
+    <footer class="py-4 text-center">
         <div class="container">
-            <p class="mb-0 text-muted small">TripPlanner &bull; Smart Travel Optimization Platform</p>
+            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
@@ -259,7 +356,8 @@
     <script th:src="@{/js/app.js}"></script>
 
     <script>
-        // Set default dates: today to +3 days
+        let recommendedOrderCache = null;
+
         document.addEventListener("DOMContentLoaded", () => {
             const today = new Date();
             const future = new Date();
@@ -268,30 +366,279 @@
             const formatDate = (d) => d.toISOString().split('T')[0];
             document.getElementById('startDate').value = formatDate(today);
             document.getElementById('endDate').value = formatDate(future);
-            document.getElementById('startLocationInput').value = "Bengaluru";
+
+            // Attach autocomplete to starting location
+            const startInput = document.getElementById('startLocationInput');
+            if (window.attachPlaceAutocomplete && startInput) {
+                window.attachPlaceAutocomplete(startInput);
+            }
+
+            // Check URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const promptParam = urlParams.get('prompt');
+            const startParam = urlParams.get('start');
+            const destParam = urlParams.get('dest');
+            const startDateParam = urlParams.get('startDate');
+
+            if (startDateParam) {
+                document.getElementById('startDate').value = startDateParam;
+            }
+
+            if (promptParam) {
+                document.getElementById('aiPromptInput').value = promptParam;
+                handleAiPlan();
+            } else if (startParam || destParam) {
+                if (startParam) document.getElementById('startLocationInput').value = startParam;
+                if (destParam) {
+                    addDestinationInput(destParam);
+                } else {
+                    addDestinationInput();
+                }
+            } else {
+                // Requirement 1 & 2: NO default destinations automatically inserted into trip forms.
+                // Present 1 clean empty destination input slot.
+                addDestinationInput();
+            }
         });
 
-        function fillExampleTrip() {
-            document.getElementById('startLocationInput').value = "Bengaluru";
-            document.getElementById('tripName').value = "Bengaluru to Ooty Highlands Circuit";
-            
-            const container = document.getElementById("destinationsContainer");
-            container.innerHTML = "";
-            
-            const places = ["Mysore", "Coorg", "Wayanad", "Ooty"];
-            places.forEach(p => addDestinationInput(p));
-            
-            document.getElementById('hotelLocation').value = "Mysore Grand Palace Stay";
-            document.getElementById('transportMode').value = "CAR";
+        function applyAiPrompt(text) {
+            document.getElementById('aiPromptInput').value = text;
+            handleAiPlan();
         }
 
-        async function handleTripSubmit(e) {
-            e.preventDefault();
+        async function handleAiPlan() {
+            const promptInput = document.getElementById('aiPromptInput');
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
 
-            const btn = document.getElementById('btnSubmitTrip');
+            const btn = document.getElementById('btnAiPlan');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Calculating Route & Generating Day-by-Day Itinerary...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> AI Parsing...';
 
+            try {
+                const response = await fetch('/api/trips/ai-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                if (!response.ok) throw new Error('AI analysis failed');
+                const data = await response.json();
+
+                // Populate Fields
+                if (data.tripName) document.getElementById('tripName').value = data.tripName;
+                if (data.startLocation) document.getElementById('startLocationInput').value = data.startLocation;
+                if (data.startDate) document.getElementById('startDate').value = data.startDate;
+                if (data.endDate) document.getElementById('endDate').value = data.endDate;
+                if (data.transportMode) document.getElementById('transportMode').value = data.transportMode;
+                if (data.travelStyle) document.getElementById('travelStyle').value = data.travelStyle;
+                if (data.travelersCount) document.getElementById('travelersCount').value = data.travelersCount;
+                if (data.budgetRange) document.getElementById('budgetRange').value = data.budgetRange;
+
+                // Populate Interests
+                if (data.preferredInterests && data.preferredInterests.length > 0) {
+                    document.querySelectorAll('.interest-check').forEach(c => {
+                        c.checked = data.preferredInterests.some(pi => pi.toLowerCase() === c.value.toLowerCase());
+                    });
+                }
+
+                // Populate Destinations and Hotels exactly from user prompt
+                if (data.destinationNames && data.destinationNames.length > 0) {
+                    const container = document.getElementById('destinationsContainer');
+                    container.innerHTML = '';
+                    data.destinationNames.forEach((dName, idx) => {
+                        const hotel = (data.destinationHotels && idx < data.destinationHotels.length) ? data.destinationHotels[idx] : '';
+                        addDestinationInput(dName, hotel);
+                    });
+                }
+
+                // Show success feedback
+                const banner = document.getElementById('aiPlanSuccessBanner');
+                const msg = document.getElementById('aiPlanSuccessMsg');
+                if (banner && msg) {
+                    msg.textContent = data.aiSummary || 'Configured trip parameters from your prompt!';
+                    banner.classList.remove('d-none');
+                }
+
+                syncHotelAccordion();
+
+            } catch (err) {
+                console.error(err);
+                alert('Could not parse prompt. Please enter destinations manually.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-magic me-1"></i> Generate with AI';
+            }
+        }
+
+        // Add Destination Card Row
+        function addDestinationInput(nameValue = '', hotelValue = '') {
+            const container = document.getElementById('destinationsContainer');
+            const currentRows = container.querySelectorAll('.destination-card-row');
+            const nextIndex = currentRows.length;
+
+            const card = document.createElement('div');
+            card.className = 'destination-card-row';
+            card.dataset.index = nextIndex;
+
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="destination-number">Stop ${nextIndex + 1}</span>
+                        <span class="drag-handle" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <button type="button" class="btn-move" title="Move Up" onclick="moveDestinationUp(this)">
+                            <i class="bi bi-chevron-up"></i>
+                        </button>
+                        <button type="button" class="btn-move" title="Move Down" onclick="moveDestinationDown(this)">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <button type="button" class="btn-move text-danger border-danger-subtle" title="Remove Stop" onclick="removeDestinationCard(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="autocomplete-wrapper">
+                            <input type="text" name="destinationNames" class="form-control destination-input" 
+                                   placeholder="Destination name (e.g. Munnar, Kodaikanal, Calicut)" 
+                                   value="${escapeHtml(nameValue)}" required autocomplete="off" oninput="syncHotelAccordion()">
+                        </div>
+                    </div>
+                    <input type="hidden" name="destinationHotels" class="destination-hotel-input" value="${escapeHtml(hotelValue)}">
+                </div>
+            `;
+
+            container.appendChild(card);
+            initDragAndDrop(card);
+            renumberDestinations();
+
+            // Attach autocomplete
+            const destInput = card.querySelector('.destination-input');
+            if (window.attachPlaceAutocomplete && destInput) {
+                window.attachPlaceAutocomplete(destInput);
+            }
+
+            syncHotelAccordion();
+        }
+
+        let draggedRow = null;
+        function initDragAndDrop(card) {
+            card.setAttribute('draggable', 'true');
+            card.addEventListener('dragstart', (e) => {
+                draggedRow = card;
+                card.classList.add('opacity-50');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            card.addEventListener('dragend', () => {
+                if (draggedRow) draggedRow.classList.remove('opacity-50');
+                draggedRow = null;
+                renumberDestinations();
+                syncHotelAccordion();
+            });
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const container = document.getElementById('destinationsContainer');
+                if (draggedRow && draggedRow !== card) {
+                    const rect = card.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    container.insertBefore(draggedRow, next ? card.nextSibling : card);
+                }
+            });
+        }
+
+        function removeDestinationCard(btn) {
+            const card = btn.closest('.destination-card-row');
+            const container = document.getElementById('destinationsContainer');
+            if (container.querySelectorAll('.destination-card-row').length <= 1) {
+                alert("At least one destination stop is required.");
+                return;
+            }
+            if (card) {
+                card.remove();
+                renumberDestinations();
+                syncHotelAccordion();
+            }
+        }
+
+        function moveDestinationUp(btn) {
+            const card = btn.closest('.destination-card-row');
+            if (!card) return;
+            const prev = card.previousElementSibling;
+            if (prev && prev.classList.contains('destination-card-row')) {
+                card.parentNode.insertBefore(card, prev);
+                renumberDestinations();
+                syncHotelAccordion();
+            }
+        }
+
+        function moveDestinationDown(btn) {
+            const card = btn.closest('.destination-card-row');
+            if (!card) return;
+            const next = card.nextElementSibling;
+            if (next && next.classList.contains('destination-card-row')) {
+                card.parentNode.insertBefore(next, card);
+                renumberDestinations();
+                syncHotelAccordion();
+            }
+        }
+
+        function renumberDestinations() {
+            const container = document.getElementById('destinationsContainer');
+            const rows = container.querySelectorAll('.destination-card-row');
+            rows.forEach((row, i) => {
+                row.dataset.index = i;
+                const badge = row.querySelector('.destination-number');
+                if (badge) badge.textContent = `Stop ${i + 1}`;
+            });
+        }
+
+        function syncHotelAccordion() {
+            const hotelContainer = document.getElementById('hotelStaysListContainer');
+            const destInputs = document.querySelectorAll('.destination-input');
+            const hotelInputs = document.querySelectorAll('.destination-hotel-input');
+
+            if (!hotelContainer) return;
+            if (destInputs.length === 0) {
+                hotelContainer.innerHTML = '<div class="text-muted small fst-italic">Add destination stops above to configure accommodation per destination.</div>';
+                return;
+            }
+
+            let html = '';
+            destInputs.forEach((inp, idx) => {
+                const dName = inp.value.trim() || `Stop ${idx + 1}`;
+                const currentHotel = hotelInputs[idx] ? hotelInputs[idx].value : '';
+                html += `
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-md-4">
+                            <span class="badge-sand d-inline-block text-truncate" style="max-width: 100%;">
+                                <i class="bi bi-geo-alt me-1"></i>${escapeHtml(dName)}
+                            </span>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control form-control-sm hotel-accordion-input" 
+                                   placeholder="🏨 Hotel / Stay (Optional, e.g. Resort in ${escapeHtml(dName)})" 
+                                   value="${escapeHtml(currentHotel)}" 
+                                   oninput="updateHotelValue(${idx}, this.value)">
+                        </div>
+                    </div>
+                `;
+            });
+            hotelContainer.innerHTML = html;
+        }
+
+        function updateHotelValue(idx, val) {
+            const hotelInputs = document.querySelectorAll('.destination-hotel-input');
+            if (hotelInputs[idx]) {
+                hotelInputs[idx].value = val;
+            }
+        }
+
+        // Side-by-Side Smart Route Optimization Preview (Requirement 5)
+        async function checkAndOptimizePreview() {
             const startLoc = document.getElementById('startLocationInput').value.trim();
             const destInputs = document.querySelectorAll('.destination-input');
             const dests = [];
@@ -299,10 +646,108 @@
                 if (i.value.trim()) dests.push(i.value.trim());
             });
 
+            if (dests.length < 2) {
+                alert("Please specify at least 2 destinations to evaluate route optimization.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/trips/preview-optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startLocation: startLoc,
+                        destinations: dests,
+                        transportMode: document.getElementById('transportMode').value
+                    })
+                });
+
+                if (!response.ok) throw new Error("Optimization check failed");
+                const summary = await response.json();
+
+                if (summary.optimizationRecommended) {
+                    recommendedOrderCache = summary.recommendedOrder;
+
+                    // Populate modal side by side
+                    const savingsText = document.getElementById('routeOptSavingsText');
+                    savingsText.innerHTML = `<strong>Shorter Route Discovered!</strong> Saves <strong>${summary.potentialSavingsKm} km</strong> &bull; <strong>${summary.potentialSavingsMinutes} minutes</strong> of driving.`;
+
+                    // Original route
+                    document.getElementById('originalDistanceText').textContent = `${summary.totalDistanceKm} km`;
+                    const origPills = document.getElementById('originalSequencePills');
+                    origPills.innerHTML = summary.originalOrder.map(p => `<span class="opt-route-pill">${escapeHtml(p)}</span>`).join(' <i class="bi bi-arrow-right text-muted"></i> ');
+
+                    // Recommended route
+                    document.getElementById('recommendedDistanceText').textContent = `${summary.recommendedDistanceKm} km`;
+                    const recPills = document.getElementById('recommendedSequencePills');
+                    recPills.innerHTML = summary.recommendedOrder.map(p => `<span class="opt-route-pill bg-white border-success">${escapeHtml(p)}</span>`).join(' <i class="bi bi-arrow-right text-success"></i> ');
+
+                    const optModal = new bootstrap.Modal(document.getElementById('routeOptimizationModal'));
+                    optModal.show();
+                } else {
+                    recommendedOrderCache = null;
+                    alert("Your route sequence is already optimal! No unnecessary backtracking detected.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Could not evaluate route optimization at this moment.");
+            }
+        }
+
+        function applyPreviewOptimizedOrder() {
+            if (!recommendedOrderCache || recommendedOrderCache.length <= 1) return;
+            const newDestNames = recommendedOrderCache.slice(1);
+
+            // Rebuild rows in the recommended order, preserving hotels
+            const existingHotels = {};
+            document.querySelectorAll('.destination-card-row').forEach(row => {
+                const name = row.querySelector('.destination-input').value.trim();
+                const hotel = row.querySelector('.destination-hotel-input').value.trim();
+                if (name) existingHotels[name.toLowerCase()] = hotel;
+            });
+
+            const container = document.getElementById('destinationsContainer');
+            container.innerHTML = '';
+            newDestNames.forEach(dName => {
+                const hName = existingHotels[dName.toLowerCase()] || '';
+                addDestinationInput(dName, hName);
+            });
+
+            const modalEl = document.getElementById('routeOptimizationModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        async function handleTripSubmit(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('btnSubmitTrip');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Calculating Accurate Road Routes & Schedule...';
+
+            const startLoc = document.getElementById('startLocationInput').value.trim();
+            const destInputs = document.querySelectorAll('.destination-input');
+            const hotelInputs = document.querySelectorAll('.destination-hotel-input');
+
+            const dests = [];
+            const hotels = [];
+
+            destInputs.forEach((inp, idx) => {
+                if (inp.value.trim()) {
+                    dests.push(inp.value.trim());
+                    hotels.push(hotelInputs[idx] ? hotelInputs[idx].value.trim() : '');
+                }
+            });
+
             if (dests.length === 0) {
                 alert("Please specify at least one destination to visit.");
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-magic me-2"></i> Generate Trip Plan & Optimize Route';
+                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                 return;
             }
 
@@ -313,6 +758,7 @@
                 tripName: document.getElementById('tripName').value.trim(),
                 startLocation: startLoc,
                 destinationNames: dests,
+                destinationHotels: hotels,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
                 dailyStartTime: document.getElementById('dailyStartTime').value,
@@ -320,7 +766,6 @@
                 transportMode: document.getElementById('transportMode').value,
                 travelStyle: document.getElementById('travelStyle').value,
                 travelersCount: parseInt(document.getElementById('travelersCount').value) || 1,
-                hotelLocation: document.getElementById('hotelLocation').value.trim(),
                 budgetRange: document.getElementById('budgetRange').value,
                 preferredInterests: interests
             };
@@ -343,7 +788,7 @@
                 console.error(err);
                 alert("Error generating trip: " + err.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-magic me-2"></i> Generate Trip Plan & Optimize Route';
+                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
             }
         }
     </script>

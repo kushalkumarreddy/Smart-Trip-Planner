@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${trip.tripName + ' - TripPlanner'}">Trip Overview - TripPlanner</title>
+    <title th:text="${trip.tripName + ' — VoyageCraft'}">Trip Details — VoyageCraft</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Leaflet CSS for guaranteed interactive map rendering -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <!-- Custom CSS -->
+    <!-- Leaflet CSS for guaranteed interactive map fallback -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -19,68 +18,71 @@
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" th:href="@{/}">
-                <i class="bi bi-compass text-primary"></i> TripPlanner
+                <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
             <div class="d-flex align-items-center gap-2">
-                <a th:href="@{/dashboard}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                </a>
-                <a th:href="@{/create-trip}" class="btn btn-primary-custom btn-sm rounded-pill px-3">
+                <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm">
                     <i class="bi bi-plus-lg me-1"></i> New Trip
+                </a>
+                <a th:href="@{/dashboard}" class="btn btn-sand btn-sm">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
                 </a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Container -->
-    <main class="container py-4 flex-grow-1">
+    <!-- Main Workspace Container -->
+    <main class="container-fluid px-lg-4 py-4 flex-grow-1">
 
-        <!-- Trip Header Banner -->
+        <!-- Trip Overview Header Card (Requirement 3: Trip name & save status at the top) -->
         <div class="card card-modern p-4 mb-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div>
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                            <i class="bi bi-calendar-check me-1"></i>
-                            <span th:text="${trip.startDate + ' to ' + trip.endDate}"></span>
-                            (<span th:text="${trip.totalDays + ' Days'}"></span>)
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                        <span class="badge-forest">
+                            <i class="bi bi-check2-circle me-1"></i> Saved &bull; Live Itinerary
                         </span>
-                        <span class="badge bg-light border text-dark">
+                        <span class="badge-sand">
+                            <i class="bi bi-calendar3 me-1"></i> 
+                            <span th:text="${trip.startDate + ' to ' + trip.endDate + ' (' + trip.totalDays + ' Days)'}"></span>
+                        </span>
+                        <span class="badge-sage">
                             <i class="bi bi-car-front me-1" th:if="${trip.transportMode == 'CAR'}"></i>
                             <i class="bi bi-bicycle me-1" th:if="${trip.transportMode == 'BIKE'}"></i>
                             <i class="bi bi-bus-front me-1" th:if="${trip.transportMode == 'PUBLIC_TRANSPORT'}"></i>
                             <i class="bi bi-person-walking me-1" th:if="${trip.transportMode == 'WALKING'}"></i>
                             <span th:text="${trip.transportMode}"></span>
                         </span>
-                        <span class="badge bg-light border text-dark" th:if="${trip.hotelLocation}">
-                            <i class="bi bi-building me-1"></i> Hotel: <span th:text="${trip.hotelLocation}"></span>
-                        </span>
                     </div>
+
                     <h2 class="fw-bold mb-1" th:text="${trip.tripName}">Trip Itinerary</h2>
                     <p class="text-muted mb-0 small">
                         Starting from <strong class="text-dark" th:text="${trip.startLocation}"></strong> &bull; 
-                        Travel Style: <strong class="text-dark" th:text="${trip.travelStyle}"></strong> &bull; 
+                        Pace: <strong class="text-dark" th:text="${trip.travelStyle}"></strong> &bull; 
                         Travelers: <strong class="text-dark" th:text="${trip.travelersCount}"></strong>
                     </p>
                 </div>
 
-                <!-- Open Full Route in Real Google Maps -->
-                <div class="d-flex gap-2">
+                <!-- Action Controls: Crew Collaboration, Share, External Navigation -->
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" class="btn btn-sand btn-sm" data-bs-toggle="modal" data-bs-target="#collaborateModal">
+                        <i class="bi bi-people-fill text-success me-1"></i> Crew &amp; Share
+                    </button>
                     <a th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" 
-                       class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Launch navigation directly in Google Maps">
+                       class="btn btn-outline-forest btn-sm" title="Launch navigation in Google Maps">
                         <i class="bi bi-google me-1"></i> Open in Google Maps
                     </a>
                 </div>
             </div>
 
             <!-- Visited Progress Bar Header -->
-            <div class="mt-4 pt-3 border-top">
+            <div class="mt-3 pt-3 border-top">
                 <div class="d-flex justify-content-between align-items-center small mb-1">
-                    <span class="fw-bold text-secondary">
-                        <i class="bi bi-check2-circle text-success me-1"></i> Trip Completion Progress:
-                        <span id="visitedPlacesCountText" class="text-dark" th:text="${trip.visitedPlacesCount + '/' + trip.sightseeingPlacesCount}"></span> Places Visited
+                    <span class="fw-bold text-dark">
+                        <i class="bi bi-check-circle-fill text-success me-1"></i> Progress:
+                        <span id="visitedPlacesCountText" th:text="${trip.visitedPlacesCount + '/' + trip.sightseeingPlacesCount}"></span> Places Visited
                     </span>
-                    <span id="tripProgressText" class="fw-bold text-success" th:text="${trip.completionPercentage + '% Completed'}"></span>
+                    <span id="tripProgressText" class="fw-bold text-success" th:text="${trip.completionPercentage + '%'}"></span>
                 </div>
                 <div class="progress-modern">
                     <div id="tripProgressBar" class="progress-bar-modern" role="progressbar" 
@@ -91,28 +93,28 @@
             </div>
         </div>
 
-        <!-- Metric KPI Cards Row -->
+        <!-- Metric Summary Cards Row (Requirement 3: Distance, travel time, destinations, budget) -->
         <div class="row g-3 mb-4">
             <div class="col-6 col-lg-3">
                 <div class="metric-card">
-                    <div class="metric-icon blue">
+                    <div class="metric-icon forest">
                         <i class="bi bi-speedometer2"></i>
                     </div>
                     <div>
                         <div class="metric-value" th:text="${trip.totalDistanceKm + ' km'}">0 km</div>
-                        <div class="metric-label">Total Distance</div>
+                        <div class="metric-label">Road Distance</div>
                     </div>
                 </div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="metric-card">
-                    <div class="metric-icon amber">
+                    <div class="metric-icon sand">
                         <i class="bi bi-clock-history"></i>
                     </div>
                     <div>
                         <div class="metric-value" th:text="${trip.formattedTotalTravelTime}">0 hr</div>
-                        <div class="metric-label">Total Travel Time</div>
+                        <div class="metric-label">Driving Time</div>
                     </div>
                 </div>
             </div>
@@ -120,50 +122,94 @@
             <div class="col-6 col-lg-3">
                 <div class="metric-card">
                     <div class="metric-icon green">
-                        <i class="bi bi-pin-map-fill"></i>
+                        <i class="bi bi-pin-map"></i>
                     </div>
                     <div>
                         <div class="metric-value" th:text="${trip.destinationsCount}">0</div>
-                        <div class="metric-label">Destinations</div>
+                        <div class="metric-label">Stops Planned</div>
                     </div>
                 </div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="metric-card">
-                    <div class="metric-icon purple">
-                        <i class="bi bi-compass"></i>
+                    <div class="metric-icon sand">
+                        <i class="bi bi-wallet2"></i>
                     </div>
                     <div>
-                        <div class="metric-value" th:text="${trip.sightseeingPlacesCount}">0</div>
-                        <div class="metric-label">Sightseeing Spots</div>
+                        <div class="metric-value" th:text="${trip.budgetRange != null ? trip.budgetRange : 'Moderate'}">Moderate</div>
+                        <div class="metric-label">Estimated Budget</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Smart Route Optimization Recommendation Alert -->
-        <div th:if="${trip.routeSummary.optimizationRecommended}" class="banner-alert info mb-4">
-            <i class="bi bi-magic fs-4 text-primary"></i>
-            <div class="flex-grow-1">
-                <h6 class="fw-bold mb-1">Smart Route Optimization Available!</h6>
-                <p class="mb-2 small">
-                    Our routing algorithm calculated an alternative route order that avoids backtracking and saves 
-                    <strong class="text-dark" th:text="${trip.routeSummary.potentialSavingsKm + ' km'}"></strong> and 
-                    <strong class="text-dark" th:text="${trip.routeSummary.potentialSavingsMinutes + ' minutes'}"></strong> of travel time!
-                </p>
-                <div class="small mb-2">
-                    <span class="text-muted">Recommended sequence: </span>
-                    <strong class="text-dark" th:text="${#strings.listJoin(trip.routeSummary.recommendedOrder, ' → ')}"></strong>
+        <!-- SMART ROUTE OPTIMIZATION SIDE-BY-SIDE PRESENTATION (Requirement 5) -->
+        <div th:if="${trip.routeSummary != null and trip.routeSummary.optimizationRecommended}" class="card card-modern p-4 mb-4 border-success">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success rounded-pill px-3 py-1 text-white">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Route Optimization Available
+                    </span>
+                    <span class="text-muted small">Our Traveling Salesperson solver found a shorter sequence!</span>
                 </div>
-                <button type="button" id="btnApplyOptimization" class="btn btn-primary btn-sm rounded-pill px-3" 
-                        th:onclick="'applyOptimizedRoute(' + ${trip.id} + ')'">
-                    <i class="bi bi-check-circle me-1"></i> Use Recommended Route
+                <div class="savings-highlight py-1 px-3">
+                    <i class="bi bi-arrow-down-circle-fill"></i>
+                    <span>Save <strong th:text="${trip.routeSummary.potentialSavingsKm + ' km'}"></strong> &amp; <strong th:text="${trip.routeSummary.potentialSavingsMinutes + ' mins'}"></strong> of driving</span>
+                </div>
+            </div>
+
+            <!-- Side-by-side comparison -->
+            <div class="opt-side-by-side my-2">
+                <!-- Original Route -->
+                <div class="opt-box original">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-secondary text-white rounded-pill px-3 py-1">Current Sequence</span>
+                        <span class="small text-muted" th:text="${trip.totalDistanceKm + ' km'}">0 km</span>
+                    </div>
+                    <div class="small fw-bold text-muted mb-2">Route stops:</div>
+                    <div class="mb-3">
+                        <th:block th:each="node, sStat : ${trip.routeSummary.originalOrder}">
+                            <span class="opt-route-pill" th:text="${node}"></span>
+                            <span th:if="${!sStat.last}" class="text-muted">&bull;</span>
+                        </th:block>
+                    </div>
+                    <div class="small text-muted">
+                        Duration: <span th:text="${trip.formattedTotalTravelTime}"></span>
+                    </div>
+                </div>
+
+                <!-- Recommended Route -->
+                <div class="opt-box recommended">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success text-white rounded-pill px-3 py-1">Optimized Alternative</span>
+                        <span class="small fw-bold text-success" th:text="${(trip.totalDistanceKm - trip.routeSummary.potentialSavingsKm) + ' km'}">0 km</span>
+                    </div>
+                    <div class="small fw-bold text-dark mb-2">Recommended path:</div>
+                    <div class="mb-3">
+                        <th:block th:each="node, sStat : ${trip.routeSummary.recommendedOrder}">
+                            <span class="opt-route-pill border-success text-dark" th:text="${node}"></span>
+                            <span th:if="${!sStat.last}" class="text-success">&bull;</span>
+                        </th:block>
+                    </div>
+                    <div class="small fw-bold text-dark">
+                        Saves road backtracking and fuel.
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end mt-3 pt-2 border-top">
+                <button type="button" class="btn btn-sand btn-sm px-3" onclick="this.closest('.border-success').style.display='none'">
+                    Keep Current Route
+                </button>
+                <button type="button" id="btnApplyOptimization" class="btn btn-forest btn-sm px-4 fw-semibold" 
+                        th:data-trip-id="${trip.id}" onclick="applyOptimizedRoute(this.dataset.tripId)">
+                    <i class="bi bi-check-circle me-1"></i> Accept &amp; Apply Recommended Route
                 </button>
             </div>
         </div>
 
-        <!-- Travel Fatigue & Health Warnings -->
+        <!-- Travel Fatigue Warnings -->
         <div th:if="${!trip.warnings.empty}" class="mb-4">
             <div th:each="warning : ${trip.warnings}" class="banner-alert warning mb-2">
                 <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
@@ -171,88 +217,113 @@
             </div>
         </div>
 
-        <!-- Route Breakdown Flow & Segments -->
+        <!-- Ordered Destinations & Overnight Stays (Requirement 3 & 10) -->
         <div class="card card-modern p-4 mb-4">
-            <h5 class="fw-bold mb-3"><i class="bi bi-signpost-split text-primary me-2"></i> Route Breakdown & Segment Distances</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-signpost-2 text-success me-2"></i>Route Sequence &amp; Stays
+                </h5>
+                <span class="text-muted small">Touch-friendly stop reordering</span>
+            </div>
             
-            <!-- Route Sequence Breadcrumbs -->
-            <div class="route-flow mb-4">
+            <div class="d-flex flex-wrap gap-2 align-items-center p-3 rounded-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
                 <div class="route-node">
-                    <i class="bi bi-geo-alt-fill text-danger"></i>
-                    <span th:text="${trip.startLocation}"></span>
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                    <strong th:text="${trip.startLocation}">Origin</strong>
                 </div>
+
                 <th:block th:each="dest, iterStat : ${trip.destinations}">
-                    <span class="route-arrow">→</span>
-                    <div class="route-node">
-                        <span class="badge bg-primary rounded-circle" style="width: 18px; height: 18px; font-size: 10px; padding: 2px;" th:text="${iterStat.count}"></span>
-                        <span th:text="${dest.name}"></span>
+                    <span class="route-arrow text-muted">→</span>
+                    <div class="route-node border p-2 rounded-3 bg-white shadow-sm d-flex align-items-center gap-2">
+                        <span class="badge bg-success rounded-circle" style="width: 22px; height: 22px; font-size: 11px; padding: 3px;" th:text="${iterStat.count}"></span>
+                        <div>
+                            <span class="fw-semibold text-dark" th:text="${dest.name}">Destination</span>
+                            <!-- Hotel Stay per destination (Requirement 10) -->
+                            <div class="small text-muted d-flex align-items-center gap-1" style="font-size: 0.76rem;">
+                                <i class="bi bi-building text-primary"></i>
+                                <span th:text="${dest.hotelName != null ? dest.hotelName : 'Add Hotel Stay'}">Hotel</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" title="Change hotel"
+                                        th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}" th:data-hotel="${dest.hotelName != null ? dest.hotelName : ''}"
+                                        onclick="promptEditHotel(this.dataset.tripId, this.dataset.destId, this.dataset.hotel)">
+                                    <i class="bi bi-pencil-square" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Touch-friendly stop reordering (Requirement 3 & 8) -->
+                        <div class="d-flex flex-column gap-1 ms-1">
+                            <button type="button" class="btn btn-light btn-sm p-0 text-secondary" style="width: 22px; height: 22px; font-size: 10px;" 
+                                    title="Move Earlier" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
+                                    onclick="moveDestinationInTrip(this.dataset.tripId, this.dataset.destId, -1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm p-0 text-secondary" style="width: 22px; height: 22px; font-size: 10px;" 
+                                    title="Move Later" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
+                                    onclick="moveDestinationInTrip(this.dataset.tripId, this.dataset.destId, 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </th:block>
             </div>
-
-            <!-- Segment Distance Details -->
-            <div class="row g-2">
-                <div class="col-md-6 col-lg-4" th:each="seg : ${trip.routeSummary.segments}">
-                    <div class="segment-card">
-                        <div>
-                            <div class="segment-title">
-                                <span th:text="${seg.fromLocation}"></span> → <span th:text="${seg.toLocation}"></span>
-                            </div>
-                            <div class="segment-stats">
-                                <i class="bi bi-speedometer2 text-muted me-1"></i> <span th:text="${seg.summaryText}"></span>
-                            </div>
-                        </div>
-                        <a th:href="${seg.googleMapsSegmentUrl}" target="_blank" rel="noopener noreferrer" 
-                           class="btn btn-outline-secondary btn-sm rounded-circle" title="View segment in Google Maps">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Controls: View Mode Switcher -->
+        <!-- Controls: View Mode Switcher for Desktop / Tablet / Mobile -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0">Itinerary & Interactive Map</h4>
+            <h4 class="fw-bold mb-0">Itinerary &amp; Interactive Route Map</h4>
             <div class="btn-group" role="group">
-                <button type="button" id="btnViewSplit" class="btn btn-outline-primary btn-sm active" onclick="setViewMode('split')">
+                <button type="button" id="btnViewSplit" class="btn btn-outline-forest btn-sm active" onclick="setViewMode('split')">
                     <i class="bi bi-layout-split me-1"></i> Split View
                 </button>
-                <button type="button" id="btnViewList" class="btn btn-outline-primary btn-sm" onclick="setViewMode('list')">
-                    <i class="bi bi-list-task me-1"></i> List View
+                <button type="button" id="btnViewList" class="btn btn-outline-forest btn-sm" onclick="setViewMode('list')">
+                    <i class="bi bi-list-task me-1"></i> Timeline Only
                 </button>
-                <button type="button" id="btnViewMap" class="btn btn-outline-primary btn-sm" onclick="setViewMode('map')">
-                    <i class="bi bi-map me-1"></i> Map View
+                <button type="button" id="btnViewMap" class="btn btn-outline-forest btn-sm" onclick="setViewMode('map')">
+                    <i class="bi bi-map me-1"></i> Map Only
                 </button>
             </div>
         </div>
 
-        <!-- Dual Column: Timeline Itinerary + Interactive Map -->
+        <!-- DUAL COLUMN SPLIT WORKSPACE: Left Timeline, Right Interactive Map (Requirement 3 & Responsive) -->
         <div class="row">
 
-            <!-- Itinerary Column -->
+            <!-- Left Panel: Itinerary Timeline -->
             <div id="itineraryColumn" class="col-lg-7 mb-4">
                 <div th:each="day : ${trip.dayItineraries}" class="card card-modern p-4 mb-4">
                     
-                    <!-- Day Header & Daily Summary -->
+                    <!-- Day Header & Single-Day Regeneration Dropdown (Requirement 4) -->
                     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom pb-3 mb-3 gap-2">
                         <div>
-                            <h5 class="fw-bold mb-1 text-primary">
-                                <i class="bi bi-calendar3 me-2"></i><span th:text="${day.title}">Day 1</span>
+                            <h5 class="fw-bold mb-1 text-dark">
+                                <i class="bi bi-calendar3 me-2" style="color: var(--forest-green);"></i><span th:text="${day.title}">Day 1</span>
                             </h5>
                             <span class="text-muted small" th:text="${day.date}"></span>
                         </div>
                         <div class="d-flex flex-wrap gap-2 align-items-center">
-                            <span class="badge" th:classappend="${day.status.contains('Long Day') ? 'bg-warning text-dark' : 'bg-success-subtle text-success'}" 
-                                  th:text="${day.status}">Balanced</span>
-                            <span class="badge bg-light border text-muted">
+                            <span class="badge-sage" th:text="${day.status}">Balanced</span>
+                            <span class="badge-sand">
                                 <i class="bi bi-speedometer2 me-1"></i> <span th:text="${day.totalDistanceKm + ' km'}"></span>
                             </span>
+
+                            <!-- Single Day Regeneration Dropdown Action (Requirement 4) -->
+                            <div class="dropdown">
+                                <button class="btn btn-sand btn-sm dropdown-toggle px-3" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Regenerate Day <span th:text="${day.dayNumber}"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li><h6 class="dropdown-header">Regenerate only this day:</h6></li>
+                                    <li><a class="dropdown-item small" href="javascript:void(0)" th:data-trip-id="${trip.id}" th:data-day="${day.dayNumber}" data-pref="BALANCED" onclick="regenerateSingleDay(this.dataset.tripId, this.dataset.day, this.dataset.pref)"><i class="bi bi-shuffle me-2 text-success"></i>Shuffle Activities</a></li>
+                                    <li><a class="dropdown-item small" href="javascript:void(0)" th:data-trip-id="${trip.id}" th:data-day="${day.dayNumber}" data-pref="Nature" onclick="regenerateSingleDay(this.dataset.tripId, this.dataset.day, this.dataset.pref)"><i class="bi bi-tree me-2 text-success"></i>More Nature &amp; Scenery</a></li>
+                                    <li><a class="dropdown-item small" href="javascript:void(0)" th:data-trip-id="${trip.id}" th:data-day="${day.dayNumber}" data-pref="Waterfalls" onclick="regenerateSingleDay(this.dataset.tripId, this.dataset.day, this.dataset.pref)"><i class="bi bi-water me-2 text-info"></i>Waterfalls &amp; Streams</a></li>
+                                    <li><a class="dropdown-item small" href="javascript:void(0)" th:data-trip-id="${trip.id}" th:data-day="${day.dayNumber}" data-pref="Historical" onclick="regenerateSingleDay(this.dataset.tripId, this.dataset.day, this.dataset.pref)"><i class="bi bi-bank me-2 text-warning"></i>Heritage &amp; History</a></li>
+                                    <li><a class="dropdown-item small" href="javascript:void(0)" th:data-trip-id="${trip.id}" th:data-day="${day.dayNumber}" data-pref="RELAXED" onclick="regenerateSingleDay(this.dataset.tripId, this.dataset.day, this.dataset.pref)"><i class="bi bi-cup-hot me-2 text-muted"></i>Relaxed Pace</a></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Daily Summary Stats -->
-                    <div class="p-2 mb-3 bg-light rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted">
+                    <div class="p-2 mb-3 rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
                         <div>
                             <span>Travel Time:</span><br>
                             <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.travelTimeMinutes)}"></strong>
@@ -262,7 +333,7 @@
                             <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.sightseeingTimeMinutes)}"></strong>
                         </div>
                         <div>
-                            <span>Breaks & Buffers:</span><br>
+                            <span>Breaks &amp; Buffers:</span><br>
                             <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.breakTimeMinutes)}"></strong>
                         </div>
                         <div>
@@ -271,19 +342,13 @@
                         </div>
                     </div>
 
-                    <!-- Daily Long Day Warning if any -->
-                    <div th:if="${day.warningMessage}" class="alert alert-warning py-2 px-3 small mb-3">
-                        <i class="bi bi-exclamation-triangle me-1"></i> <span th:text="${day.warningMessage}"></span>
-                    </div>
-
-                    <!-- Day Timeline Items -->
+                    <!-- Timeline Items -->
                     <div class="timeline-container">
                         <div th:each="item : ${day.items}" class="timeline-item">
                             
-                            <!-- Timeline Dot Icon -->
                             <div class="timeline-dot" 
                                  th:classappend="${(item.visited != null and item.visited) ? 'visited' : (item.activityType == 'MEAL' ? 'meal' : (item.activityType == 'HOTEL' ? 'hotel' : ''))}">
-                                <i class="bi bi-check" th:if="${item.visited != null and item.visited}"></i>
+                                 <i class="bi bi-check" th:if="${item.visited != null and item.visited}"></i>
                                 <i class="bi bi-cup-hot" th:if="${(item.visited == null or !item.visited) and item.activityType == 'MEAL'}"></i>
                                 <i class="bi bi-building" th:if="${(item.visited == null or !item.visited) and item.activityType == 'HOTEL'}"></i>
                                 <i class="bi bi-car-front" th:if="${(item.visited == null or !item.visited) and item.activityType == 'ARRIVAL'}"></i>
@@ -291,202 +356,455 @@
                                 <i class="bi bi-compass" th:if="${(item.visited == null or !item.visited) and item.activityType == 'DEPARTURE'}"></i>
                             </div>
 
-                            <!-- Timeline Item Content Card -->
                             <div class="timeline-content" th:classappend="${(item.visited != null and item.visited) ? 'is-visited' : ''}">
                                 <div class="d-flex justify-content-between align-items-start mb-1">
                                     <div>
-                                        <span class="badge bg-secondary-subtle text-secondary me-1" 
+                                        <span class="badge-sand me-1" 
                                               th:text="${item.startTime + ' - ' + item.endTime}"></span>
                                         <span class="fw-bold place-title text-dark" th:text="${item.activity}"></span>
                                     </div>
-                                    
-                                    <!-- Visited Toggle Checkbox for Sightseeing -->
-                                    <div th:if="${item.placeId != null}" class="form-check ms-2">
-                                        <input class="form-check-input visited-checkbox" type="checkbox" 
-                                               th:id="'chk_' + ${item.placeId}"
-                                               th:checked="${item.visited != null and item.visited}"
-                                               th:onchange="'togglePlaceVisited(' + ${item.placeId} + ', this)'"
-                                               title="Mark as Visited">
-                                        <label class="form-check-label small fw-semibold" th:for="'chk_' + ${item.placeId}">
-                                            <span th:text="${(item.visited != null and item.visited) ? 'Visited' : 'Mark Visited'}"></span>
-                                        </label>
+
+                                    <!-- Visited Checkbox Toggle (Requirement 3: Working visited/unvisited controls) -->
+                                    <div th:if="${item.placeId != null}" class="form-check form-switch ms-2">
+                                        <input class="form-check-input visited-toggle" type="checkbox" role="switch"
+                                               th:id="'check-' + ${item.placeId}"
+                                               th:checked="${item.visited}"
+                                               th:data-place-id="${item.placeId}"
+                                               onchange="togglePlaceVisitedStatus(this.dataset.placeId, this)">
+                                        <label class="form-check-label small text-muted" th:for="'check-' + ${item.placeId}">Visited</label>
                                     </div>
                                 </div>
 
                                 <div class="text-muted small mb-1">
-                                    <i class="bi bi-geo-alt text-primary me-1"></i> <span th:text="${item.location}"></span>
-                                    <th:block th:if="${item.rating != null}">
-                                        &bull; <span class="text-warning fw-bold">⭐ <span th:text="${item.rating}"></span></span>
-                                    </th:block>
-                                    <th:block th:if="${item.travelDistanceKm > 0}">
-                                        &bull; <span>Dist: <strong th:text="${item.travelDistanceKm + ' km'}"></strong></span>
-                                    </th:block>
+                                    <i class="bi bi-geo-alt me-1"></i> <span th:text="${item.location}"></span>
+                                    <span th:if="${item.travelDistanceKm > 0}">
+                                        &bull; <span th:text="${item.travelDistanceKm + ' km transit'}"></span>
+                                    </span>
                                 </div>
 
-                                <p th:if="${item.notes}" class="text-muted small mb-0 mt-1" th:text="${item.notes}"></p>
+                                <p th:if="${item.notes}" class="small text-muted mb-0" th:text="${item.notes}"></p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Map Column -->
+            <!-- Right Panel: Interactive Google Map / Leaflet Map (Requirement 3 & Responsive) -->
             <div id="mapColumn" class="col-lg-5 mb-4">
-                <div class="sticky-top" style="top: 85px; z-index: 10;">
-                    <div class="card card-modern p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold mb-0"><i class="bi bi-map-fill text-primary me-2"></i> Interactive Trip Map</h6>
-                            <span class="badge bg-light text-muted border">Real-Time Routing</span>
-                        </div>
-
-                        <!-- Map Render Container -->
-                        <div id="mapContainer"></div>
-
-                        <!-- Map Legend & Deep Link -->
-                        <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center small">
-                            <div class="d-flex align-items-center gap-3">
-                                <span><span class="badge rounded-circle p-1 me-1" style="background:#2563eb;">&nbsp;&nbsp;</span> Unvisited</span>
-                                <span><span class="badge rounded-circle p-1 me-1" style="background:#10b981;">&nbsp;&nbsp;</span> Visited</span>
-                            </div>
-                            <a th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" 
-                               class="btn btn-sm btn-outline-primary rounded-pill">
-                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Google Maps
-                            </a>
-                        </div>
+                <div class="card card-modern p-3 sticky-top" style="top: 85px; z-index: 1020;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-map-fill text-success me-2"></i> Interactive Route Map
+                        </h6>
+                        <span class="badge-sage small">Highway Polyline</span>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Recommended Nearby Sightseeing Places Deck -->
-        <div class="card card-modern p-4 mt-2 mb-5">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-                <div>
-                    <h4 class="fw-bold mb-1"><i class="bi bi-compass-fill text-primary me-2"></i> Recommended Nearby Sightseeing Places</h4>
-                    <p class="text-muted mb-0 small">Curated attractions ranked by distance, ratings, user reviews, and your travel interests</p>
-                </div>
+                    <!-- Map Canvas Container -->
+                    <div id="mapContainer" class="map-container" style="height: 540px; border-radius: 14px;"></div>
 
-                <!-- Sorting Dropdown -->
-                <div class="d-flex align-items-center gap-2">
-                    <label for="sortSelector" class="small fw-semibold text-muted text-nowrap">Sort By:</label>
-                    <select id="sortSelector" class="form-select form-select-sm rounded-pill" onchange="sortSightseeingPlaces(this.value)">
-                        <option value="popularity" selected>Popularity &amp; Match Score</option>
-                        <option value="rating">Top Rated (⭐ High to Low)</option>
-                        <option value="distance">Nearest Distance (km)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Category Filter Pills -->
-            <div class="d-flex flex-wrap gap-2 mb-4">
-                <span class="filter-pill active" onclick="filterPlacesByCategory('ALL', this)">All Categories</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Historical', this)">🏛 Historical</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Nature', this)">🌲 Nature</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Waterfalls', this)">🌊 Waterfalls</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Temples', this)">🛕 Temples</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Parks', this)">🌳 Parks</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Museums', this)">🎨 Museums</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Adventure', this)">🧗 Adventure</span>
-                <span class="filter-pill" onclick="filterPlacesByCategory('Photography', this)">📷 Photography</span>
-            </div>
-
-            <!-- Places Cards Deck -->
-            <div id="recommendationsDeck" class="row g-3">
-                <div th:each="place : ${trip.recommendedNearbyPlaces}" 
-                     class="col-md-6 col-lg-4 recommendation-item"
-                     th:attr="data-category=${place.category}, data-distance=${place.distanceKm}, data-rating=${place.rating}, data-score=${place.matchScore}">
-                    
-                    <div class="place-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mt-2 small text-muted">
                         <div>
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="place-category-badge" th:text="${place.category}">Historical</span>
-                                <span class="badge bg-warning-subtle text-dark border">
-                                    ⭐ <strong th:text="${place.rating}">4.6</strong> (<span th:text="${place.reviewCount}"></span>)
-                                </span>
-                            </div>
-
-                            <h5 class="fw-bold mb-1" th:text="${place.name}">Attraction Name</h5>
-                            
-                            <div class="text-muted small mb-2">
-                                <i class="bi bi-geo-alt text-danger me-1"></i>
-                                Distance: <strong class="text-dark" th:text="${place.distanceKm + ' km'}">2.4 km</strong> &bull; 
-                                Est. Transit: <span th:text="${place.estimatedTravelTimeMinutes + ' min'}">8 min</span>
-                            </div>
-
-                            <p class="text-muted small mb-3" th:text="${place.description}"></p>
-
-                            <div class="small text-muted mb-3">
-                                <i class="bi bi-clock me-1"></i> <span th:text="${place.openingHours}"></span>
-                            </div>
+                            <i class="bi bi-geo-alt-fill text-primary me-1"></i> Stops &bull; 
+                            <i class="bi bi-geo-alt-fill text-success me-1"></i> Visited
                         </div>
-
-                        <!-- Card Action Buttons -->
-                        <div class="pt-2 border-top d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
-                                    th:attr="data-name=${place.name}, data-category=${place.category}, data-rating=${place.rating}, data-reviews=${place.reviewCount}, data-distance=${place.distanceKm}, data-duration=${place.estimatedVisitDurationMinutes}, data-description=${place.description}, data-lat=${place.latitude}, data-lng=${place.longitude}"
-                                    th:onclick="'addPlaceItem(' + ${trip.id} + ', ' + ${trip.destinations[0].id} + ', this)'">
-                                <i class="bi bi-plus-circle me-1"></i> Add to Trip
-                            </button>
-                            <a th:href="@{https://www.google.com/maps/search/(api=1, query=${place.name + ' ' + place.destinationName})}"
-                               target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm" title="Open in Google Maps">
-                                <i class="bi bi-google"></i>
-                            </a>
-                        </div>
+                        <a th:if="${trip.routeSummary != null and trip.routeSummary.googleMapsFullRouteUrl != null}" 
+                           th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Open Google Maps
+                        </a>
                     </div>
                 </div>
             </div>
+
         </div>
 
     </main>
 
+    <!-- Crew Collaboration & Share Modal (Requirement 7) -->
+    <div class="modal fade" id="collaborateModal" tabindex="-1" aria-labelledby="collabModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="collabModalLabel">
+                        <i class="bi bi-people-fill text-success me-2"></i>Trip Crew &amp; Share
+                    </h5>
+                    <button type="button-close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Share Invite Link -->
+                    <div class="p-3 rounded-3 mb-4" style="background: var(--warm-sand); border: 1px solid var(--border-color);">
+                        <label class="form-label fw-bold small text-dark mb-1">
+                            <i class="bi bi-link-45deg me-1"></i> Share Invite Link
+                        </label>
+                        <div class="input-group">
+                            <input type="text" id="shareLinkInput" class="form-control" readonly 
+                                   th:value="${'/trip/' + trip.id + '?invite=' + trip.shareCode}">
+                            <button class="btn btn-forest px-3" type="button" onclick="copyShareLink()">
+                                <i class="bi bi-clipboard me-1"></i> Copy Link
+                            </button>
+                        </div>
+                        <div class="small text-muted mt-1">Friends can join as editors or viewers using this link.</div>
+                    </div>
+
+                    <!-- Current Crew Members -->
+                    <h6 class="fw-bold mb-3">Crew Members</h6>
+                    <div class="d-flex flex-column gap-2 mb-4">
+                        <div th:each="collab : ${trip.collaborators}" class="d-flex justify-content-between align-items-center p-2 rounded-3 border bg-white">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="collaborator-avatar" th:text="${(collab.userName != null and !collab.userName.empty) ? #strings.substring(collab.userName, 0, 1) : 'U'}">T</div>
+                                <div>
+                                    <div class="fw-semibold text-dark small" th:text="${collab.userName != null ? collab.userName : 'Traveler'}">Name</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;" th:text="${collab.userEmail != null ? collab.userEmail : ''}">Email</div>
+                                </div>
+                            </div>
+                            <span class="badge-sand" th:text="${collab.role}">OWNER</span>
+                        </div>
+                    </div>
+
+                    <!-- Add Collaborator Form -->
+                    <h6 class="fw-bold mb-2">Invite New Crew Member</h6>
+                    <form th:data-trip-id="${trip.id}" onsubmit="handleInviteCollaborator(event, this.dataset.tripId)">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <input type="text" id="newCollabName" class="form-control form-control-sm" placeholder="Member Name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="email" id="newCollabEmail" class="form-control form-control-sm" placeholder="Email address" required>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-forest btn-sm w-100">
+                                    <i class="bi bi-person-plus me-1"></i> Invite
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="text-center">
+    <footer class="py-4 text-center">
         <div class="container">
-            <p class="mb-0 text-muted small">TripPlanner &bull; Built with Spring Boot, MySQL &amp; Google Maps Platform APIs</p>
+            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Leaflet JS for guaranteed interactive map fallback -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <!-- Optional Google Maps JavaScript API (Loads if API Key is configured) -->
-    <script th:if="${isLiveMapsConfigured}" th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${googleMapsApiKey} + '&libraries=places'"></script>
-    <script th:inline="javascript">
-        window.googleMapsApiKeyAvailable = /*[[${isLiveMapsConfigured}]]*/ false;
-    </script>
-
-    <!-- Application JS Engine -->
     <script th:src="@{/js/app.js}"></script>
 
-    <!-- Map Coordinate Initialization Script -->
     <script th:inline="javascript">
+        /*<![CDATA[*/
+        const tripData = /*[[${trip}]]*/ {};
+        /*]]>*/
+    </script>
+
+    <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-            const locations = [];
-
-            // Add starting point
-            /*[# th:if="${trip.startLat != null and trip.startLng != null}"]*/
-            locations.push({
-                name: /*[[${trip.startLocation}]]*/ 'Start',
-                lat: /*[[${trip.startLat}]]*/ 12.9716,
-                lng: /*[[${trip.startLng}]]*/ 77.5946,
-                isVisited: true
-            });
-            /*[/]*/
-
-            // Add destinations
-            /*[# th:each="d : ${trip.destinations}"]*/
-            locations.push({
-                name: /*[[${d.name}]]*/ 'Destination',
-                lat: /*[[${d.latitude}]]*/ 12.2958,
-                lng: /*[[${d.longitude}]]*/ 76.6394,
-                isVisited: /*[[${d.visited}]]*/ false
-            });
-            /*[/]*/
-
-            initTripMap("mapContainer", locations);
+            // Update share link with actual browser origin
+            const shareInput = document.getElementById("shareLinkInput");
+            if (shareInput && tripData && tripData.id) {
+                shareInput.value = window.location.origin + '/trip/' + tripData.id + (tripData.shareCode ? ('?invite=' + tripData.shareCode) : '');
+            }
+            initTripWorkspaceMap(tripData);
         });
+
+        // Initialize Workspace Map with Real Route Highway Polyline
+        function initTripWorkspaceMap(trip) {
+            const mapElement = document.getElementById("mapContainer");
+            if (!mapElement || !trip) return;
+
+            // Remove existing instance if previously created
+            if (window._currentLeafletMap) {
+                try { window._currentLeafletMap.remove(); } catch(e) {}
+            }
+
+            const originLat = trip.startLat || 12.9716;
+            const originLng = trip.startLng || 77.5946;
+
+            const map = L.map("mapContainer", {
+                zoomControl: true,
+                scrollWheelZoom: true
+            }).setView([originLat, originLng], 9);
+            window._currentLeafletMap = map;
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            const boundsGroup = L.featureGroup();
+
+            // Custom Origin Icon
+            const originIcon = L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="background: #1b4332; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.35); border: 2.5px solid #ffffff;"><i class="bi bi-geo-alt-fill"></i></div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
+                popupAnchor: [0, -20]
+            });
+
+            const originMarker = L.marker([originLat, originLng], { icon: originIcon })
+                .addTo(map)
+                .bindPopup(`<strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}`);
+            boundsGroup.addLayer(originMarker);
+
+            // Add Destination markers
+            const stopCoords = [ [originLat, originLng] ];
+
+            if (trip.destinations && trip.destinations.length > 0) {
+                trip.destinations.forEach((d, idx) => {
+                    const dLat = d.latitude || (originLat + (idx + 1) * 0.08);
+                    const dLng = d.longitude || (originLng + (idx + 1) * 0.08);
+                    stopCoords.push([dLat, dLng]);
+
+                    const stopIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div style="background: #245747; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(0,0,0,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16],
+                        popupAnchor: [0, -18]
+                    });
+
+                    const popupContent = `
+                        <div style="min-width: 160px;">
+                            <div class="fw-bold fs-6 text-dark">${escapeHtml(d.name)}</div>
+                            <div class="text-muted small mb-1">Stop ${idx + 1} of ${trip.destinations.length}</div>
+                            ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay selected</div>'}
+                            ${d.distanceFromPrevious ? `<div class="small text-muted mt-1">🛣️ ${d.distanceFromPrevious} km from prev stop</div>` : ''}
+                        </div>
+                    `;
+
+                    const stopMarker = L.marker([dLat, dLng], { icon: stopIcon })
+                        .addTo(map)
+                        .bindPopup(popupContent);
+                    boundsGroup.addLayer(stopMarker);
+                });
+            }
+
+            // Draw Real Highway Route Geometry Polyline
+            let routePoints = [];
+            if (trip.routeSummary && trip.routeSummary.fullRouteGeometry && trip.routeSummary.fullRouteGeometry.length > 1) {
+                routePoints = trip.routeSummary.fullRouteGeometry.map(pt => [pt[0], pt[1]]);
+            } else {
+                routePoints = stopCoords;
+            }
+
+            if (routePoints.length > 1) {
+                // Route outer casing
+                L.polyline(routePoints, {
+                    color: '#1b4332',
+                    weight: 6,
+                    opacity: 0.35,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                }).addTo(map);
+
+                // Main vibrant road line
+                const routeLine = L.polyline(routePoints, {
+                    color: '#245747',
+                    weight: 4,
+                    opacity: 0.95,
+                    smoothFactor: 1.0,
+                    dashArray: (trip.transportMode === 'WALKING') ? '6, 8' : null
+                }).addTo(map);
+                boundsGroup.addLayer(routeLine);
+            }
+
+            if (boundsGroup.getLayers().length > 0) {
+                map.fitBounds(boundsGroup.getBounds(), { padding: [45, 45], maxZoom: 14 });
+            }
+
+            // Ensure tile sizing is refreshed
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 300);
+        }
+
+        // View Mode Switcher: Split / Timeline Only / Map Only
+        function setViewMode(mode) {
+            const itinCol = document.getElementById("itineraryColumn");
+            const mapCol = document.getElementById("mapColumn");
+            document.querySelectorAll("#btnViewSplit, #btnViewList, #btnViewMap").forEach(b => b.classList.remove("active"));
+
+            if (mode === "split") {
+                itinCol.className = "col-lg-7 mb-4";
+                mapCol.className = "col-lg-5 mb-4";
+                itinCol.style.display = "block";
+                mapCol.style.display = "block";
+                document.getElementById("btnViewSplit").classList.add("active");
+            } else if (mode === "list") {
+                itinCol.className = "col-12 mb-4";
+                itinCol.style.display = "block";
+                mapCol.style.display = "none";
+                document.getElementById("btnViewList").classList.add("active");
+            } else if (mode === "map") {
+                mapCol.className = "col-12 mb-4";
+                mapCol.style.display = "block";
+                itinCol.style.display = "none";
+                document.getElementById("btnViewMap").classList.add("active");
+            }
+
+            // Refresh map rendering on view change
+            setTimeout(() => {
+                if (window._currentLeafletMap) {
+                    window._currentLeafletMap.invalidateSize();
+                }
+            }, 200);
+        }
+
+        // Visited Checkbox Toggle (Requirement 3: Working visited/unvisited controls)
+        async function togglePlaceVisitedStatus(placeId, checkbox) {
+            try {
+                const res = await fetch(`/api/places/${placeId}/toggle-visited`, { method: 'POST' });
+                if (!res.ok) throw new Error("Toggle visited failed");
+                const updated = await res.json();
+
+                const timelineContent = checkbox.closest('.timeline-content');
+                if (timelineContent) {
+                    if (updated.visited) {
+                        timelineContent.classList.add('is-visited');
+                    } else {
+                        timelineContent.classList.remove('is-visited');
+                    }
+                }
+
+                // Update progress text
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                checkbox.checked = !checkbox.checked;
+                alert("Could not update visited status.");
+            }
+        }
+
+        // Single Day Regeneration (Requirement 4: Regenerate-one-day action)
+        async function regenerateSingleDay(tripId, dayNumber, preference) {
+            try {
+                const res = await fetch(`/api/trips/${tripId}/regenerate-day/${dayNumber}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ preference: preference })
+                });
+                if (!res.ok) throw new Error("Day regeneration failed");
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Could not regenerate day schedule. Please try again.");
+            }
+        }
+
+        // Apply Smart Route Optimization (Requirement 5)
+        async function applyOptimizedRoute(tripId) {
+            const btn = document.getElementById("btnApplyOptimization");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Optimizing Route...';
+            }
+
+            try {
+                const res = await fetch(`/api/trips/${tripId}/reorder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ applyOptimizedOrder: true })
+                });
+
+                if (!res.ok) throw new Error("Failed to optimize route");
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Could not apply optimized route order.");
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Accept &amp; Apply Recommended Route';
+                }
+            }
+        }
+
+        // Move Destination stop up/down (Requirement 3 & 8)
+        async function moveDestinationInTrip(tripId, destinationId, direction) {
+            try {
+                const dests = tripData.destinations ? [...tripData.destinations] : [];
+                const currentIndex = dests.findIndex(d => d.id === destinationId);
+                if (currentIndex === -1) return;
+
+                const targetIndex = currentIndex + direction;
+                if (targetIndex < 0 || targetIndex >= dests.length) return;
+
+                const temp = dests[currentIndex];
+                dests[currentIndex] = dests[targetIndex];
+                dests[targetIndex] = temp;
+
+                const orderedIds = dests.map(d => d.id);
+                const updateRes = await fetch(`/api/trips/${tripId}/reorder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderedDestinationIds: orderedIds })
+                });
+
+                if (!updateRes.ok) throw new Error("Failed to reorder stops");
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Could not reorder destination stop.");
+            }
+        }
+
+        // Edit hotel for destination stop (Requirement 10)
+        async function promptEditHotel(tripId, destinationId, currentHotel) {
+            const newHotel = prompt("Enter hotel or accommodation for this stop:", currentHotel || "");
+            if (newHotel === null) return;
+
+            try {
+                const res = await fetch(`/api/trips/${tripId}/destinations/${destinationId}/hotel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hotelName: newHotel.trim() })
+                });
+                if (!res.ok) throw new Error("Could not update hotel");
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to update hotel.");
+            }
+        }
+
+        // Copy Share link
+        function copyShareLink() {
+            const copyText = document.getElementById("shareLinkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("Invite link copied to clipboard!");
+        }
+
+        // Add Collaborator
+        async function handleInviteCollaborator(e, tripId) {
+            e.preventDefault();
+            const name = document.getElementById('newCollabName').value.trim();
+            const email = document.getElementById('newCollabEmail').value.trim();
+
+            try {
+                const res = await fetch(`/api/trips/${tripId}/collaborators`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, email: email, role: "EDITOR" })
+                });
+                if (!res.ok) throw new Error("Could not add collaborator");
+                alert(`${name} invited to your travel crew!`);
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to add collaborator.");
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
     </script>
 </body>
 </html>

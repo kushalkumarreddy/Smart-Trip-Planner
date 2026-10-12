@@ -11,5 +11,7 @@ import java.util.List;
 public interface ItineraryItemRepository extends JpaRepository<ItineraryItem, Long> {
     List<ItineraryItem> findByTripOrderByDayNumberAscStartTimeAsc(Trip trip);
     List<ItineraryItem> findByTripIdOrderByDayNumberAscStartTimeAsc(Long tripId);
+    List<ItineraryItem> findByTripIdAndDayNumberOrderByStartTimeAsc(Long tripId, Integer dayNumber);
     void deleteByTripId(Long tripId);
+    void deleteByTripIdAndDayNumber(Long tripId, Integer dayNumber);
 }

@@ -15,6 +15,7 @@ public class DestinationDto {
     private Integer travelTimeFromPrevious;
     private Boolean visited;
     private String notes;
+    private String hotelName;
     private List<SightseeingPlaceDto> places = new ArrayList<>();
 
     public DestinationDto() {
@@ -104,6 +105,14 @@ public class DestinationDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getHotelName() {
+        return hotelName;
+    }
+
+    public void setHotelName(String hotelName) {
+        this.hotelName = hotelName;
     }
 
     public List<SightseeingPlaceDto> getPlaces() {

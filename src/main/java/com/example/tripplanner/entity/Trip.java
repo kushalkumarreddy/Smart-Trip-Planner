@@ -72,6 +72,9 @@ public class Trip {
     @Column(name = "total_travel_time_minutes")
     private Integer totalTravelTimeMinutes = 0;
 
+    @Column(name = "share_code", length = 50)
+    private String shareCode;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -86,6 +89,12 @@ public class Trip {
     @OrderBy("dayNumber ASC, startTime ASC")
     private List<ItineraryItem> itineraries = new ArrayList<>();
 
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<TripCollaborator> collaborators = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<TripSuggestion> suggestions = new ArrayList<>();
+
     public Trip() {
     }
 
@@ -93,6 +102,9 @@ public class Trip {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.shareCode == null || this.shareCode.trim().isEmpty()) {
+            this.shareCode = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
     }
 
     @PreUpdate
@@ -298,7 +310,22 @@ public class Trip {
     }
 
     public void setDestinations(List<Destination> destinations) {
-        this.destinations = destinations;
+        if (this.destinations == null) {
+            this.destinations = new ArrayList<>();
+        } else {
+            this.destinations.clear();
+        }
+        if (destinations != null) {
+            this.destinations.addAll(destinations);
+        }
+    }
+
+    public String getShareCode() {
+        return shareCode;
+    }
+
+    public void setShareCode(String shareCode) {
+        this.shareCode = shareCode;
     }
 
     public List<ItineraryItem> getItineraries() {
@@ -306,6 +333,43 @@ public class Trip {
     }
 
     public void setItineraries(List<ItineraryItem> itineraries) {
-        this.itineraries = itineraries;
+        if (this.itineraries == null) {
+            this.itineraries = new ArrayList<>();
+        } else {
+            this.itineraries.clear();
+        }
+        if (itineraries != null) {
+            this.itineraries.addAll(itineraries);
+        }
+    }
+
+    public List<TripCollaborator> getCollaborators() {
+        return collaborators;
+    }
+
+    public void setCollaborators(List<TripCollaborator> collaborators) {
+        if (this.collaborators == null) {
+            this.collaborators = new ArrayList<>();
+        } else {
+            this.collaborators.clear();
+        }
+        if (collaborators != null) {
+            this.collaborators.addAll(collaborators);
+        }
+    }
+
+    public List<TripSuggestion> getSuggestions() {
+        return suggestions;
+    }
+
+    public void setSuggestions(List<TripSuggestion> suggestions) {
+        if (this.suggestions == null) {
+            this.suggestions = new ArrayList<>();
+        } else {
+            this.suggestions.clear();
+        }
+        if (suggestions != null) {
+            this.suggestions.addAll(suggestions);
+        }
     }
 }

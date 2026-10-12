@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TripPlanner - Intelligent Trip Planner & Route Optimization</title>
+    <title>VoyageCraft — Every journey, thoughtfully planned.</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    <!-- Custom Design System CSS -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -17,184 +17,332 @@
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" th:href="@{/}">
-                <i class="bi bi-compass text-primary"></i> TripPlanner
+                <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                     <li class="nav-item">
-                        <a class="nav-link active fw-semibold" th:href="@{/}">Home</a>
+                        <a class="nav-link active" th:href="@{/}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link fw-semibold" th:href="@{/create-trip}">Plan a Trip</a>
+                        <a class="nav-link" th:href="@{/create-trip}">Plan a Trip</a>
                     </li>
                     <li class="nav-item" th:if="${isLoggedIn}">
-                        <a class="nav-link fw-semibold" th:href="@{/dashboard}">My Dashboard</a>
+                        <a class="nav-link" th:href="@{/dashboard}">My Journeys</a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
                     <th:block th:if="${isLoggedIn}">
                         <span class="text-muted small me-2 d-none d-md-inline" th:text="${userEmail}"></span>
-                        <a th:href="@{/dashboard}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                        <a th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </a>
                         <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Logout</button>
+                            <button type="submit" class="btn btn-sand btn-sm px-3">Logout</button>
                         </form>
                     </th:block>
                     <th:block th:unless="${isLoggedIn}">
-                        <a th:href="@{/login}" class="btn btn-outline-primary rounded-pill px-3">Login</a>
-                        <a th:href="@{/register}" class="btn btn-primary-custom rounded-pill px-3">Register</a>
+                        <a th:href="@{/login}" class="btn btn-outline-forest btn-sm">Sign In</a>
+                        <a th:href="@{/register}" class="btn btn-forest btn-sm">Get Started</a>
                     </th:block>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section text-center">
+    <!-- Large Scenic Hero Section (Requirement 1) -->
+    <section class="scenic-hero text-center">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-9">
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-bold">
-                        <i class="bi bi-stars me-1"></i> Full-Stack Travel Planner & Route Optimization System
+                <div class="col-lg-10 col-xl-9">
+                    <span class="badge-sage d-inline-flex align-items-center gap-1 mb-3">
+                        <i class="bi bi-tree-fill"></i> Intelligent Travel Explorer &amp; Route Engine
                     </span>
-                    <h1 class="hero-title mb-3">Plan Your Perfect Trip</h1>
-                    <p class="hero-subtitle mb-4">
-                        Enter the places you want to visit. We'll calculate routes, distances, travel times, nearby sightseeing spots, and create a practical day-by-day itinerary tailored for you.
+                    <h1 class="scenic-hero-title mb-3">Every journey, thoughtfully planned.</h1>
+                    <p class="scenic-hero-subtitle mb-4">
+                        Discover scenic routes, calculate real driving road distances, optimize multi-stop sequences, and generate realistic daily itineraries tailored to your travel style.
                     </p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <a th:href="@{/create-trip}" class="btn btn-primary-custom btn-lg rounded-pill px-4 shadow">
-                            <i class="bi bi-map me-1"></i> Start Planning
-                        </a>
-                        <a th:href="@{/login}" class="btn btn-outline-dark btn-lg rounded-pill px-4" th:unless="${isLoggedIn}">
-                            <i class="bi bi-person me-1"></i> Login to Save Trips
-                        </a>
+
+                    <!-- Prominent Trip Planner Bar -->
+                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 900px;">
+                        <form id="heroPlannerForm" onsubmit="handleHeroQuickPlan(event)">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-4">
+                                    <div class="planner-input-group">
+                                        <label for="heroStartLoc"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Starting Location</label>
+                                        <div class="autocomplete-wrapper">
+                                            <input type="text" id="heroStartLoc" placeholder="Where do you start? (e.g. Guntakal)" required autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="planner-input-group">
+                                        <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
+                                        <div class="autocomplete-wrapper">
+                                            <input type="text" id="heroDestLoc" placeholder="Where to? (e.g. Munnar)" autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="planner-input-group">
+                                        <label for="heroStartDate"><i class="bi bi-calendar3 text-muted me-1"></i>Start Date</label>
+                                        <input type="date" id="heroStartDate" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-forest w-100 py-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm">
+                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan my trip</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
+
+                    <!-- Optional AI Trip-Planning Entry Point -->
+                    <div class="ai-planner-card text-start mx-auto" style="max-width: 900px;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
+                            <span class="small text-muted">Describe your trip in plain words</span>
+                        </div>
+                        <form onsubmit="handleHeroAiSearch(event)">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted">
+                                    <i class="bi bi-chat-quote"></i>
+                                </span>
+                                <input type="text" id="heroPromptInput" class="form-control border-start-0 py-2" 
+                                       placeholder="e.g. 4 day trip from guntakal, calicut, munar, kodaikenal">
+                                <button class="btn btn-forest px-4 fw-semibold" type="submit">
+                                    <i class="bi bi-magic me-1"></i> Generate with AI
+                                </button>
+                            </div>
+                        </form>
+                        <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+                            <span class="text-muted small">Try:</span>
+                            <span class="ai-chip" onclick="fillHeroPrompt('4 day trip from guntakal, calicut, munar, kodaikenal')">
+                                📍 Guntakal → Calicut, Munnar &amp; Kodaikanal
+                            </span>
+                            <span class="ai-chip" onclick="fillHeroPrompt('3-day weekend trip from Bengaluru to Wayanad with nature and viewpoints')">
+                                🌿 Bengaluru → Wayanad (Nature)
+                            </span>
+                            <span class="ai-chip" onclick="fillHeroPrompt('4-day heritage road trip from Bengaluru to Mysore and Ooty')">
+                                🏛️ Mysore &amp; Ooty Circuit
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Quick Preview / How It Works -->
+    <!-- Destination Discovery Section (Real Destination Imagery) -->
     <section class="py-5 bg-white border-bottom">
         <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">How TripPlanner Works</h2>
-                <p class="text-muted">A realistic, automated workflow built for real travelers</p>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+                <div>
+                    <span class="badge-sage mb-2 d-inline-block">Curated Getaways</span>
+                    <h2 class="fw-bold mb-1">Handpicked Scenic Destinations</h2>
+                    <p class="text-muted small mb-0">Explore breathtaking locations with verified roads, scenic highlights, and boutique stays.</p>
+                </div>
+                <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm mt-3 mt-md-0">
+                    <i class="bi bi-sliders me-1"></i> Custom Itinerary
+                </a>
             </div>
 
             <div class="row g-4">
-                <div class="col-md-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon blue mx-auto mb-3">
-                            <i class="bi bi-geo-alt"></i>
+                <!-- Munnar Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80" alt="Munnar Tea Plantations">
+                            <span class="destination-tag-badge"><i class="bi bi-cloud-haze me-1"></i>Hill Station • Mist</span>
                         </div>
-                        <h5 class="fw-bold">1. Enter Destinations</h5>
-                        <p class="text-muted small">
-                            Dynamically add your starting point and all the places you want to visit with Google Places autocomplete.
-                        </p>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Munnar, Kerala</h5>
+                                <p class="text-muted small mb-3">Undulating emerald tea terraces, misty mountain peaks, and Eravikulam sanctuary.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 3-4 Days</span>
+                                <a th:href="@{/create-trip?dest=Munnar}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon amber mx-auto mb-3">
-                            <i class="bi bi-signpost-split"></i>
+                <!-- Kodaikanal Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80" alt="Kodaikanal Lake and Valleys">
+                            <span class="destination-tag-badge"><i class="bi bi-tree me-1"></i>Pine Forests • Lakes</span>
                         </div>
-                        <h5 class="fw-bold">2. Calculate Routes</h5>
-                        <p class="text-muted small">
-                            Computes segment-by-segment distances, total trip km, and optimal route ordering (TSP 2-opt heuristic) across Car, Bike, Transit, and Walking.
-                        </p>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Kodaikanal, Tamil Nadu</h5>
+                                <p class="text-muted small mb-3">Star-shaped mountain lake, Coaker's walk cliff views, and towering Pillar rocks.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 3-4 Days</span>
+                                <a th:href="@{/create-trip?dest=Kodaikanal}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon purple mx-auto mb-3">
-                            <i class="bi bi-compass"></i>
+                <!-- Coorg Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80" alt="Coorg Coffee Estates">
+                            <span class="destination-tag-badge"><i class="bi bi-cup-hot me-1"></i>Coffee • Waterfalls</span>
                         </div>
-                        <h5 class="fw-bold">3. Rank Sightseeing</h5>
-                        <p class="text-muted small">
-                            Recommends top sightseeing spots ranked by distance, ratings, user reviews, and personal interests. Add spots with 1 click!
-                        </p>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Coorg (Madikeri), Karnataka</h5>
+                                <p class="text-muted small mb-3">Lush coffee plantations, roaring Abbey Falls, and Tibetan monastery serenity.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 3-4 Days</span>
+                                <a th:href="@{/create-trip?dest=Coorg}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon green mx-auto mb-3">
-                            <i class="bi bi-calendar2-check"></i>
+                <!-- Calicut Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="Calicut Malabar Coast">
+                            <span class="destination-tag-badge"><i class="bi bi-water me-1"></i>Coastal • Heritage</span>
                         </div>
-                        <h5 class="fw-bold">4. Day-by-Day Schedule</h5>
-                        <p class="text-muted small">
-                            Generates practical itineraries with 20-min buffers, meal breaks, hotel check-ins, and tracks your visited progress in real time.
-                        </p>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Calicut (Kozhikode), Kerala</h5>
+                                <p class="text-muted small mb-3">Historic Malabar maritime coast, ancient wooden dhow shipyards, and beach pier sunsets.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 2-3 Days</span>
+                                <a th:href="@{/create-trip?dest=Calicut}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wayanad Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80" alt="Wayanad Western Ghats">
+                            <span class="destination-tag-badge"><i class="bi bi-compass me-1"></i>Caves • Waterfalls</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Wayanad, Kerala</h5>
+                                <p class="text-muted small mb-3">Ancient Edakkal caves, Banasura Sagar earthen reservoir, and heart-shaped Chembra lake.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 3 Days</span>
+                                <a th:href="@{/create-trip?dest=Wayanad}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ooty Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="destination-card">
+                        <div class="destination-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?auto=format&fit=crop&w=800&q=80" alt="Ooty Nilgiri Hills">
+                            <span class="destination-tag-badge"><i class="bi bi-train-front me-1"></i>Toy Train • Blue Hills</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">Ooty &amp; Nilgiris, Tamil Nadu</h5>
+                                <p class="text-muted small mb-3">UNESCO heritage mountain railway, Doddabetta summit views, and terraced rose gardens.</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>Ideal: 3 Days</span>
+                                <a th:href="@{/create-trip?dest=Ooty}" class="btn btn-sand btn-sm px-3">
+                                    Plan Trip <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Example Demo Journey Section -->
-    <section class="py-5 bg-light">
+    <!-- Core Features Section -->
+    <section class="py-5" style="background-color: var(--warm-sand-light);">
         <div class="container">
-            <div class="card card-modern p-4 p-md-5">
-                <div class="row align-items-center">
-                    <div class="col-lg-6 mb-4 mb-lg-0">
-                        <span class="badge bg-primary text-white rounded-pill px-3 py-1 mb-2">Example Journey</span>
-                        <h3 class="fw-bold mb-3">Bengaluru → Mysore → Coorg → Wayanad → Ooty</h3>
-                        <p class="text-muted mb-4">
-                            Our system automatically determines segment distances (145 km, 120 km, 115 km, 130 km), verifies travel durations, suggests visiting Mysore Palace, Abbey Falls, and Banasura Dam, and optimizes travel time to prevent fatigue.
+            <div class="text-center mb-5">
+                <span class="badge-sage mb-2 d-inline-block">Intelligent Routing</span>
+                <h2 class="fw-bold mt-1">Engineered for Real Road Travel</h2>
+                <p class="text-muted small">No impossible timelines, phantom coordinates, or unnecessary backtracking.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon forest mx-auto mb-3">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h5 class="fw-bold">Places Autocomplete</h5>
+                        <p class="text-muted small mb-0">
+                            Instant location suggestions with verified coordinates as you type any city, hill station, or landmark.
                         </p>
-                        <div class="d-flex flex-wrap gap-2 mb-4">
-                            <span class="badge bg-white border text-dark p-2"><i class="bi bi-car-front text-primary me-1"></i> Car / Bike / Transit / Walking</span>
-                            <span class="badge bg-white border text-dark p-2"><i class="bi bi-clock text-primary me-1"></i> 15-30 min Buffers</span>
-                            <span class="badge bg-white border text-dark p-2"><i class="bi bi-check-circle text-success me-1"></i> Visited Checklists</span>
-                        </div>
-                        <a th:href="@{/create-trip}" class="btn btn-primary-custom rounded-pill px-4">
-                            Try It Now With Your Places <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="border rounded-4 p-3 bg-white shadow-sm">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                                <span class="fw-bold text-primary"><i class="bi bi-calendar3 me-1"></i> Sample Day 1 Itinerary</span>
-                                <span class="badge bg-success-subtle text-success">Balanced</span>
-                            </div>
-                            <div class="small">
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">07:00 AM</span>
-                                    <span>🚗 Start from Bengaluru (145 km, 3 hr)</span>
-                                </div>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">10:00 AM</span>
-                                    <span>📍 Arrive in Mysore</span>
-                                </div>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">10:30 AM</span>
-                                    <span class="fw-semibold text-primary">🏛 Mysore Palace (⭐ 4.7 • 2.4 km)</span>
-                                </div>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">12:45 PM</span>
-                                    <span>🍴 Lunch Break & Local Cuisine</span>
-                                </div>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">02:00 PM</span>
-                                    <span class="fw-semibold text-primary">⛰ Chamundi Hill & Temple (⭐ 4.7)</span>
-                                </div>
-                                <div class="d-flex gap-2 mb-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">05:00 PM</span>
-                                    <span>🌳 Karanji Lake Nature Walk</span>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <span class="text-muted fw-bold" style="width: 70px;">07:00 PM</span>
-                                    <span>🏨 Hotel Check-in / Dinner</span>
-                                </div>
-                            </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon sand mx-auto mb-3">
+                            <i class="bi bi-speedometer2"></i>
                         </div>
+                        <h5 class="fw-bold">Accurate Highway Distances</h5>
+                        <p class="text-muted small mb-0">
+                            Real driving mileage and transit times powered by verified highway networks and OSRM turn-by-turn geometry.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon green mx-auto mb-3">
+                            <i class="bi bi-shuffle"></i>
+                        </div>
+                        <h5 class="fw-bold">Smart Route Optimization</h5>
+                        <p class="text-muted small mb-0">
+                            Transparent side-by-side comparison of original vs recommended routes with calculated distance and time savings.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon purple mx-auto mb-3">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h5 class="fw-bold">Collaborative Crew Planning</h5>
+                        <p class="text-muted small mb-0">
+                            Share itineraries with companions using secure invite links, add sightseeing ideas, and vote on favorites together.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -202,14 +350,54 @@
     </section>
 
     <!-- Footer -->
-    <footer class="text-center">
-        <div class="container">
-            <p class="mb-1 fw-bold text-dark">TripPlanner & Route Optimization System</p>
-            <p class="mb-0 text-muted small">Powered by Spring Boot, MySQL, Google Maps Platform APIs, and Bootstrap 5.</p>
+    <footer class="py-4">
+        <div class="container text-center">
+            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const startInput = document.getElementById('heroStartLoc');
+            const destInput = document.getElementById('heroDestLoc');
+            if (startInput) attachPlaceAutocomplete(startInput);
+            if (destInput) attachPlaceAutocomplete(destInput);
+
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('heroStartDate').value = tomorrow.toISOString().split('T')[0];
+        });
+
+        function handleHeroQuickPlan(e) {
+            e.preventDefault();
+            const start = document.getElementById('heroStartLoc').value.trim();
+            const dest = document.getElementById('heroDestLoc').value.trim();
+            const startDate = document.getElementById('heroStartDate').value;
+
+            let url = '/create-trip?start=' + encodeURIComponent(start);
+            if (dest) url += '&dest=' + encodeURIComponent(dest);
+            if (startDate) url += '&startDate=' + encodeURIComponent(startDate);
+            window.location.href = url;
+        }
+
+        function fillHeroPrompt(text) {
+            document.getElementById('heroPromptInput').value = text;
+        }
+
+        function handleHeroAiSearch(e) {
+            e.preventDefault();
+            const text = document.getElementById('heroPromptInput').value.trim();
+            if (text) {
+                window.location.href = '/create-trip?prompt=' + encodeURIComponent(text);
+            } else {
+                window.location.href = '/create-trip';
+            }
+        }
+    </script>
 </body>
 </html>

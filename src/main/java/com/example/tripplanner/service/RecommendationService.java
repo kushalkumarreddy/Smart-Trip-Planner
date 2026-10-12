@@ -97,6 +97,61 @@ public class RecommendationService {
                 "Wild safari sanctuary, butterfly conservatory, and zoo featuring tigers, lions, and bears.", "09:30 AM - 05:00 PM", 12.8009, 77.5777));
         CURATED_PLACES_DB.put("bengaluru", blrPlaces);
         CURATED_PLACES_DB.put("bangalore", blrPlaces);
+
+        // Calicut / Kozhikode
+        List<PlaceTemplate> calicutPlaces = new ArrayList<>();
+        calicutPlaces.add(new PlaceTemplate("Kozhikode Beach & Sea Pier", "Photography", 4.6, 28000, 1.5, 75, 6,
+                "Scenic Malabar coastline promenade celebrated for golden sunsets, century-old piers, and local cuisine.", "Open 24 Hours", 11.2590, 75.7700));
+        calicutPlaces.add(new PlaceTemplate("Mananchira Square", "Parks", 4.5, 14000, 0.8, 60, 4,
+                "Tranquil heritage park surrounding an ancient freshwater tank built by the Zamorin kings.", "09:00 AM - 08:00 PM", 11.2530, 75.7820));
+        calicutPlaces.add(new PlaceTemplate("Kappad Beach & Vasco da Gama Monument", "Historical", 4.5, 21000, 16.5, 90, 35,
+                "Historic shoreline where Portuguese explorer Vasco da Gama landed in 1498, framed by rocky headlands.", "06:00 AM - 07:00 PM", 11.3900, 75.7170));
+        calicutPlaces.add(new PlaceTemplate("Beypore Port & Ancient Uru Dhow Yard", "Historical", 4.6, 17500, 11.2, 90, 25,
+                "Historic maritime port celebrated for centuries of handcrafted wooden dhow (Uru) shipbuilding traditions.", "09:00 AM - 06:00 PM", 11.1640, 75.8080));
+        calicutPlaces.add(new PlaceTemplate("Thusharagiri Waterfalls", "Waterfalls", 4.6, 12000, 48.0, 120, 70,
+                "Picturesque Western Ghats waterfalls and trekking path cascading through rubber, areca nut, and spice estates.", "08:00 AM - 05:00 PM", 11.4700, 76.0500));
+        CURATED_PLACES_DB.put("calicut", calicutPlaces);
+        CURATED_PLACES_DB.put("kozhikode", calicutPlaces);
+
+        // Munnar
+        List<PlaceTemplate> munnarPlaces = new ArrayList<>();
+        munnarPlaces.add(new PlaceTemplate("Tea Gardens & Tata Tea Museum", "Nature", 4.7, 36000, 2.5, 90, 8,
+                "Lush undulating tea terraces and heritage museum illustrating the evolution of tea plantations.", "09:00 AM - 05:00 PM", 10.0889, 77.0595));
+        munnarPlaces.add(new PlaceTemplate("Eravikulam National Park", "Nature", 4.7, 41000, 8.5, 150, 25,
+                "Sanctuary for the endangered Nilgiri Tahr mountain goat and blooming Neelakurinji shrublands.", "07:30 AM - 04:00 PM", 10.1500, 77.0600));
+        munnarPlaces.add(new PlaceTemplate("Mattupetty Dam & Lake", "Adventure", 4.5, 32000, 12.0, 90, 28,
+                "Mountain storage dam offering scenic speed boating and tranquil reflections of surrounding tea hills.", "09:30 AM - 05:00 PM", 10.1060, 77.1250));
+        munnarPlaces.add(new PlaceTemplate("Top Station Cloud Point", "Photography", 4.6, 29000, 32.0, 90, 55,
+                "Highest altitude lookout on the Munnar-Kodaikanal road offering panoramic views over the Western Ghats and Tamil Nadu plains.", "06:00 AM - 06:30 PM", 10.1240, 77.2450));
+        munnarPlaces.add(new PlaceTemplate("Attukad Waterfalls", "Waterfalls", 4.5, 21000, 9.0, 75, 22,
+                "Spectacular mountain waterfall rushing between rolling hills and jungle trails, ideal for photography.", "09:00 AM - 06:00 PM", 10.0540, 77.0420));
+        CURATED_PLACES_DB.put("munnar", munnarPlaces);
+        CURATED_PLACES_DB.put("munar", munnarPlaces);
+
+        // Kodaikanal
+        List<PlaceTemplate> kodaiPlaces = new ArrayList<>();
+        kodaiPlaces.add(new PlaceTemplate("Kodaikanal Lake & Boathouse", "Nature", 4.6, 38000, 1.2, 90, 5,
+                "Star-shaped serene lake built in 1863 surrounded by cycling pathways, horse rides, and mist.", "08:30 AM - 06:30 PM", 10.2350, 77.4890));
+        kodaiPlaces.add(new PlaceTemplate("Coaker's Walk", "Photography", 4.6, 29000, 1.8, 60, 6,
+                "One-kilometer paved mountain walkway on steep cliff edges overlooking plains and rolling clouds.", "07:00 AM - 07:00 PM", 10.2310, 77.4950));
+        kodaiPlaces.add(new PlaceTemplate("Pillar Rocks Viewpoint", "Nature", 4.5, 24000, 7.5, 60, 18,
+                "Majestic trio of giant vertical granite boulders rising 400 feet into the sky amidst misty valleys.", "09:00 AM - 05:30 PM", 10.2100, 77.4680));
+        kodaiPlaces.add(new PlaceTemplate("Bryant Park & Glasshouse", "Parks", 4.4, 21000, 1.0, 75, 4,
+                "Botanical haven hosting hundreds of rose and hybrid flower varieties near the east edge of the lake.", "09:00 AM - 06:00 PM", 10.2330, 77.4940));
+        kodaiPlaces.add(new PlaceTemplate("Silver Cascade Waterfall", "Waterfalls", 4.4, 19000, 8.0, 45, 18,
+                "180-foot natural waterfall pouring over steep cliffs on the main Ghat road approaching Kodaikanal.", "Open 24 Hours", 10.2550, 77.5180));
+        CURATED_PLACES_DB.put("kodaikanal", kodaiPlaces);
+        CURATED_PLACES_DB.put("kodaikenal", kodaiPlaces);
+
+        // Guntakal & surrounding region
+        List<PlaceTemplate> guntakalPlaces = new ArrayList<>();
+        guntakalPlaces.add(new PlaceTemplate("Kasapuram Neti Anjaneya Swamy Temple", "Temples", 4.7, 18500, 8.5, 90, 20,
+                "Renowned and revered shrine of Lord Hanuman famous for ghee offerings and peaceful spiritual courtyards.", "06:00 AM - 09:00 PM", 15.1420, 77.3080));
+        guntakalPlaces.add(new PlaceTemplate("Guntakal Historic Heritage Rail Junction", "Historical", 4.3, 4200, 1.0, 60, 5,
+                "Historic British-era junction station founded in the 1860s showcasing colonial railway heritage.", "Open 24 Hours", 15.1678, 77.3686));
+        guntakalPlaces.add(new PlaceTemplate("Chippagiri Historical Overlook", "Historical", 4.5, 3100, 18.0, 75, 35,
+                "Spiritual and historic hill village associated with medieval Haridasa philosopher Sri Vijayadasaru.", "07:00 AM - 06:00 PM", 15.2800, 77.2100));
+        CURATED_PLACES_DB.put("guntakal", guntakalPlaces);
     }
 
     public List<SightseeingPlaceDto> getRecommendedPlaces(String destinationName, List<String> userInterests, String sortBy, String filterCategory) {

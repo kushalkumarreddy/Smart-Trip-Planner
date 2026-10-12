@@ -40,6 +40,9 @@ public class Destination {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "hotel_name", length = 255)
+    private String hotelName;
+
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("priority ASC, rating DESC")
     private List<Place> places = new ArrayList<>();
@@ -148,6 +151,14 @@ public class Destination {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getHotelName() {
+        return hotelName;
+    }
+
+    public void setHotelName(String hotelName) {
+        this.hotelName = hotelName;
     }
 
     public List<Place> getPlaces() {

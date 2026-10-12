@@ -1,6 +1,7 @@
 /**
- * Trip Planner & Route Optimization Frontend Engine
- * Dynamic destination inputs, route rendering, map controls, and visited tracking
+ * VoyageCraft - AI Smart Travel Planner Frontend Engine
+ * Handles Google Maps-style place autocomplete, route rendering, map controls,
+ * visited tracking, route optimization, and collaboration helpers.
  */
 
 let tripMap = null;
@@ -8,83 +9,218 @@ let mapMarkers = [];
 let mapPolyline = null;
 let isGoogleMapsActive = false;
 
-// 1. Dynamic Destination Input Management
-function addDestinationInput(value = "") {
-    const container = document.getElementById("destinationsContainer");
-    if (!container) return;
+// =========================================================
+// 1. Google Maps-Style Custom Place Autocomplete Engine
+// =========================================================
 
-    const rowCount = container.querySelectorAll(".destination-row").length + 1;
-    const row = document.createElement("div");
-    row.className = "destination-row";
-    row.innerHTML = `
-        <span class="destination-number">${rowCount}</span>
-        <input type="text" name="destinationNames" class="form-control destination-input" 
-               placeholder="e.g. Destination (e.g. Mysore, Coorg, Ooty...)" 
-               value="${value}" required list="placesDatalist">
-        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDestinationInput(this)">
-            <i class="bi bi-trash"></i>
-        </button>
-    `;
-
-    container.appendChild(row);
-    renumberDestinations();
-
-    // Attach autocomplete if Google Places is ready
-    const newInput = row.querySelector(".destination-input");
-    attachPlacesAutocomplete(newInput);
-}
-
-function removeDestinationInput(button) {
-    const container = document.getElementById("destinationsContainer");
-    if (!container) return;
-
-    const rows = container.querySelectorAll(".destination-row");
-    if (rows.length <= 1) {
-        alert("At least one destination is required for planning your trip.");
+/**
+ * Attaches real-time place suggestions with Google Maps-like dropdown UI
+ * to any input element. Works out of the box with zero external API key required.
+ */
+function attachPlaceAutocomplete(inputElement) {
+    if (!inputElement || inputElement.dataset.autocompleteAttached === "true") {
         return;
     }
+    inputElement.dataset.autocompleteAttached = "true";
 
-    button.closest(".destination-row").remove();
-    renumberDestinations();
-}
+    // Ensure input is contained in an .autocomplete-wrapper
+    let wrapper = inputElement.closest(".autocomplete-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.className = "autocomplete-wrapper";
+        inputElement.parentNode.insertBefore(wrapper, inputElement);
+        wrapper.appendChild(inputElement);
+    }
 
-function renumberDestinations() {
-    const container = document.getElementById("destinationsContainer");
-    if (!container) return;
+    // Create dropdown container
+    const dropdown = document.createElement("div");
+    dropdown.className = "autocomplete-dropdown";
+    wrapper.appendChild(dropdown);
 
-    const rows = container.querySelectorAll(".destination-row");
-    rows.forEach((row, index) => {
-        const badge = row.querySelector(".destination-number");
-        if (badge) badge.textContent = index + 1;
-    });
-}
+    let debounceTimer = null;
+    let activeIndex = -1;
 
-// 2. Google Places Autocomplete Integration
-function attachPlacesAutocomplete(inputElement) {
-    if (!inputElement) return;
-    if (window.google && window.google.maps && window.google.maps.places) {
-        try {
-            const autocomplete = new google.maps.places.Autocomplete(inputElement, {
-                types: ["(cities)"]
-            });
-            autocomplete.addListener("place_changed", function () {
-                const place = autocomplete.getPlace();
-                if (place && place.name) {
-                    inputElement.value = place.name;
-                }
-            });
-        } catch (e) {
-            console.warn("Could not attach Google Autocomplete to input", e);
+    // Input typing listener
+    inputElement.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            closeDropdown();
+            return;
         }
+
+        // Show subtle loading state
+        dropdown.innerHTML = `
+            <div class="p-2 text-muted small text-center">
+                <span class="spinner-border spinner-border-sm me-1 text-primary" role="status"></span>
+                <span>Searching places...</span>
+            </div>
+        `;
+        dropdown.classList.add("show");
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/places/autocomplete?query=${encodeURIComponent(query)}&limit=6`);
+                if (!response.ok) {
+                    dropdown.innerHTML = `
+                        <div class="p-2 text-danger small text-center">
+                            <i class="bi bi-exclamation-circle me-1"></i> Unable to search places
+                        </div>
+                    `;
+                    return;
+                }
+
+                const suggestions = await response.json();
+                renderDropdown(suggestions, query);
+            } catch (err) {
+                console.error("Autocomplete fetch error:", err);
+                dropdown.innerHTML = `
+                    <div class="p-2 text-muted small text-center">
+                        <i class="bi bi-wifi-off me-1"></i> Search service unavailable
+                    </div>
+                `;
+            }
+        }, 180);
+    });
+
+    // Keyboard navigation (ArrowDown, ArrowUp, Enter, Escape)
+    inputElement.addEventListener("keydown", function (e) {
+        const items = dropdown.querySelectorAll(".autocomplete-item");
+        if (!dropdown.classList.contains("show") || items.length === 0) return;
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === "Enter") {
+            if (activeIndex >= 0 && activeIndex < items.length) {
+                e.preventDefault();
+                selectItem(items[activeIndex]);
+            }
+        } else if (e.key === "Escape") {
+            closeDropdown();
+        }
+    });
+
+    // Focus listener
+    inputElement.addEventListener("focus", function () {
+        if (dropdown.children.length > 0 && this.value.trim().length >= 2) {
+            dropdown.classList.add("show");
+        }
+    });
+
+    function renderDropdown(items, query) {
+        dropdown.innerHTML = "";
+        activeIndex = -1;
+
+        if (!items || items.length === 0) {
+            dropdown.innerHTML = `
+                <div class="p-2 text-muted small text-center">
+                    <i class="bi bi-geo me-1"></i> No matching locations found
+                </div>
+            `;
+            dropdown.classList.add("show");
+            return;
+        }
+
+        items.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "autocomplete-item";
+            row.dataset.placeName = item.name;
+
+            const highlightedName = highlightMatch(item.name, query);
+            const subtext = escapeHtml(item.description || item.category || "Destination");
+
+            row.innerHTML = `
+                <div class="autocomplete-pin">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div class="autocomplete-text">
+                    <div class="autocomplete-main">${highlightedName}</div>
+                    <div class="autocomplete-sub">${subtext}</div>
+                </div>
+            `;
+
+            row.addEventListener("mousedown", (e) => {
+                e.preventDefault(); // Prevents input blur before click
+                selectItem(row);
+            });
+
+            dropdown.appendChild(row);
+        });
+
+        dropdown.classList.add("show");
+    }
+
+    function selectItem(itemElement) {
+        const placeName = itemElement.dataset.placeName;
+        if (placeName) {
+            inputElement.value = placeName;
+            inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+            inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        closeDropdown();
+    }
+
+    function updateActiveItem(items) {
+        items.forEach((item, idx) => {
+            if (idx === activeIndex) {
+                item.classList.add("active");
+                item.scrollIntoView({ block: "nearest" });
+            } else {
+                item.classList.remove("active");
+            }
+        });
+    }
+
+    function closeDropdown() {
+        dropdown.classList.remove("show");
+        activeIndex = -1;
     }
 }
 
-// 3. Map Initialization (Dual-Mode: Google Maps + Leaflet Fallback)
+// Global click outside to dismiss all autocomplete dropdowns
+document.addEventListener("click", (e) => {
+    if (!e.target.closest(".autocomplete-wrapper")) {
+        document.querySelectorAll(".autocomplete-dropdown.show").forEach(d => d.classList.remove("show"));
+    }
+});
+
+// Alias for backwards compatibility
+window.attachPlaceAutocomplete = attachPlaceAutocomplete;
+window.attachPlacesAutocomplete = attachPlaceAutocomplete;
+
+function highlightMatch(text, query) {
+    if (!text || !query) return escapeHtml(text || "");
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    return escapeHtml(text).replace(regex, "<strong>$1</strong>");
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// =========================================================
+// 2. Map Initialization (Dual-Engine: Google Maps + Leaflet)
+// =========================================================
+
 function initTripMap(mapElementId, locations = []) {
     const mapElement = document.getElementById(mapElementId);
     if (!mapElement) return;
 
-    // Default center (South India / Bengaluru region)
+    // Default center (Bengaluru region)
     let centerLat = 12.9716;
     let centerLng = 77.5946;
 
@@ -93,11 +229,9 @@ function initTripMap(mapElementId, locations = []) {
         centerLng = locations[0].lng;
     }
 
-    // Check if Google Maps JS API is ready
     if (window.google && window.google.maps && window.googleMapsApiKeyAvailable) {
         initGoogleMap(mapElement, locations, centerLat, centerLng);
     } else {
-        // Fallback to Leaflet OpenStreetMap
         initLeafletMap(mapElementId, locations, centerLat, centerLng);
     }
 }
@@ -108,10 +242,7 @@ function initGoogleMap(mapElement, locations, centerLat, centerLng) {
         center: { lat: centerLat, lng: centerLng },
         zoom: 8,
         mapTypeControl: true,
-        streetViewControl: false,
-        styles: [
-            { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
-        ]
+        streetViewControl: false
     });
 
     const bounds = new google.maps.LatLngBounds();
@@ -145,7 +276,7 @@ function initGoogleMap(mapElement, locations, centerLat, centerLng) {
 
         const infoWindow = new google.maps.InfoWindow({
             content: `
-                <div style="padding: 6px; font-family: sans-serif;">
+                <div style="padding: 6px; font-family: 'Plus Jakarta Sans', sans-serif;">
                     <strong style="font-size: 14px;">${loc.name}</strong><br>
                     <span style="font-size: 12px; color: #64748b;">Stop ${index + 1}</span><br>
                     ${loc.isVisited ? '<span style="color:#10b981; font-weight:bold;">☑ Visited</span>' : '<span style="color:#64748b;">☐ Unvisited</span>'}
@@ -162,7 +293,7 @@ function initGoogleMap(mapElement, locations, centerLat, centerLng) {
             path: pathCoordinates,
             geodesic: true,
             strokeColor: "#2563eb",
-            strokeOpacity: 0.8,
+            strokeOpacity: 0.85,
             strokeWeight: 4
         });
         mapPolyline.setMap(tripMap);
@@ -229,7 +360,10 @@ function initLeafletMap(mapElementId, locations, centerLat, centerLng) {
     }
 }
 
-// 4. Visited Checkbox Toggle for Sightseeing Places & Destinations
+// =========================================================
+// 3. Visited Progress Tracker
+// =========================================================
+
 async function togglePlaceVisited(placeId, checkboxElement) {
     const isChecked = checkboxElement.checked;
     const itemCard = checkboxElement.closest(".timeline-content");
@@ -246,7 +380,6 @@ async function togglePlaceVisited(placeId, checkboxElement) {
         const progress = await response.json();
         updateProgressDisplay(progress);
 
-        // Update card styling
         if (itemCard) {
             if (isChecked) {
                 itemCard.classList.add("is-visited");
@@ -255,7 +388,6 @@ async function togglePlaceVisited(placeId, checkboxElement) {
             }
         }
 
-        // Update corresponding timeline dot if present
         const timelineItem = checkboxElement.closest(".timeline-item");
         if (timelineItem) {
             const dot = timelineItem.querySelector(".timeline-dot");
@@ -271,7 +403,7 @@ async function togglePlaceVisited(placeId, checkboxElement) {
         }
     } catch (err) {
         console.error("Error updating place visited:", err);
-        checkboxElement.checked = !isChecked; // revert
+        checkboxElement.checked = !isChecked;
         alert("Could not update visited status. Please try again.");
     }
 }
@@ -312,9 +444,12 @@ function updateProgressDisplay(progress) {
     }
 }
 
-// 5. Smart Route Optimization (Apply TSP Recommended Order)
+// =========================================================
+// 4. Smart Route Optimization (Apply TSP Sequence)
+// =========================================================
+
 async function applyOptimizedRoute(tripId) {
-    if (!confirm("Would you like to reorganize your trip using the recommended shortest route? This will recalculate schedule timings and distances.")) {
+    if (!confirm("Reorganize your journey using the recommended shortest highway route? This will update your travel schedule and eliminate backtracking.")) {
         return;
     }
 
@@ -341,7 +476,32 @@ async function applyOptimizedRoute(tripId) {
     }
 }
 
-// 6. Add Sightseeing Place to Trip
+// =========================================================
+// 5. Delete Trip Handler
+// =========================================================
+
+async function deleteTripItem(tripId) {
+    if (!confirm("Are you sure you want to delete this trip itinerary? This action cannot be undone.")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/trips/${tripId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Failed to delete trip");
+        window.location.reload();
+    } catch (err) {
+        console.error("Error deleting trip:", err);
+        alert("Could not delete trip. Please try again.");
+    }
+}
+
+// =========================================================
+// 6. Sightseeing & Itinerary Add Place
+// =========================================================
+
 function addPlaceItem(tripId, destinationId, placeDataBtn) {
     const d = placeDataBtn.dataset;
     const placeDto = {
@@ -386,9 +546,11 @@ async function sendAddPlaceRequest(tripId, destinationId, placeDto, placeDataBtn
     }
 }
 
+// =========================================================
 // 7. Sightseeing Categories Filter & Sorter
+// =========================================================
+
 function filterPlacesByCategory(category, clickedElement) {
-    // Highlight pill
     document.querySelectorAll(".filter-pill").forEach(el => el.classList.remove("active"));
     if (clickedElement) clickedElement.classList.add("active");
 
@@ -419,7 +581,6 @@ function sortSightseeingPlaces(sortCriteria) {
             const ratingB = parseFloat(b.getAttribute("data-rating") || "0");
             return ratingB - ratingA;
         } else {
-            // Popularity
             const scoreA = parseFloat(a.getAttribute("data-score") || "0");
             const scoreB = parseFloat(b.getAttribute("data-score") || "0");
             return scoreB - scoreA;
@@ -429,7 +590,10 @@ function sortSightseeingPlaces(sortCriteria) {
     items.forEach(item => container.appendChild(item));
 }
 
-// 8. View Mode Switcher (List View / Map View / Split View)
+// =========================================================
+// 8. View Mode Switcher
+// =========================================================
+
 function setViewMode(mode) {
     const listCol = document.getElementById("itineraryColumn");
     const mapCol = document.getElementById("mapColumn");
@@ -451,7 +615,6 @@ function setViewMode(mode) {
             tripMap.invalidateSize();
         }
     } else {
-        // Split view
         if (listCol) { listCol.className = "col-lg-7 mb-4"; listCol.style.display = "block"; }
         if (mapCol) { mapCol.className = "col-lg-5 mb-4"; mapCol.style.display = "block"; }
         if (btnSplit) btnSplit.classList.add("active");
@@ -461,11 +624,15 @@ function setViewMode(mode) {
     }
 }
 
-// Global initialization on DOM ready
-document.addEventListener("DOMContentLoaded", () => {
-    // Attach autocomplete to existing start and destination fields
-    const startInput = document.getElementById("startLocationInput");
-    if (startInput) attachPlacesAutocomplete(startInput);
+// =========================================================
+// 9. Global DOM Ready Auto-Init
+// =========================================================
 
-    document.querySelectorAll(".destination-input").forEach(attachPlacesAutocomplete);
+document.addEventListener("DOMContentLoaded", () => {
+    // Automatically attach autocomplete to all relevant inputs
+    const startInput = document.getElementById("startLocationInput");
+    if (startInput) attachPlaceAutocomplete(startInput);
+
+    document.querySelectorAll(".destination-input").forEach(attachPlaceAutocomplete);
+    document.querySelectorAll(".destination-hotel-input").forEach(attachPlaceAutocomplete);
 });

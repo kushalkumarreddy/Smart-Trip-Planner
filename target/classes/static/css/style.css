@@ -1,51 +1,89 @@
 /* =========================================================
-   Trip Planner & Route Optimization Design System
-   Modern, Clean, Professional & Practical UI
+   VoyageCraft — Premium Travel Explorer Design System
+   Color Palette:
+   - Forest Green: #245747
+   - Sage Green:   #DDE8DD
+   - Warm Sand:    #F5F1E8
+   - Dark Text:    #26332E
+   - White backgrounds with subtle borders
+   - Font: Inter
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-light: #eff6ff;
-    --secondary: #0f172a;
-    --accent: #0ea5e9;
-    --success: #10b981;
-    --success-light: #ecfdf5;
-    --warning: #f59e0b;
-    --warning-light: #fffbeb;
-    --danger: #ef4444;
-    --bg-main: #f8fafc;
+    /* Brand Nature Palette */
+    --forest-green: #245747;
+    --forest-green-hover: #1c4538;
+    --forest-green-dark: #16362c;
+    --sage-green: #DDE8DD;
+    --sage-green-light: #eff5ef;
+    --warm-sand: #F5F1E8;
+    --warm-sand-dark: #ebe3d5;
+    --warm-sand-light: #faf8f5;
+    --dark-text: #26332E;
+
+    /* Theme Tokens */
+    --primary: var(--forest-green);
+    --primary-hover: var(--forest-green-hover);
+    --primary-light: var(--sage-green);
+    --primary-subtle: var(--sage-green-light);
+    --secondary: var(--dark-text);
+    --sand: var(--warm-sand);
+    --sand-subtle: var(--warm-sand-light);
+
+    --success: #2e7d32;
+    --success-light: #e8f5e9;
+    --warning: #c27803;
+    --warning-light: #fef7ec;
+    --danger: #c53030;
+    --danger-light: #fdf2f2;
+
+    --bg-main: #fbfaf8;
     --card-bg: #ffffff;
-    --text-primary: #0f172a;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --text-primary: #26332E;
+    --text-muted: #5e6f67;
+    --text-light: #86968f;
+
+    --border-color: #e2e8e2;
+    --border-subtle: rgba(36, 87, 71, 0.12);
+    --border-focus: var(--forest-green);
+
+    --shadow-sm: 0 1px 3px rgba(38, 51, 46, 0.05);
+    --shadow-md: 0 4px 14px rgba(38, 51, 46, 0.08);
+    --shadow-lg: 0 12px 28px rgba(38, 51, 46, 0.12);
+
     --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
     --radius-full: 9999px;
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Base Setup */
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+    letter-spacing: -0.025em;
 }
 
 /* Navbar */
 .navbar-custom {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.85rem 0;
+    padding: 0.9rem 0;
     position: sticky;
     top: 0;
     z-index: 1030;
@@ -54,14 +92,27 @@ body {
 .navbar-brand {
     font-weight: 800;
     font-size: 1.35rem;
-    color: var(--primary);
+    color: var(--forest-green) !important;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.55rem;
+    letter-spacing: -0.03em;
 }
 
 .navbar-brand i {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
+    color: var(--forest-green);
+}
+
+.nav-link {
+    color: var(--text-muted) !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--forest-green) !important;
 }
 
 /* Card Styling */
@@ -77,28 +128,249 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Hero Section */
-.hero-section {
-    background: radial-gradient(circle at top right, #e0f2fe 0%, #f8fafc 60%);
-    padding: 4.5rem 0 3.5rem;
+/* Buttons */
+.btn-primary-custom, .btn-forest {
+    background-color: var(--forest-green);
+    border-color: var(--forest-green);
+    color: #ffffff !important;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    padding: 0.55rem 1.35rem;
+    transition: var(--transition);
+}
+
+.btn-primary-custom:hover, .btn-forest:hover {
+    background-color: var(--forest-green-hover);
+    border-color: var(--forest-green-hover);
+    box-shadow: 0 4px 12px rgba(36, 87, 71, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-outline-forest {
+    background: transparent;
+    border: 1.5px solid var(--forest-green);
+    color: var(--forest-green) !important;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    padding: 0.55rem 1.35rem;
+    transition: var(--transition);
+}
+
+.btn-outline-forest:hover {
+    background-color: var(--forest-green);
+    color: #ffffff !important;
+}
+
+.btn-sage {
+    background-color: var(--sage-green);
+    border-color: var(--sage-green);
+    color: var(--forest-green) !important;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    transition: var(--transition);
+}
+
+.btn-sage:hover {
+    background-color: #d1ded1;
+    color: var(--forest-green-dark) !important;
+}
+
+.btn-sand {
+    background-color: var(--warm-sand);
+    border-color: var(--border-color);
+    color: var(--dark-text) !important;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    transition: var(--transition);
+}
+
+.btn-sand:hover {
+    background-color: var(--warm-sand-dark);
+}
+
+/* Badges */
+.badge-sage {
+    background-color: var(--sage-green);
+    color: var(--forest-green);
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-full);
+}
+
+.badge-sand {
+    background-color: var(--warm-sand);
+    color: var(--dark-text);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-full);
+}
+
+.badge-forest {
+    background-color: var(--forest-green);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-full);
+}
+
+/* =========================================================
+   Homepage Scenic Hero Section & Discovery
+   ========================================================= */
+.scenic-hero {
+    position: relative;
+    background: linear-gradient(180deg, rgba(36, 87, 71, 0.82) 0%, rgba(38, 51, 46, 0.90) 100%),
+                url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+    color: #ffffff;
+    padding: 5.5rem 0 4.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.hero-title {
-    font-size: 3rem;
+.scenic-hero-title {
+    font-size: 3.25rem;
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.035em;
     line-height: 1.15;
-    color: var(--secondary);
+    color: #ffffff;
 }
 
-.hero-subtitle {
-    font-size: 1.2rem;
-    color: var(--text-muted);
+.scenic-hero-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.88);
+    max-width: 680px;
+    margin: 0 auto;
     line-height: 1.6;
 }
 
-/* Metric / KPI Cards */
+/* Trip Planner Search Box */
+.planner-search-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 16px 36px rgba(18, 38, 30, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: var(--dark-text);
+}
+
+.planner-input-group {
+    background: var(--warm-sand-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.6rem 0.9rem;
+    transition: var(--transition);
+}
+
+.planner-input-group:focus-within {
+    border-color: var(--forest-green);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(36, 87, 71, 0.15);
+}
+
+.planner-input-group label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+    display: block;
+}
+
+.planner-input-group input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--dark-text);
+}
+
+/* AI Prompt Entry Card */
+.ai-planner-card {
+    background: var(--warm-sand);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-chip {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    color: var(--dark-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-chip:hover {
+    background: var(--forest-green);
+    color: #ffffff;
+    border-color: var(--forest-green);
+    transform: translateY(-1px);
+}
+
+/* Destination Discovery Cards with Real Imagery */
+.destination-card {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.destination-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--sage-green);
+}
+
+.destination-img-wrap {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.destination-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.destination-card:hover .destination-img-wrap img {
+    transform: scale(1.05);
+}
+
+.destination-tag-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--forest-green);
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
+}
+
+/* =========================================================
+   Metric / Summary Cards
+   ========================================================= */
 .metric-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -118,119 +390,183 @@ body {
 .metric-icon {
     width: 48px;
     height: 48px;
-    border-radius: var(--radius-sm);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
 }
 
-.metric-icon.blue { background: #dbeafe; color: #1d4ed8; }
-.metric-icon.green { background: #d1fae5; color: #047857; }
-.metric-icon.amber { background: #fef3c7; color: #b45309; }
+.metric-icon.forest, .metric-icon.blue { background: var(--sage-green); color: var(--forest-green); }
+.metric-icon.sand, .metric-icon.amber { background: var(--warm-sand); color: #8a6418; }
+.metric-icon.green { background: #e8f5e9; color: #2e7d32; }
 .metric-icon.purple { background: #f3e8ff; color: #7e22ce; }
 
 .metric-value {
-    font-size: 1.6rem;
+    font-size: 1.55rem;
     font-weight: 800;
-    line-height: 1.1;
-    color: var(--secondary);
+    line-height: 1.15;
+    color: var(--dark-text);
 }
 
 .metric-label {
-    font-size: 0.825rem;
+    font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
-    margin-top: 0.15rem;
+    margin-top: 0.2rem;
 }
 
-/* Dynamic Destination Input Rows */
-.destination-row {
+/* =========================================================
+   Trip Creation Progressive Form
+   ========================================================= */
+.step-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.6rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.step-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    background: #f1f5f9;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    animation: fadeIn 0.25s ease-out;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.destination-number {
-    width: 28px;
-    height: 28px;
-    background: var(--primary);
-    color: white;
+.step-num {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--forest-green);
+    color: #ffffff;
     font-weight: 700;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
-
-/* Route Segments Table & Flow */
-.route-flow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-}
-
-.route-node {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    padding: 0.4rem 0.85rem;
-    border-radius: var(--radius-full);
-    font-weight: 600;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.route-arrow {
-    color: var(--text-muted);
-    font-weight: 700;
-}
-
-/* Segment Pill */
-.segment-card {
+.destination-card-row {
     background: #ffffff;
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.65rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-radius: 14px;
+    padding: 1.1rem;
+    margin-bottom: 0.9rem;
+    transition: var(--transition);
 }
 
-.segment-title {
+.destination-card-row:hover {
+    border-color: var(--forest-green);
+    box-shadow: var(--shadow-sm);
+}
+
+.destination-number {
     font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--secondary);
+    font-size: 0.8rem;
+    background: var(--sage-green);
+    color: var(--forest-green);
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
 }
 
-.segment-stats {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+.drag-handle {
+    cursor: grab;
+    color: var(--text-light);
+    padding: 2px 6px;
+    font-size: 1.1rem;
+    user-select: none;
 }
 
-/* Timeline / Itinerary View */
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.btn-move {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--warm-sand-light);
+    color: var(--dark-text);
+    transition: var(--transition);
+}
+
+.btn-move:hover {
+    background: var(--sage-green);
+    color: var(--forest-green);
+}
+
+/* =========================================================
+   Side-by-Side Smart Route Optimization Comparison
+   ========================================================= */
+.opt-side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+}
+
+@media (max-width: 768px) {
+    .opt-side-by-side {
+        grid-template-columns: 1fr;
+    }
+}
+
+.opt-box {
+    border: 1.5px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.2rem;
+    background: #ffffff;
+}
+
+.opt-box.original {
+    background: var(--warm-sand-light);
+}
+
+.opt-box.recommended {
+    border-color: var(--forest-green);
+    background: var(--sage-green-light);
+}
+
+.opt-route-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 3px;
+}
+
+.savings-highlight {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    color: #1b5e20;
+    font-weight: 700;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* =========================================================
+   Itinerary Timeline & Workspace (Left & Right Panel)
+   ========================================================= */
 .timeline-container {
     position: relative;
     padding-left: 2rem;
@@ -243,7 +579,7 @@ body {
     bottom: 10px;
     left: 11px;
     width: 2px;
-    background: #cbd5e1;
+    background: var(--sage-green);
 }
 
 .timeline-item {
@@ -254,177 +590,243 @@ body {
 .timeline-dot {
     position: absolute;
     left: -2rem;
-    top: 4px;
+    top: 6px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: white;
-    border: 2px solid var(--primary);
+    background: #ffffff;
+    border: 2px solid var(--forest-green);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
-    color: var(--primary);
+    color: var(--forest-green);
 }
 
 .timeline-dot.visited {
     background: var(--success);
     border-color: var(--success);
-    color: white;
+    color: #ffffff;
 }
 
 .timeline-dot.meal {
-    border-color: #f97316;
-    color: #f97316;
+    border-color: #d97706;
+    color: #d97706;
 }
 
 .timeline-dot.hotel {
-    border-color: #8b5cf6;
-    color: #8b5cf6;
+    border-color: #0284c7;
+    color: #0284c7;
 }
 
 .timeline-content {
-    background: white;
+    background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 1.1rem;
+    padding: 1.15rem;
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
 }
 
 .timeline-content.is-visited {
     background: #f0fdf4;
-    border-color: #86efac;
+    border-color: #a7f3d0;
 }
 
 .timeline-content.is-visited .place-title {
-    color: #166534;
-}
-
-/* Sightseeing Recommendation Cards */
-.place-card {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1.1rem;
-    margin-bottom: 1rem;
-    transition: var(--transition);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.place-card:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-
-.place-category-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.6rem;
-    border-radius: var(--radius-full);
-    background: #e2e8f0;
-    color: #475569;
-}
-
-/* Category Filter Pills */
-.filter-pill {
-    cursor: pointer;
-    border-radius: var(--radius-full);
-    padding: 0.4rem 0.9rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border: 1px solid var(--border-color);
-    background: white;
-    color: var(--text-muted);
-    transition: var(--transition);
-    user-select: none;
-}
-
-.filter-pill:hover, .filter-pill.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
+    color: #065f46;
 }
 
 /* Map Container */
 #mapContainer {
     height: 540px;
     width: 100%;
-    border-radius: var(--radius-md);
+    border-radius: 16px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     z-index: 1;
 }
 
-/* Visited Checkbox Toggle */
-.visited-checkbox {
-    cursor: pointer;
-    width: 1.3rem;
-    height: 1.3rem;
-}
-
 /* Progress bar modern */
 .progress-modern {
-    height: 12px;
+    height: 10px;
     border-radius: var(--radius-full);
-    background-color: #e2e8f0;
+    background-color: var(--border-color);
     overflow: hidden;
 }
 
 .progress-bar-modern {
-    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(90deg, #245747 0%, #34d399 100%);
     transition: width 0.4s ease;
 }
 
-/* Alerts / Warnings Banner */
+/* Banner Alerts */
 .banner-alert {
     border-radius: var(--radius-md);
     padding: 1rem 1.25rem;
     border: 1px solid transparent;
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.85rem;
 }
 
 .banner-alert.warning {
-    background: #fffbeb;
-    border-color: #fde68a;
-    color: #92400e;
+    background: var(--warning-light);
+    border-color: #fed7aa;
+    color: #9a3412;
 }
 
 .banner-alert.info {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1e40af;
+    background: var(--sage-green-light);
+    border-color: var(--sage-green);
+    color: var(--forest-green-dark);
 }
 
-/* Buttons */
-.btn-primary-custom {
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: white;
+/* =========================================================
+   Autocomplete Dropdown Engine
+   ========================================================= */
+.autocomplete-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1060;
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+    animation: fadeInDropdown 0.15s ease-out;
+}
+
+@keyframes fadeInDropdown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.autocomplete-dropdown.show {
+    display: block;
+}
+
+.autocomplete-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--warm-sand-light);
+    transition: background 0.15s ease;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: var(--sage-green-light);
+}
+
+.autocomplete-pin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--sage-green);
+    color: var(--forest-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.autocomplete-text {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.autocomplete-main {
     font-weight: 600;
-    border-radius: var(--radius-sm);
-    padding: 0.55rem 1.2rem;
-    transition: var(--transition);
+    font-size: 0.92rem;
+    color: var(--dark-text);
+    line-height: 1.25;
 }
 
-.btn-primary-custom:hover {
-    background-color: var(--primary-hover);
-    border-color: var(--primary-hover);
-    color: white;
-    box-shadow: var(--shadow-sm);
+.autocomplete-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================================
+   Dashboard Wanderlust Banner
+   ========================================================= */
+.wanderlust-hero-banner {
+    background: linear-gradient(135deg, var(--forest-green) 0%, #153229 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 2.2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(36, 87, 71, 0.25);
+}
+
+.wanderlust-badge {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    font-size: 0.8rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.travel-stat-pill {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    padding: 0.75rem 1.15rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+/* Collaborator Avatars */
+.collaborator-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--sage-green);
+    color: var(--forest-green);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
 }
 
 /* Footer */
 footer {
     margin-top: auto;
-    background: white;
+    background: #ffffff;
     border-top: 1px solid var(--border-color);
-    padding: 1.5rem 0;
+    padding: 1.75rem 0;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.88rem;
 }

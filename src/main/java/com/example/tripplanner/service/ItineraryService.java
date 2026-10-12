@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -39,7 +41,6 @@ public class ItineraryService {
 
         String dailyStart = (trip.getDailyStartTime() != null && !trip.getDailyStartTime().isEmpty()) ? trip.getDailyStartTime() : "08:00";
         String dailyEnd = (trip.getDailyEndTime() != null && !trip.getDailyEndTime().isEmpty()) ? trip.getDailyEndTime() : "20:30";
-        String hotelLocation = trip.getHotelLocation();
 
         // Distribute destinations across days
         int destCount = destinations.size();
@@ -64,6 +65,7 @@ public class ItineraryService {
         }
 
         String previousDayEndLocation = trip.getStartLocation();
+        String previousNightHotel = null;
 
         for (int dayIndex = 0; dayIndex < daysCount; dayIndex++) {
             int dayNumber = dayIndex + 1;
@@ -90,8 +92,16 @@ public class ItineraryService {
             int totalPlacesCount = 0;
             int visitedPlacesCount = 0;
 
-            // 1. Morning Departure
-            String dayOrigin = (hotelLocation != null && !hotelLocation.isEmpty() && dayIndex > 0) ? hotelLocation : previousDayEndLocation;
+            // 1. Morning Departure: Depart from previous night's hotel stay or initial origin
+            String dayOrigin;
+            if (dayIndex == 0) {
+                dayOrigin = trip.getStartLocation();
+            } else if (previousNightHotel != null && !previousNightHotel.isEmpty()) {
+                dayOrigin = previousNightHotel;
+            } else {
+                dayOrigin = previousDayEndLocation;
+            }
+
             ItineraryItemDto departItem = new ItineraryItemDto();
             departItem.setDayNumber(dayNumber);
             departItem.setScheduleDate(currentDate);
@@ -102,8 +112,9 @@ public class ItineraryService {
             departItem.setActivityType("DEPARTURE");
             items.add(departItem);
 
-            String currentLegOrigin = dayOrigin;
+            String currentLegOrigin = (dayIndex == 0) ? trip.getStartLocation() : previousDayEndLocation;
             boolean hadLunch = false;
+            Destination currentStopDest = null;
 
             // Process destinations for this day
             if (dayDests.isEmpty()) {
@@ -112,12 +123,10 @@ public class ItineraryService {
                 int added = 0;
                 for (SightseeingPlaceDto p : leisurePlaces) {
                     if (added >= 3) break;
-                    // Transit to place
                     int transitMins = p.getEstimatedTravelTimeMinutes() != null ? p.getEstimatedTravelTimeMinutes() : 15;
                     double distKm = p.getDistanceKm() != null ? p.getDistanceKm() : 3.0;
                     currentTime = TimeUtils.addMinutes(currentTime, defaultBufferMinutes);
 
-                    // Add Sightseeing activity
                     String visitStart = TimeUtils.addMinutes(currentTime, transitMins);
                     int dur = p.getEstimatedVisitDurationMinutes() != null ? p.getEstimatedVisitDurationMinutes() : 90;
                     String visitEnd = TimeUtils.addMinutes(visitStart, dur);
@@ -147,34 +156,39 @@ public class ItineraryService {
                 }
             } else {
                 for (Destination dest : dayDests) {
-                    // Travel from current point to this destination
-                    GoogleMapsService.RouteCalculationResult leg = googleMapsService.calculateRouteSegment(currentLegOrigin, dest.getName(), transportMode);
-                    dayDistance += leg.getDistanceKm();
-                    dayTravelMinutes += leg.getDurationMinutes();
+                    currentStopDest = dest;
 
-                    String arriveTime = TimeUtils.addMinutes(currentTime, leg.getDurationMinutes());
+                    // Travel from current point to this destination (skip zero-travel leg if already at destination)
+                    boolean alreadyAtDestination = currentLegOrigin != null && currentLegOrigin.equalsIgnoreCase(dest.getName());
+                    if (!alreadyAtDestination) {
+                        GoogleMapsService.RouteCalculationResult leg = googleMapsService.calculateRouteSegment(currentLegOrigin, dest.getName(), transportMode);
+                        dayDistance += leg.getDistanceKm();
+                        dayTravelMinutes += leg.getDurationMinutes();
 
-                    ItineraryItemDto arriveItem = new ItineraryItemDto();
-                    arriveItem.setDayNumber(dayNumber);
-                    arriveItem.setScheduleDate(currentDate);
-                    arriveItem.setStartTime(currentTime);
-                    arriveItem.setEndTime(arriveTime);
-                    arriveItem.setActivity("Scenic Travel to " + dest.getName());
-                    arriveItem.setLocation(dest.getName());
-                    arriveItem.setActivityType("ARRIVAL");
-                    arriveItem.setTravelDistanceKm(leg.getDistanceKm());
-                    arriveItem.setTravelTimeMinutes(leg.getDurationMinutes());
-                    items.add(arriveItem);
+                        String arriveTime = TimeUtils.addMinutes(currentTime, leg.getDurationMinutes());
 
-                    currentTime = arriveTime;
-                    currentLegOrigin = dest.getName();
-                    previousDayEndLocation = dest.getName();
+                        ItineraryItemDto arriveItem = new ItineraryItemDto();
+                        arriveItem.setDayNumber(dayNumber);
+                        arriveItem.setScheduleDate(currentDate);
+                        arriveItem.setStartTime(currentTime);
+                        arriveItem.setEndTime(arriveTime);
+                        arriveItem.setActivity("Scenic Travel to " + dest.getName());
+                        arriveItem.setLocation(dest.getName());
+                        arriveItem.setActivityType("ARRIVAL");
+                        arriveItem.setTravelDistanceKm(leg.getDistanceKm());
+                        arriveItem.setTravelTimeMinutes(leg.getDurationMinutes());
+                        items.add(arriveItem);
 
-                    // Activity buffer after travel
-                    currentTime = TimeUtils.addMinutes(currentTime, defaultBufferMinutes);
-                    dayBreakMinutes += defaultBufferMinutes;
+                        currentTime = arriveTime;
+                        currentLegOrigin = dest.getName();
+                        previousDayEndLocation = dest.getName();
 
-                    // Lunch check: If time is around 12:00 - 14:00 and haven't had lunch yet
+                        // Buffer after travel
+                        currentTime = TimeUtils.addMinutes(currentTime, defaultBufferMinutes);
+                        dayBreakMinutes += defaultBufferMinutes;
+                    }
+
+                    // Lunch check: Around 12:00 - 14:00
                     if (!hadLunch && TimeUtils.parseTime(currentTime).isAfter(TimeUtils.parseTime("12:00"))) {
                         String lunchStart = currentTime;
                         String lunchEnd = TimeUtils.addMinutes(lunchStart, 60);
@@ -192,15 +206,15 @@ public class ItineraryService {
                         currentTime = lunchEnd;
                         dayBreakMinutes += 60;
                         hadLunch = true;
-                        currentTime = TimeUtils.addMinutes(currentTime, 15); // brief post-meal buffer
+                        currentTime = TimeUtils.addMinutes(currentTime, 15);
                     }
 
-                    // Fetch places for this destination (either from persisted place entities or recommended catalog)
+                    // Fetch places for this destination
                     List<SightseeingPlaceDto> destPlaces = getOrGeneratePlacesForDestination(dest);
                     int placesScheduled = 0;
 
                     for (SightseeingPlaceDto place : destPlaces) {
-                        if (placesScheduled >= 3) break; // keep schedule realistic
+                        if (placesScheduled >= 3) break;
 
                         int visitDuration = place.getEstimatedVisitDurationMinutes() != null ? place.getEstimatedVisitDurationMinutes() : 90;
                         int travelTime = place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : 15;
@@ -209,7 +223,6 @@ public class ItineraryService {
                         String actStart = TimeUtils.addMinutes(currentTime, travelTime);
                         String actEnd = TimeUtils.addMinutes(actStart, visitDuration);
 
-                        // If activity extends beyond daily cutoff (e.g. 20:30), stop scheduling
                         if (TimeUtils.parseTime(actEnd).isAfter(TimeUtils.parseTime(dailyEnd))) {
                             break;
                         }
@@ -228,7 +241,13 @@ public class ItineraryService {
                         visitItem.setDurationMinutes(visitDuration);
                         visitItem.setRating(place.getRating());
                         visitItem.setVisited(place.getVisited() != null && place.getVisited());
-                        visitItem.setNotes(place.getDescription());
+
+                        String notes = place.getDescription() != null ? place.getDescription() : "";
+                        String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
+                        if (conflict != null) {
+                            notes = (notes.isEmpty() ? "" : notes + " • ") + "⚠️ " + conflict;
+                        }
+                        visitItem.setNotes(notes);
                         items.add(visitItem);
 
                         if (visitItem.getVisited()) {
@@ -241,15 +260,23 @@ public class ItineraryService {
                         daySightseeingMinutes += visitDuration;
                         placesScheduled++;
 
-                        // Add 15-20 min buffer between activities
                         currentTime = TimeUtils.addMinutes(actEnd, defaultBufferMinutes);
                         dayBreakMinutes += defaultBufferMinutes;
                     }
                 }
             }
 
-            // Evening Hotel / Dinner Check-in
-            String eveningStay = (hotelLocation != null && !hotelLocation.isEmpty()) ? hotelLocation : ("Hotel / Resort in " + previousDayEndLocation);
+            // Evening Stay: Separate hotel based on this destination/stop (Requirement 10)
+            String destinationHotel = null;
+            if (currentStopDest != null && currentStopDest.getHotelName() != null && !currentStopDest.getHotelName().trim().isEmpty()) {
+                destinationHotel = currentStopDest.getHotelName().trim();
+            } else if (trip.getHotelLocation() != null && !trip.getHotelLocation().trim().isEmpty() && destinations.size() == 1) {
+                destinationHotel = trip.getHotelLocation().trim();
+            }
+
+            String eveningStay = (destinationHotel != null) ? destinationHotel : ("Hotel / Resort in " + previousDayEndLocation);
+            previousNightHotel = eveningStay;
+
             ItineraryItemDto eveningItem = new ItineraryItemDto();
             eveningItem.setDayNumber(dayNumber);
             eveningItem.setScheduleDate(currentDate);
@@ -273,7 +300,7 @@ public class ItineraryService {
             dayDto.setVisitedCount(visitedPlacesCount);
 
             // Health Status & Warnings
-            if (dayTravelMinutes >= 420) { // > 7 hours travel
+            if (dayTravelMinutes >= 420) {
                 dayDto.setStatus("⚠️ Long Day");
                 dayDto.setWarningMessage("This day contains " + TimeUtils.formatDuration(dayTravelMinutes) + " of transit! Consider spreading destinations across another day or resting.");
             } else if (dayTravelMinutes + daySightseeingMinutes >= 600) {
@@ -289,6 +316,164 @@ public class ItineraryService {
         }
 
         return dayItineraries;
+    }
+
+    /**
+     * Regenerates a single day's itinerary without altering other days (Requirement 4).
+     */
+    public DayItineraryDto regenerateSingleDay(Trip trip, List<Destination> destinations, int dayNumber,
+                                               String preference, String transportMode,
+                                               Set<String> alreadyUsedPlaceNames) {
+        LocalDate startDate = trip.getStartDate() != null ? trip.getStartDate() : LocalDate.now();
+        LocalDate targetDate = startDate.plusDays(dayNumber - 1);
+
+        String dailyStart = (trip.getDailyStartTime() != null && !trip.getDailyStartTime().isEmpty()) ? trip.getDailyStartTime() : "08:00";
+        String dailyEnd = (trip.getDailyEndTime() != null && !trip.getDailyEndTime().isEmpty()) ? trip.getDailyEndTime() : "20:30";
+
+        // Determine destination for this day
+        int destIndex = Math.min(destinations.size() - 1, dayNumber - 1);
+        Destination targetDest = (destIndex >= 0 && destIndex < destinations.size()) ? destinations.get(destIndex) : null;
+        String destName = (targetDest != null) ? targetDest.getName() : trip.getStartLocation();
+
+        String dayTitle = "Day " + dayNumber + " • Refreshed Itinerary in " + destName;
+        DayItineraryDto dayDto = new DayItineraryDto(dayNumber, targetDate, dayTitle);
+        List<ItineraryItemDto> items = new ArrayList<>();
+
+        String currentTime = dailyStart;
+        double dayDistance = 0.0;
+        int dayTravelMinutes = 0;
+        int daySightseeingMinutes = 0;
+        int dayBreakMinutes = 0;
+        int totalPlacesCount = 0;
+        int visitedPlacesCount = 0;
+
+        // Morning Departure from hotel
+        String hotel = (targetDest != null && targetDest.getHotelName() != null && !targetDest.getHotelName().isEmpty())
+                ? targetDest.getHotelName()
+                : ("Hotel / Stay in " + destName);
+
+        ItineraryItemDto departItem = new ItineraryItemDto();
+        departItem.setDayNumber(dayNumber);
+        departItem.setScheduleDate(targetDate);
+        departItem.setStartTime(currentTime);
+        departItem.setEndTime(currentTime);
+        departItem.setActivity("🚗 Depart from " + hotel);
+        departItem.setLocation(hotel);
+        departItem.setActivityType("DEPARTURE");
+        items.add(departItem);
+
+        // Fetch fresh candidate places matching the user's preference
+        String categoryFilter = (preference != null && !preference.equalsIgnoreCase("ALL") && !preference.equalsIgnoreCase("BALANCED"))
+                ? preference
+                : null;
+
+        List<SightseeingPlaceDto> candidates = recommendationService.getRecommendedPlaces(destName, null, "rating", categoryFilter);
+        // Shuffle or filter out places already in other days
+        List<SightseeingPlaceDto> filtered = new ArrayList<>();
+        for (SightseeingPlaceDto c : candidates) {
+            if (alreadyUsedPlaceNames == null || !alreadyUsedPlaceNames.contains(c.getName().toLowerCase())) {
+                filtered.add(c);
+            }
+        }
+        if (filtered.isEmpty()) {
+            filtered = new ArrayList<>(candidates);
+        }
+        Collections.shuffle(filtered);
+
+        int scheduled = 0;
+        boolean hadLunch = false;
+
+        for (SightseeingPlaceDto place : filtered) {
+            if (scheduled >= 3) break;
+
+            int visitDuration = place.getEstimatedVisitDurationMinutes() != null ? place.getEstimatedVisitDurationMinutes() : 90;
+            int travelTime = place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : 15;
+            double placeDist = place.getDistanceKm() != null ? place.getDistanceKm() : 2.5;
+
+            // Lunch insertion if around noon
+            if (!hadLunch && TimeUtils.parseTime(currentTime).isAfter(TimeUtils.parseTime("12:30"))) {
+                String lunchStart = currentTime;
+                String lunchEnd = TimeUtils.addMinutes(lunchStart, 60);
+                ItineraryItemDto lunchItem = new ItineraryItemDto();
+                lunchItem.setDayNumber(dayNumber);
+                lunchItem.setScheduleDate(targetDate);
+                lunchItem.setStartTime(lunchStart);
+                lunchItem.setEndTime(lunchEnd);
+                lunchItem.setActivity("🍴 Lunch Break & Local Specialities");
+                lunchItem.setLocation("Dining in " + destName);
+                lunchItem.setActivityType("MEAL");
+                lunchItem.setDurationMinutes(60);
+                items.add(lunchItem);
+
+                currentTime = lunchEnd;
+                dayBreakMinutes += 60;
+                hadLunch = true;
+                currentTime = TimeUtils.addMinutes(currentTime, 15);
+            }
+
+            String actStart = TimeUtils.addMinutes(currentTime, travelTime);
+            String actEnd = TimeUtils.addMinutes(actStart, visitDuration);
+
+            if (TimeUtils.parseTime(actEnd).isAfter(TimeUtils.parseTime(dailyEnd))) {
+                break;
+            }
+
+            ItineraryItemDto visitItem = new ItineraryItemDto();
+            visitItem.setDayNumber(dayNumber);
+            visitItem.setScheduleDate(targetDate);
+            visitItem.setStartTime(actStart);
+            visitItem.setEndTime(actEnd);
+            visitItem.setActivity("Visit " + place.getName());
+            visitItem.setLocation(place.getName() + ", " + destName);
+            visitItem.setActivityType("SIGHTSEEING");
+            visitItem.setTravelDistanceKm(placeDist);
+            visitItem.setTravelTimeMinutes(travelTime);
+            visitItem.setDurationMinutes(visitDuration);
+            visitItem.setRating(place.getRating());
+            visitItem.setVisited(false);
+
+            String notes = place.getDescription() != null ? place.getDescription() : "";
+            String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
+            if (conflict != null) {
+                notes = (notes.isEmpty() ? "" : notes + " • ") + "⚠️ " + conflict;
+            }
+            visitItem.setNotes(notes);
+            items.add(visitItem);
+
+            dayDistance += placeDist;
+            dayTravelMinutes += travelTime;
+            daySightseeingMinutes += visitDuration;
+            totalPlacesCount++;
+            scheduled++;
+
+            currentTime = TimeUtils.addMinutes(actEnd, defaultBufferMinutes);
+            dayBreakMinutes += defaultBufferMinutes;
+        }
+
+        // Evening Hotel Check-in
+        ItineraryItemDto eveningItem = new ItineraryItemDto();
+        eveningItem.setDayNumber(dayNumber);
+        eveningItem.setScheduleDate(targetDate);
+        eveningItem.setStartTime(currentTime);
+        eveningItem.setEndTime(TimeUtils.addMinutes(currentTime, 60));
+        eveningItem.setActivity("🏨 Return & Relax at " + hotel);
+        eveningItem.setLocation(hotel);
+        eveningItem.setActivityType("HOTEL");
+        eveningItem.setDurationMinutes(60);
+        items.add(eveningItem);
+        dayBreakMinutes += 60;
+
+        dayDto.setItems(items);
+        dayDto.setTotalDistanceKm(Math.round(dayDistance * 10.0) / 10.0);
+        dayDto.setTravelTimeMinutes(dayTravelMinutes);
+        dayDto.setSightseeingTimeMinutes(daySightseeingMinutes);
+        dayDto.setBreakTimeMinutes(dayBreakMinutes);
+        dayDto.setTotalDurationMinutes(dayTravelMinutes + daySightseeingMinutes + dayBreakMinutes);
+        dayDto.setTotalPlacesCount(totalPlacesCount);
+        dayDto.setVisitedCount(visitedPlacesCount);
+        dayDto.setStatus("Balanced");
+
+        return dayDto;
     }
 
     private List<SightseeingPlaceDto> getOrGeneratePlacesForDestination(Destination dest) {
@@ -317,7 +502,50 @@ public class ItineraryService {
             return dtos;
         }
 
-        // Retrieve curated recommendations
         return recommendationService.getRecommendedPlaces(dest.getName(), null, "popularity", null);
+    }
+
+    public static String checkOpeningHoursConflict(String visitStartTime, String visitEndTime, String openingHours) {
+        if (openingHours == null || openingHours.trim().isEmpty() ||
+                openingHours.equalsIgnoreCase("24 Hours") ||
+                openingHours.toLowerCase().contains("24") ||
+                openingHours.toLowerCase().contains("all day")) {
+            return null;
+        }
+        try {
+            String[] parts = openingHours.split("-");
+            if (parts.length != 2) return null;
+
+            LocalTime openTime = parseTime12(parts[0].trim());
+            LocalTime closeTime = parseTime12(parts[1].trim());
+            if (openTime == null || closeTime == null) return null;
+
+            LocalTime start = TimeUtils.parseTime(visitStartTime);
+            LocalTime end = TimeUtils.parseTime(visitEndTime);
+
+            if (start.isBefore(openTime)) {
+                return "Attraction opens at " + parts[0].trim() + " (visit scheduled from " + TimeUtils.formatAmPm(visitStartTime) + ")";
+            }
+            if (end.isAfter(closeTime)) {
+                return "Attraction closes at " + parts[1].trim() + " (visit extends until " + TimeUtils.formatAmPm(visitEndTime) + ")";
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static LocalTime parseTime12(String raw) {
+        try {
+            String clean = raw.trim().toUpperCase().replaceAll("\\s*(AM|PM)", " $1");
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+            return LocalTime.parse(clean, dtf);
+        } catch (Exception e) {
+            try {
+                DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+                return LocalTime.parse(raw.trim().toUpperCase(), dtf2);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
     }
 }
