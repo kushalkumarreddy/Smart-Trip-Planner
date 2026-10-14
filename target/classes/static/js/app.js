@@ -625,8 +625,37 @@ function setViewMode(mode) {
 }
 
 // =========================================================
-// 9. Global DOM Ready Auto-Init
+// 9. Global DOM Ready Auto-Init & Image Fallbacks
 // =========================================================
+
+/**
+ * Robust image fallback handler that prevents broken image icons
+ * and renders high-quality theme-matched vector illustrations.
+ */
+function handleImageFallback(img, category) {
+    if (!img || img.dataset.fallbackApplied === "true") return;
+    img.dataset.fallbackApplied = "true";
+
+    const cat = (category || img.getAttribute("data-category") || "").toLowerCase();
+    let fallbackSrc = "/images/placeholder-travel.svg";
+
+    if (cat.includes("heritage") || cat.includes("culture") || cat.includes("palace") || cat.includes("fort") || cat.includes("historical")) {
+        fallbackSrc = "/images/fallback-heritage.svg";
+    } else if (cat.includes("beach") || cat.includes("coast") || cat.includes("island") || cat.includes("sea")) {
+        fallbackSrc = "/images/fallback-beach.svg";
+    } else if (cat.includes("waterfall") || cat.includes("stream") || cat.includes("lake") || cat.includes("river")) {
+        fallbackSrc = "/images/fallback-waterfall.svg";
+    } else if (cat.includes("temple") || cat.includes("spiritual") || cat.includes("pilgrim") || cat.includes("shrine") || cat.includes("religious")) {
+        fallbackSrc = "/images/fallback-temple.svg";
+    } else if (cat.includes("nature") || cat.includes("wildlife") || cat.includes("hill") || cat.includes("mountain") || cat.includes("forest") || cat.includes("valley")) {
+        fallbackSrc = "/images/fallback-nature.svg";
+    }
+
+    img.src = fallbackSrc;
+    img.classList.add("img-fallback-loaded");
+}
+
+window.handleImageFallback = handleImageFallback;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Automatically attach autocomplete to all relevant inputs
@@ -635,4 +664,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll(".destination-input").forEach(attachPlaceAutocomplete);
     document.querySelectorAll(".destination-hotel-input").forEach(attachPlaceAutocomplete);
+
+    // Scan for existing images and ensure fallback safety
+    document.querySelectorAll("img").forEach(img => {
+        img.addEventListener("error", function () {
+            handleImageFallback(this);
+        });
+    });
 });
+

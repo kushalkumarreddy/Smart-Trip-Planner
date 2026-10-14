@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mistSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18392F" />
+      <stop offset="50%" stop-color="#244F40" />
+      <stop offset="100%" stop-color="#DCE8DC" />
+    </linearGradient>
+    <linearGradient id="mountainRidge1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b6957" />
+      <stop offset="100%" stop-color="#18392F" />
+    </linearGradient>
+    <linearGradient id="teaTerrace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d6a50" />
+      <stop offset="100%" stop-color="#143328" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky & Morning Mist -->
+  <rect width="800" height="500" fill="url(#mistSky)" />
+  <ellipse cx="400" cy="200" rx="450" ry="60" fill="#DCE8DC" opacity="0.25" filter="blur(8px)" />
+
+  <!-- Far Blue-Green Peaks -->
+  <path d="M -50 350 Q 150 180 320 300 Q 500 160 680 290 Q 750 240 850 350 L 850 500 L -50 500 Z" fill="url(#mountainRidge1)" opacity="0.6"/>
+
+  <!-- Mid Ridge with Mist Layer -->
+  <ellipse cx="400" cy="290" rx="500" ry="40" fill="#DCE8DC" opacity="0.3" />
+  <path d="M -50 400 Q 100 240 280 360 Q 460 210 650 340 Q 750 280 850 380 L 850 500 L -50 500 Z" fill="url(#mountainRidge1)" opacity="0.85"/>
+
+  <!-- Tea Garden Terraces Foreground -->
+  <path d="M -20 420 Q 200 360 420 410 Q 640 370 820 430 L 820 500 L -20 500 Z" fill="url(#teaTerrace)" />
+  <path d="M -20 450 Q 250 400 520 440 Q 680 410 820 460 L 820 500 L -20 500 Z" fill="#18392F" />
+
+  <!-- Pine / Shola Trees -->
+  <g fill="#132c24">
+    <polygon points="120,440 135,380 150,440" />
+    <polygon points="140,450 155,395 170,450" />
+    <polygon points="160,460 172,410 184,460" />
+    <polygon points="620,440 635,370 650,440" />
+    <polygon points="640,450 652,390 664,450" />
+    <polygon points="660,460 675,380 690,460" />
+  </g>
+</svg>

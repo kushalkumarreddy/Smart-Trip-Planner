@@ -1,52 +1,58 @@
 /* =========================================================
    VoyageCraft — Premium Travel Explorer Design System
-   Color Palette:
-   - Forest Green: #245747
-   - Sage Green:   #DDE8DD
-   - Warm Sand:    #F5F1E8
-   - Dark Text:    #26332E
-   - White backgrounds with subtle borders
-   - Font: Inter
+   Adventure Explorer Palette:
+   - Forest Green:   #244F40
+   - Deep Green:     #18392F
+   - Sage:           #DCE8DC
+   - Warm Cream:     #F7F3EA
+   - Muted Amber:    #D8A86E
+   - Dark Text:      #26332E
+   - Secondary Text: #68756D
    ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Brand Nature Palette */
-    --forest-green: #245747;
-    --forest-green-hover: #1c4538;
-    --forest-green-dark: #16362c;
-    --sage-green: #DDE8DD;
-    --sage-green-light: #eff5ef;
-    --warm-sand: #F5F1E8;
-    --warm-sand-dark: #ebe3d5;
-    --warm-sand-light: #faf8f5;
+    /* Brand Adventure Explorer Palette */
+    --forest-green: #244F40;
+    --forest-green-hover: #1b3d32;
+    --deep-green: #18392F;
+    --sage-green: #DCE8DC;
+    --sage-green-light: #f0f6f0;
+    --warm-cream: #F7F3EA;
+    --warm-cream-dark: #ebe3d5;
+    --warm-cream-light: #fdfbf7;
+    --muted-amber: #D8A86E;
+    --muted-amber-hover: #c4965d;
     --dark-text: #26332E;
+    --secondary-text: #68756D;
 
     /* Theme Tokens */
     --primary: var(--forest-green);
     --primary-hover: var(--forest-green-hover);
+    --primary-dark: var(--deep-green);
     --primary-light: var(--sage-green);
     --primary-subtle: var(--sage-green-light);
     --secondary: var(--dark-text);
-    --sand: var(--warm-sand);
-    --sand-subtle: var(--warm-sand-light);
+    --sand: var(--warm-cream);
+    --sand-subtle: var(--warm-cream-light);
+    --accent-amber: var(--muted-amber);
 
-    --success: #2e7d32;
-    --success-light: #e8f5e9;
-    --warning: #c27803;
-    --warning-light: #fef7ec;
+    --success: #244F40;
+    --success-light: #DCE8DC;
+    --warning: #D8A86E;
+    --warning-light: #fef7ed;
     --danger: #c53030;
     --danger-light: #fdf2f2;
 
-    --bg-main: #fbfaf8;
+    --bg-main: #fbf9f5;
     --card-bg: #ffffff;
-    --text-primary: #26332E;
-    --text-muted: #5e6f67;
-    --text-light: #86968f;
+    --text-primary: var(--dark-text);
+    --text-muted: var(--secondary-text);
+    --text-light: #8e9c94;
 
     --border-color: #e2e8e2;
-    --border-subtle: rgba(36, 87, 71, 0.12);
+    --border-subtle: rgba(36, 79, 64, 0.12);
     --border-focus: var(--forest-green);
 
     --shadow-sm: 0 1px 3px rgba(38, 51, 46, 0.05);
@@ -219,8 +225,12 @@ h1, h2, h3, h4, h5, h6 {
    ========================================================= */
 .scenic-hero {
     position: relative;
-    background: linear-gradient(180deg, rgba(36, 87, 71, 0.82) 0%, rgba(38, 51, 46, 0.90) 100%),
-                url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+    background-color: var(--deep-green);
+    background-image: linear-gradient(180deg, rgba(24, 57, 47, 0.88) 0%, rgba(38, 51, 46, 0.94) 100%),
+                      url('/images/hero-travel.svg'),
+                      url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2000&q=80');
+    background-position: center center;
+    background-size: cover;
     color: #ffffff;
     padding: 5.5rem 0 4.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -923,4 +933,217 @@ footer {
     color: #ffffff;
     border-color: var(--forest-green);
 }
+
+/* =========================================================
+   Round-Trip Distance Feature Styles
+   ========================================================= */
+.btn-round-trip {
+    background: linear-gradient(135deg, var(--forest-green) 0%, #1b3d32 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(216, 168, 110, 0.4);
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(36, 79, 64, 0.2);
+    cursor: pointer;
+}
+
+.btn-round-trip:hover {
+    background: linear-gradient(135deg, #1b3d32 0%, var(--deep-green) 100%);
+    color: var(--muted-amber) !important;
+    border-color: var(--muted-amber);
+    box-shadow: 0 4px 14px rgba(24, 57, 47, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-round-trip.active {
+    background: #18392F;
+    border-color: var(--muted-amber);
+    color: #f7f3ea !important;
+}
+
+.btn-round-trip i {
+    transition: transform 0.3s ease;
+}
+
+.btn-round-trip:hover i {
+    transform: rotate(180deg);
+}
+
+/* Round-Trip Details Summary Card */
+.round-trip-card {
+    background: #ffffff;
+    border: 1.5px solid #dce8dc;
+    border-left: 5px solid var(--muted-amber);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 16px rgba(38, 51, 46, 0.07);
+    transition: all 0.3s ease;
+    animation: fadeInSlideDown 0.3s ease-out;
+}
+
+@keyframes fadeInSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.round-trip-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.round-trip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .round-trip-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rt-metric-box {
+    background: #fbfbf9;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: var(--transition);
+}
+
+.rt-metric-box:hover {
+    border-color: var(--forest-green);
+    background: #f6f8f5;
+}
+
+.rt-metric-box.total-box {
+    background: linear-gradient(135deg, #f7f3ea 0%, #edf3eb 100%);
+    border: 1.5px solid var(--forest-green);
+}
+
+.rt-metric-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--secondary-text);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.rt-metric-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--dark-text);
+    line-height: 1.2;
+}
+
+.rt-metric-sub {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.rt-badge-provider {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: #eaf1ea;
+    color: var(--forest-green);
+    font-weight: 600;
+    border: 1px solid #c9dec9;
+}
+
+/* Map Route Legend */
+.map-route-legend {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.85rem;
+    font-size: 0.78rem;
+    color: var(--dark-text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    z-index: 1000;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+}
+
+.legend-line-outbound {
+    width: 22px;
+    height: 4px;
+    background: #244F40;
+    border-radius: 2px;
+}
+
+.legend-line-return {
+    width: 22px;
+    height: 4px;
+    background: repeating-linear-gradient(to right, #D8A86E 0, #D8A86E 6px, transparent 6px, transparent 10px);
+    border-radius: 2px;
+}
+
+/* Image Fallback & Robust Aspect Ratios */
+.travel-card-img-wrapper {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background-color: #f0f4f0;
+}
+
+.travel-card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s ease;
+}
+
+.travel-card-img-wrapper:hover img {
+    transform: scale(1.04);
+}
+
+.img-fallback-loaded {
+    object-fit: contain !important;
+    background: #f7f9f6;
+    padding: 12px;
+}
+
 

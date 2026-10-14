@@ -235,6 +235,37 @@ public class GoogleMapsService {
         return GeoUtils.getAutocompleteSuggestions(query.trim(), maxResults);
     }
 
+    /**
+     * Securely fetches Google Places photo bytes on the server side to protect API keys
+     * and avoid client-side CORS issues.
+     */
+    public byte[] fetchPlacePhoto(String photoReference, int maxWidth) {
+        if (!isLiveApiConfigured() || photoReference == null || photoReference.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            int width = (maxWidth > 0 && maxWidth <= 1600) ? maxWidth : 800;
+            String url = String.format("https://maps.googleapis.com/maps/api/place/photo?maxwidth=%d&photoreference=%s&key=%s",
+                    width, java.net.URLEncoder.encode(photoReference.trim(), java.nio.charset.StandardCharsets.UTF_8), apiKey.trim());
+            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
+                    .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                    .build();
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .timeout(java.time.Duration.ofSeconds(6))
+                    .GET()
+                    .build();
+            java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() == 200 && response.body() != null && response.body().length > 0) {
+                return response.body();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to fetch Google Place photo for reference: {}", e.getMessage());
+        }
+        return null;
+    }
+
     public void clearRouteCache() {
         routeCache.clear();
     }

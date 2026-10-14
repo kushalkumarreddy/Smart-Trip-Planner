@@ -164,4 +164,58 @@ class ItineraryServiceTest {
         boolean hasZoo = refreshed.getItems().stream().anyMatch(i -> i.getActivity().contains("Mysore Zoo"));
         assertThat(hasZoo).isTrue();
     }
+
+    @Test
+    @DisplayName("Multi-Day Itinerary: Places to visit NEVER repeat across days")
+    void testMultiDayItineraryNeverRepeatsSightseeingPlaces() {
+        Trip trip = new Trip();
+        trip.setId(2L);
+        trip.setStartLocation("Bengaluru");
+        trip.setStartDate(LocalDate.now());
+        trip.setEndDate(LocalDate.now().plusDays(2)); // 3-day trip
+        trip.setDailyStartTime("08:00");
+        trip.setDailyEndTime("20:00");
+        trip.setTransportMode("CAR");
+
+        Destination dest = new Destination("Coorg", 0);
+        dest.setId(20L);
+        dest.setTrip(trip);
+
+        List<SightseeingPlaceDto> coorgPlaces = new ArrayList<>();
+        String[] placeNames = { "Abbey Falls", "Raja's Seat", "Dubare Elephant Camp", "Talakaveri", "Madikeri Fort", "Iruppu Falls" };
+        for (String name : placeNames) {
+            SightseeingPlaceDto p = new SightseeingPlaceDto();
+            p.setName(name);
+            p.setEstimatedVisitDurationMinutes(90);
+            p.setEstimatedTravelTimeMinutes(15);
+            p.setDistanceKm(5.0);
+            coorgPlaces.add(p);
+        }
+
+        when(recommendationService.getRecommendedPlaces(eq("Coorg"), any(), anyString(), any()))
+                .thenReturn(coorgPlaces);
+
+        List<DayItineraryDto> days = itineraryService.generateItineraryPlan(trip, Collections.singletonList(dest), "CAR");
+
+        assertThat(days).hasSize(3);
+
+        List<String> allSightseeingActivities = new ArrayList<>();
+        for (DayItineraryDto day : days) {
+            for (ItineraryItemDto item : day.getItems()) {
+                if ("SIGHTSEEING".equalsIgnoreCase(item.getActivityType())) {
+                    allSightseeingActivities.add(item.getActivity().toLowerCase());
+                }
+            }
+        }
+
+        // Verify there are sightseeing items scheduled
+        assertThat(allSightseeingActivities).isNotEmpty();
+
+        // Strict verification: Set size must equal List size -> ZERO duplicate places across all days
+        HashSet<String> uniqueActivities = new HashSet<>(allSightseeingActivities);
+        assertThat(uniqueActivities.size())
+                .as("All sightseeing activities across a multi-day trip must be strictly unique without repeats")
+                .isEqualTo(allSightseeingActivities.size());
+    }
 }
+

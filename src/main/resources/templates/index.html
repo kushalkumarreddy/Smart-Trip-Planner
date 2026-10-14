@@ -74,7 +74,7 @@
                                     <div class="planner-input-group">
                                         <label for="heroStartLoc"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Starting Location</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroStartLoc" placeholder="Where do you start? (e.g. Guntakal)" required autocomplete="off">
+                                            <input type="text" id="heroStartLoc" placeholder="Search your starting location" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -82,7 +82,7 @@
                                     <div class="planner-input-group">
                                         <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroDestLoc" placeholder="Where to? (e.g. Munnar)" autocomplete="off">
+                                            <input type="text" id="heroDestLoc" placeholder="Where do you want to go?" autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -113,7 +113,7 @@
                                     <i class="bi bi-chat-quote"></i>
                                 </span>
                                 <input type="text" id="heroPromptInput" class="form-control border-start-0 py-2" 
-                                       placeholder="e.g. 4 day trip from guntakal, calicut, munar, kodaikenal">
+                                       placeholder="e.g. 4-day road trip from Bengaluru to Wayanad, Munnar and Ooty">
                                 <button class="btn btn-forest px-4 fw-semibold" type="submit">
                                     <i class="bi bi-magic me-1"></i> Generate with AI
                                 </button>
@@ -121,14 +121,14 @@
                         </form>
                         <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
                             <span class="text-muted small">Try:</span>
-                            <span class="ai-chip" onclick="fillHeroPrompt('4 day trip from guntakal, calicut, munar, kodaikenal')">
-                                📍 Guntakal → Calicut, Munnar &amp; Kodaikanal
+                            <span class="ai-chip" onclick="fillHeroPrompt('4-day trip from Bengaluru to Wayanad, Munnar and Ooty')">
+                                📍 Bengaluru → Wayanad, Munnar &amp; Ooty
                             </span>
                             <span class="ai-chip" onclick="fillHeroPrompt('3-day weekend trip from Bengaluru to Wayanad with nature and viewpoints')">
                                 🌿 Bengaluru → Wayanad (Nature)
                             </span>
-                            <span class="ai-chip" onclick="fillHeroPrompt('4-day heritage road trip from Bengaluru to Mysore and Ooty')">
-                                🏛️ Mysore &amp; Ooty Circuit
+                            <span class="ai-chip" onclick="fillHeroPrompt('4-day heritage road trip from Bengaluru to Mysore, Coorg and Ooty')">
+                                🏛️ Mysore, Coorg &amp; Ooty Circuit
                             </span>
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                      th:data-category="${dest.category}" th:data-name="${dest.name}" th:data-state="${dest.state}">
                     <div class="destination-card h-100 d-flex flex-column">
                         <div class="destination-img-wrap">
-                            <img th:src="${dest.imageUrl}" th:alt="${dest.name}" loading="lazy">
+                            <img th:src="${dest.imageUrl}" th:alt="${dest.name}" th:data-category="${dest.category}" onerror="handleImageFallback(this, this.getAttribute('data-category'))" loading="lazy">
                             <span class="destination-tag-badge">
                                 <i class="bi bi-tag-fill me-1"></i><span th:text="${dest.category}"></span>
                             </span>

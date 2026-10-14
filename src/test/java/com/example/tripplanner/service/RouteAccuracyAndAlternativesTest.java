@@ -144,4 +144,43 @@ class RouteAccuracyAndAlternativesTest {
         assertThat(original.getSegments().get(0).getToLocation()).isEqualTo("Mysore");
         assertThat(reordered.getSegments().get(0).getToLocation()).isEqualTo("Coorg");
     }
+
+    @Test
+    @DisplayName("Round-trip calculation strictly equals the sum of outbound and road return journeys")
+    void testCalculateRoundTripDetailsComputesValidSumOfOutboundAndReturn() {
+        List<String> destinations = Arrays.asList("Mysore", "Coorg");
+        RouteSummaryDto outboundSummary = routeService.calculateCompleteRoute("Bengaluru", destinations, "CAR");
+
+        com.example.tripplanner.dto.RoundTripDetailsDto roundTrip = routeService.calculateRoundTripDetails(
+                "Bengaluru", destinations, "CAR", outboundSummary);
+
+        assertThat(roundTrip).isNotNull();
+        assertThat(roundTrip.isSuccess()).isTrue();
+        assertThat(roundTrip.getOutboundDistanceKm()).isGreaterThan(0.0);
+        assertThat(roundTrip.getReturnDistanceKm()).isGreaterThan(0.0);
+
+        // Strict validation: Round-trip total must be the exact sum of outbound and return distances
+        double expectedTotal = Math.round((roundTrip.getOutboundDistanceKm() + roundTrip.getReturnDistanceKm()) * 10.0) / 10.0;
+        assertThat(roundTrip.getRoundTripTotalDistanceKm()).isEqualTo(expectedTotal);
+
+        int expectedDuration = roundTrip.getOutboundDurationMinutes() + roundTrip.getReturnDurationMinutes();
+        assertThat(roundTrip.getRoundTripTotalDurationMinutes()).isEqualTo(expectedDuration);
+
+        // Verify return destination links final stop back to origin
+        assertThat(roundTrip.getReturnOrigin()).isEqualTo("Coorg");
+        assertThat(roundTrip.getReturnDestination()).isEqualTo("Bengaluru");
+        assertThat(roundTrip.getRoutingProvider()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("Round-trip handles invalid or empty destination locations safely")
+    void testCalculateRoundTripHandlesInvalidLocations() {
+        com.example.tripplanner.dto.RoundTripDetailsDto roundTrip = routeService.calculateRoundTripDetails(
+                "Bengaluru", List.of(), "CAR", null);
+
+        assertThat(roundTrip).isNotNull();
+        assertThat(roundTrip.isSuccess()).isFalse();
+        assertThat(roundTrip.getErrorMessage()).contains("at least one destination");
+    }
 }
+

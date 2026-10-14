@@ -93,6 +93,45 @@ public class TripApiController {
     }
 
     /**
+     * Accurately calculates outbound distance, return highway distance from final destination
+     * back to origin, and combined round-trip metrics.
+     */
+    @GetMapping("/{id}/round-trip")
+    public ResponseEntity<RoundTripDetailsDto> getTripRoundTripDetails(@PathVariable("id") Long id,
+                                                                       @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto trip = tripService.getTripDtoById(id, user);
+
+        List<String> destNames = new ArrayList<>();
+        if (trip.getDestinations() != null) {
+            for (DestinationDto d : trip.getDestinations()) {
+                if (d.getName() != null && !d.getName().trim().isEmpty()) {
+                    destNames.add(d.getName().trim());
+                }
+            }
+        }
+
+        RoundTripDetailsDto details = routeService.calculateRoundTripDetails(
+                trip.getStartLocation(), destNames, trip.getTransportMode(), trip.getRouteSummary());
+        return ResponseEntity.ok(details);
+    }
+
+    /**
+     * Preview Round-Trip Distance calculation for dynamic itinerary forms
+     */
+    @PostMapping("/preview-round-trip")
+    public ResponseEntity<RoundTripDetailsDto> previewRoundTrip(@RequestBody Map<String, Object> body) {
+        String startLocation = (String) body.get("startLocation");
+        @SuppressWarnings("unchecked")
+        List<String> destinations = (List<String>) body.get("destinations");
+        String transportMode = (String) body.getOrDefault("transportMode", "CAR");
+
+        RoundTripDetailsDto details = routeService.calculateRoundTripDetails(
+                startLocation, destinations, transportMode, null);
+        return ResponseEntity.ok(details);
+    }
+
+    /**
      * Manual Destination Reordering (User can swipe/move destinations up & down) or apply optimized route
      */
     @PostMapping("/{id}/reorder")

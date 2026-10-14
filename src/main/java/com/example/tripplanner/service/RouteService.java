@@ -1,5 +1,6 @@
 package com.example.tripplanner.service;
 
+import com.example.tripplanner.dto.RoundTripDetailsDto;
 import com.example.tripplanner.dto.RouteAlternativeDto;
 import com.example.tripplanner.dto.RouteSegmentDto;
 import com.example.tripplanner.dto.RouteSummaryDto;
@@ -143,7 +144,105 @@ public class RouteService {
         // Evaluate Smart Route Optimization & Multi-Strategy Alternatives
         evaluateRouteOptimization(summary, startLocation.trim(), cleanDestinations, mode, totalDistanceKm, totalMinutes);
 
+        // Calculate accurate highway return route and round-trip metrics
+        RoundTripDetailsDto roundTrip = calculateRoundTripDetails(startLocation.trim(), cleanDestinations, mode, summary);
+        summary.setRoundTripDetails(roundTrip);
+
         return summary;
+    }
+
+    /**
+     * Calculates the return journey from the final destination back to the original starting location,
+     * providing accurate outbound, return, and total round-trip road distance and driving times.
+     */
+    public RoundTripDetailsDto calculateRoundTripDetails(String startLocation, List<String> destinations,
+                                                         String transportMode, RouteSummaryDto outboundSummary) {
+        RoundTripDetailsDto roundTrip = new RoundTripDetailsDto();
+        String mode = (transportMode != null && !transportMode.trim().isEmpty()) ? transportMode.trim().toUpperCase() : "CAR";
+        roundTrip.setTransportMode(mode);
+
+        if (startLocation == null || startLocation.trim().isEmpty() || destinations == null || destinations.isEmpty()) {
+            roundTrip.setSuccess(false);
+            roundTrip.setErrorMessage("Both starting location and at least one destination are required to calculate round-trip distance.");
+            return roundTrip;
+        }
+
+        // Clean destinations
+        List<String> cleanDests = new ArrayList<>();
+        for (String d : destinations) {
+            if (d != null && !d.trim().isEmpty()) {
+                cleanDests.add(d.trim());
+            }
+        }
+
+        if (cleanDests.isEmpty()) {
+            roundTrip.setSuccess(false);
+            roundTrip.setErrorMessage("At least one valid destination is required to calculate round-trip distance.");
+            return roundTrip;
+        }
+
+        String origin = startLocation.trim();
+        String finalDest = cleanDests.get(cleanDests.size() - 1);
+
+        roundTrip.setStartLocation(origin);
+        roundTrip.setFinalDestination(finalDest);
+
+        // Outbound metrics from outboundSummary or calculate if null
+        double outboundDist = 0.0;
+        int outboundTime = 0;
+        if (outboundSummary != null && Boolean.TRUE.equals(outboundSummary.getRouteCalculationSuccess())) {
+            outboundDist = outboundSummary.getTotalDistanceKm();
+            outboundTime = outboundSummary.getTotalTravelTimeMinutes();
+        } else {
+            RouteSummaryDto calculated = calculateCompleteRoute(origin, cleanDests, mode);
+            if (!Boolean.TRUE.equals(calculated.getRouteCalculationSuccess())) {
+                roundTrip.setSuccess(false);
+                roundTrip.setErrorMessage("Unable to calculate outbound route: " + calculated.getCalculationErrorMessage());
+                return roundTrip;
+            }
+            outboundDist = calculated.getTotalDistanceKm();
+            outboundTime = calculated.getTotalTravelTimeMinutes();
+        }
+
+        roundTrip.setOutboundDistanceKm(Math.round(outboundDist * 10.0) / 10.0);
+        roundTrip.setOutboundDurationMinutes(outboundTime);
+        roundTrip.setFormattedOutboundDuration(TimeUtils.formatDuration(outboundTime));
+
+        // Calculate return journey: from finalDest back to origin
+        GoogleMapsService.RouteCalculationResult returnLeg = googleMapsService.calculateRouteSegment(finalDest, origin, mode);
+        if (returnLeg == null || !returnLeg.isSuccess()) {
+            roundTrip.setSuccess(false);
+            String err = (returnLeg != null && returnLeg.getErrorMessage() != null)
+                    ? returnLeg.getErrorMessage()
+                    : "Routing provider temporarily unable to obtain road route from " + finalDest + " back to " + origin;
+            roundTrip.setErrorMessage(err);
+            roundTrip.setReturnDistanceKm(0.0);
+            roundTrip.setReturnDurationMinutes(0);
+            roundTrip.setTotalRoundTripDistanceKm(roundTrip.getOutboundDistanceKm());
+            roundTrip.setTotalRoundTripDurationMinutes(roundTrip.getOutboundDurationMinutes());
+            return roundTrip;
+        }
+
+        double returnDist = Math.round(returnLeg.getDistanceKm() * 10.0) / 10.0;
+        int returnMins = returnLeg.getDurationMinutes();
+
+        roundTrip.setSuccess(true);
+        roundTrip.setReturnDistanceKm(returnDist);
+        roundTrip.setReturnDurationMinutes(returnMins);
+        roundTrip.setFormattedReturnDuration(TimeUtils.formatDuration(returnMins));
+
+        double totalDist = Math.round((outboundDist + returnDist) * 10.0) / 10.0;
+        int totalMins = outboundTime + returnMins;
+
+        roundTrip.setTotalRoundTripDistanceKm(totalDist);
+        roundTrip.setTotalRoundTripDurationMinutes(totalMins);
+        roundTrip.setFormattedTotalRoundTripDuration(TimeUtils.formatDuration(totalMins));
+
+        roundTrip.setRoutingProvider(returnLeg.getVerifiedProvider());
+        roundTrip.setReturnRouteGeometry(returnLeg.getGeometryCoords());
+        roundTrip.setGoogleMapsReturnUrl(GeoUtils.buildGoogleMapsUrl(finalDest, origin, mode));
+
+        return roundTrip;
     }
 
     private void evaluateRouteOptimization(RouteSummaryDto summary, String startLocation, List<String> destinations,

@@ -66,4 +66,29 @@ public class PlacesApiController {
         Map<String, Object> details = googleMapsService.reverseGeocode(lat, lng);
         return ResponseEntity.ok(details);
     }
+
+    /**
+     * Secure Place Photo Proxy endpoint:
+     * Loads Google Places photo on the backend without exposing the server's API key
+     * or causing client-side CORS issues, falling back gracefully to category SVGs.
+     */
+    @GetMapping("/photo")
+    public ResponseEntity<byte[]> getPlacePhoto(
+            @RequestParam(value = "photoReference", required = false) String photoReference,
+            @RequestParam(value = "maxWidth", defaultValue = "800") int maxWidth) {
+        if (photoReference != null && !photoReference.trim().isEmpty()) {
+            byte[] imageBytes = googleMapsService.fetchPlacePhoto(photoReference, maxWidth);
+            if (imageBytes != null && imageBytes.length > 0) {
+                return ResponseEntity.ok()
+                        .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "image/jpeg")
+                        .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "public, max-age=86400")
+                        .body(imageBytes);
+            }
+        }
+
+        // Return 302 redirect to reliable local vector fallback
+        return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                .header(org.springframework.http.HttpHeaders.LOCATION, "/images/placeholder-travel.svg")
+                .build();
+    }
 }

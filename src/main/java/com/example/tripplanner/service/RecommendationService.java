@@ -470,16 +470,35 @@ public class RecommendationService {
             }
         }
 
-        // If not found in static catalog, generate realistic places anchored on the destination coordinates
+        // If not found directly by name, check for nearby authentic destinations within 35 km
         if (templates == null || templates.isEmpty()) {
-            templates = generateGenericPlacesForLocation(destinationName);
+            double[] coords = GeoUtils.getApproximateCoordinates(destinationName);
+            for (Map.Entry<String, List<PlaceTemplate>> entry : CURATED_PLACES_DB.entrySet()) {
+                double[] candidateCoords = GeoUtils.getApproximateCoordinates(entry.getKey());
+                double dist = GeoUtils.calculateHaversineDistanceKm(coords[0], coords[1], candidateCoords[0], candidateCoords[1]);
+                if (dist <= 35.0) {
+                    templates = entry.getValue();
+                    break;
+                }
+            }
+        }
+
+        // Return empty list if no genuine verified places exist for this location; never fabricate fake places
+        if (templates == null || templates.isEmpty()) {
+            return Collections.emptyList();
         }
 
         double[] destCoords = GeoUtils.getApproximateCoordinates(destinationName);
 
-        // Convert templates to DTOs and score them
+        // Convert templates to DTOs and score them, preventing duplicates
         List<SightseeingPlaceDto> results = new ArrayList<>();
+        Set<String> seenPlaceNames = new HashSet<>();
+
         for (PlaceTemplate t : templates) {
+            if (t.name == null || !seenPlaceNames.add(t.name.trim().toLowerCase())) {
+                continue; // Prevent duplicate recommendations
+            }
+
             // Apply category filter if requested
             if (filterCategory != null && !filterCategory.equalsIgnoreCase("ALL") && !filterCategory.trim().isEmpty()) {
                 if (!t.category.equalsIgnoreCase(filterCategory.trim())) {
@@ -498,8 +517,8 @@ public class RecommendationService {
             dto.setEstimatedTravelTimeMinutes(t.travelTimeMinutes);
             dto.setDescription(t.description);
             dto.setOpeningHours(t.openingHours);
-            dto.setLatitude(t.latitude != 0 ? t.latitude : destCoords[0] + (Math.random() - 0.5) * 0.05);
-            dto.setLongitude(t.longitude != 0 ? t.longitude : destCoords[1] + (Math.random() - 0.5) * 0.05);
+            dto.setLatitude(t.latitude != 0 ? t.latitude : destCoords[0]);
+            dto.setLongitude(t.longitude != 0 ? t.longitude : destCoords[1]);
             dto.setVisited(false);
             dto.setAddedToItinerary(false);
 
@@ -548,27 +567,6 @@ public class RecommendationService {
         }
 
         return results;
-    }
-
-    private List<PlaceTemplate> generateGenericPlacesForLocation(String locationName) {
-        double[] coords = GeoUtils.getApproximateCoordinates(locationName);
-        List<PlaceTemplate> list = new ArrayList<>();
-        list.add(new PlaceTemplate(locationName + " Old Town & Heritage Walk", "Historical", 4.6, 9500, 1.8, 90, 8,
-                "Atmospheric historic quarter showcasing traditional architecture, landmarks, and rich local cultural history.", "09:00 AM - 06:00 PM",
-                coords[0] + 0.005, coords[1] + 0.004));
-        list.add(new PlaceTemplate(locationName + " Scenic Viewpoint", "Nature", 4.7, 12400, 4.2, 60, 14,
-                "Scenic elevated hilltop viewpoint overlooking valleys and breathtaking horizon sunsets.", "06:00 AM - 07:00 PM",
-                coords[0] - 0.012, coords[1] + 0.008));
-        list.add(new PlaceTemplate(locationName + " Botanical Park", "Parks", 4.4, 7200, 3.1, 75, 10,
-                "Peaceful landscaped botanical gardens with shaded paths, floral displays, and leisure lawns.", "08:00 AM - 06:30 PM",
-                coords[0] + 0.008, coords[1] - 0.007));
-        list.add(new PlaceTemplate(locationName + " Central Heritage Museum", "Museums", 4.5, 6800, 2.5, 90, 9,
-                "Comprehensive regional gallery displaying archaeological treasures, local art, and historic relics.", "10:00 AM - 05:00 PM",
-                coords[0] - 0.004, coords[1] - 0.003));
-        list.add(new PlaceTemplate(locationName + " Sunset Point & Lake", "Photography", 4.5, 8900, 5.0, 60, 16,
-                "Popular shoreline vantage point favored by photographers for golden hour reflections and calm breezes.", "Open 24 Hours",
-                coords[0] + 0.015, coords[1] + 0.011));
-        return list;
     }
 
     public List<FeaturedDestinationDto> getFeaturedDestinations(String category, String query) {

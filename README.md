@@ -114,3 +114,20 @@ Once started, open your web browser at:
 | `POST` | `/api/trips/{id}/suggestions/{sugId}/accept` | Accept a suggestion into the itinerary |
 | `PUT`  | `/api/places/{id}/visited` | Toggle attraction visited state |
 | `DELETE` | `/api/trips/{id}` | Delete a trip |
+| `GET`  | `/api/trips/{id}/round-trip` | Calculate outbound and highway return distance |
+| `POST` | `/api/trips/preview-round-trip` | Preview round-trip calculation without saving |
+
+---
+
+## ⚡ Single-Click Launchers
+
+You can start VoyageCraft in a single click using either:
+
+1. **Desktop Shortcut:** Double-click the **`VoyageCraft`** icon on your Windows Desktop.
+2. **Project Folder Batch Launcher:** Double-click [`run-voyagecraft.bat`](run-voyagecraft.bat) located in the project root folder.
+
+Both launchers will automatically:
+- Verify the local environment and dependencies.
+- Launch the Spring Boot server (`mvnw.cmd spring-boot:run`).
+- Open your default web browser directly to `http://localhost:8080`.
+

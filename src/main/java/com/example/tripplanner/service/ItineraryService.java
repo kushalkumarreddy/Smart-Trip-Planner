@@ -67,6 +67,9 @@ public class ItineraryService {
         String previousDayEndLocation = trip.getStartLocation();
         String previousNightHotel = null;
 
+        // Track all scheduled place keys across the entire multi-day trip to guarantee ZERO repetitive visits
+        Set<String> tripScheduledPlaceKeys = new HashSet<>();
+
         for (int dayIndex = 0; dayIndex < daysCount; dayIndex++) {
             int dayNumber = dayIndex + 1;
             LocalDate currentDate = startDate.plusDays(dayIndex);
@@ -118,11 +121,16 @@ public class ItineraryService {
 
             // Process destinations for this day
             if (dayDests.isEmpty()) {
-                // Leisure / sight day in previous destination
+                // Leisure / sight day in previous destination without repeating earlier visits
                 List<SightseeingPlaceDto> leisurePlaces = recommendationService.getRecommendedPlaces(previousDayEndLocation, null, "rating", null);
                 int added = 0;
                 for (SightseeingPlaceDto p : leisurePlaces) {
                     if (added >= 3) break;
+                    String pKey = normalizePlaceKey(p.getName());
+                    if (!pKey.isEmpty() && tripScheduledPlaceKeys.contains(pKey)) {
+                        continue; // Strictly skip: traveler already visited this attraction on an earlier day
+                    }
+
                     int transitMins = p.getEstimatedTravelTimeMinutes() != null ? p.getEstimatedTravelTimeMinutes() : 15;
                     double distKm = p.getDistanceKm() != null ? p.getDistanceKm() : 3.0;
                     currentTime = TimeUtils.addMinutes(currentTime, defaultBufferMinutes);
@@ -147,12 +155,61 @@ public class ItineraryService {
                     spotItem.setNotes(p.getDescription());
                     items.add(spotItem);
 
+                    tripScheduledPlaceKeys.add(pKey);
+
                     currentTime = visitEnd;
                     dayDistance += distKm;
                     dayTravelMinutes += transitMins;
                     daySightseeingMinutes += dur;
                     totalPlacesCount++;
                     added++;
+                }
+
+                // If all catalog attractions for this destination were already visited on previous days,
+                // schedule authentic local exploration experiences rather than repeating the same tourist spots
+                if (added == 0) {
+                    String experienceTitle;
+                    String experienceNotes;
+                    int expDuration = 90;
+                    int expTransit = 15;
+                    double expDist = 2.0;
+
+                    if (dayNumber % 3 == 1) {
+                        experienceTitle = "Local Handicrafts & Artisan Spice Bazaar";
+                        experienceNotes = "Explore authentic regional craft markets, spice shops, and local culinary delicacies.";
+                    } else if (dayNumber % 3 == 2) {
+                        experienceTitle = "Scenic Nature Trail & Viewpoint Walk";
+                        experienceNotes = "Relaxed stroll along panoramic nature paths, valley vistas, and photography points.";
+                    } else {
+                        experienceTitle = "Cultural Heritage Stroll & Café Trail";
+                        experienceNotes = "Experience historic neighborhood architecture, street charm, and traditional coffee/tea heritage spots.";
+                    }
+
+                    currentTime = TimeUtils.addMinutes(currentTime, defaultBufferMinutes);
+                    String visitStart = TimeUtils.addMinutes(currentTime, expTransit);
+                    String visitEnd = TimeUtils.addMinutes(visitStart, expDuration);
+
+                    ItineraryItemDto expItem = new ItineraryItemDto();
+                    expItem.setDayNumber(dayNumber);
+                    expItem.setScheduleDate(currentDate);
+                    expItem.setStartTime(visitStart);
+                    expItem.setEndTime(visitEnd);
+                    expItem.setActivity("Explore " + experienceTitle);
+                    expItem.setLocation(previousDayEndLocation + " City & Environs");
+                    expItem.setActivityType("SIGHTSEEING");
+                    expItem.setTravelDistanceKm(expDist);
+                    expItem.setTravelTimeMinutes(expTransit);
+                    expItem.setDurationMinutes(expDuration);
+                    expItem.setRating(4.8);
+                    expItem.setVisited(false);
+                    expItem.setNotes(experienceNotes);
+                    items.add(expItem);
+
+                    currentTime = visitEnd;
+                    dayDistance += expDist;
+                    dayTravelMinutes += expTransit;
+                    daySightseeingMinutes += expDuration;
+                    totalPlacesCount++;
                 }
             } else {
                 for (Destination dest : dayDests) {
@@ -209,12 +266,16 @@ public class ItineraryService {
                         currentTime = TimeUtils.addMinutes(currentTime, 15);
                     }
 
-                    // Fetch places for this destination
+                    // Fetch places for this destination ensuring NO duplicate visits across stops/days
                     List<SightseeingPlaceDto> destPlaces = getOrGeneratePlacesForDestination(dest);
                     int placesScheduled = 0;
 
                     for (SightseeingPlaceDto place : destPlaces) {
                         if (placesScheduled >= 3) break;
+                        String pKey = normalizePlaceKey(place.getName());
+                        if (!pKey.isEmpty() && tripScheduledPlaceKeys.contains(pKey)) {
+                            continue; // Strictly skip: already scheduled on an earlier day or stop
+                        }
 
                         int visitDuration = place.getEstimatedVisitDurationMinutes() != null ? place.getEstimatedVisitDurationMinutes() : 90;
                         int travelTime = place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : 15;
@@ -250,6 +311,8 @@ public class ItineraryService {
                         visitItem.setNotes(notes);
                         items.add(visitItem);
 
+                        tripScheduledPlaceKeys.add(pKey);
+
                         if (visitItem.getVisited()) {
                             visitedPlacesCount++;
                         }
@@ -262,6 +325,68 @@ public class ItineraryService {
 
                         currentTime = TimeUtils.addMinutes(actEnd, defaultBufferMinutes);
                         dayBreakMinutes += defaultBufferMinutes;
+                    }
+
+                    // If fewer than 2 places were scheduled because earlier days consumed top attractions,
+                    // search additional catalog places for this destination to provide fresh visits
+                    if (placesScheduled < 2) {
+                        List<SightseeingPlaceDto> morePlaces = recommendationService.getRecommendedPlaces(dest.getName(), null, "rating", null);
+                        for (SightseeingPlaceDto altPlace : morePlaces) {
+                            if (placesScheduled >= 3) break;
+                            String altKey = normalizePlaceKey(altPlace.getName());
+                            if (!altKey.isEmpty() && tripScheduledPlaceKeys.contains(altKey)) {
+                                continue;
+                            }
+
+                            int visitDuration = altPlace.getEstimatedVisitDurationMinutes() != null ? altPlace.getEstimatedVisitDurationMinutes() : 90;
+                            int travelTime = altPlace.getEstimatedTravelTimeMinutes() != null ? altPlace.getEstimatedTravelTimeMinutes() : 15;
+                            double placeDist = altPlace.getDistanceKm() != null ? altPlace.getDistanceKm() : 2.5;
+
+                            String actStart = TimeUtils.addMinutes(currentTime, travelTime);
+                            String actEnd = TimeUtils.addMinutes(actStart, visitDuration);
+
+                            if (TimeUtils.parseTime(actEnd).isAfter(TimeUtils.parseTime(dailyEnd))) {
+                                break;
+                            }
+
+                            ItineraryItemDto visitItem = new ItineraryItemDto();
+                            visitItem.setDayNumber(dayNumber);
+                            visitItem.setScheduleDate(currentDate);
+                            visitItem.setStartTime(actStart);
+                            visitItem.setEndTime(actEnd);
+                            visitItem.setActivity("Visit " + altPlace.getName());
+                            visitItem.setLocation(altPlace.getName() + ", " + dest.getName());
+                            visitItem.setActivityType("SIGHTSEEING");
+                            visitItem.setPlaceId(altPlace.getId());
+                            visitItem.setTravelDistanceKm(placeDist);
+                            visitItem.setTravelTimeMinutes(travelTime);
+                            visitItem.setDurationMinutes(visitDuration);
+                            visitItem.setRating(altPlace.getRating());
+                            visitItem.setVisited(altPlace.getVisited() != null && altPlace.getVisited());
+
+                            String notes = altPlace.getDescription() != null ? altPlace.getDescription() : "";
+                            String conflict = checkOpeningHoursConflict(actStart, actEnd, altPlace.getOpeningHours());
+                            if (conflict != null) {
+                                notes = (notes.isEmpty() ? "" : notes + " • ") + "⚠️ " + conflict;
+                            }
+                            visitItem.setNotes(notes);
+                            items.add(visitItem);
+
+                            tripScheduledPlaceKeys.add(altKey);
+
+                            if (visitItem.getVisited()) {
+                                visitedPlacesCount++;
+                            }
+                            totalPlacesCount++;
+
+                            dayDistance += placeDist;
+                            dayTravelMinutes += travelTime;
+                            daySightseeingMinutes += visitDuration;
+                            placesScheduled++;
+
+                            currentTime = TimeUtils.addMinutes(actEnd, defaultBufferMinutes);
+                            dayBreakMinutes += defaultBufferMinutes;
+                        }
                     }
                 }
             }
@@ -371,12 +496,37 @@ public class ItineraryService {
         // Shuffle or filter out places already in other days
         List<SightseeingPlaceDto> filtered = new ArrayList<>();
         for (SightseeingPlaceDto c : candidates) {
-            if (alreadyUsedPlaceNames == null || !alreadyUsedPlaceNames.contains(c.getName().toLowerCase())) {
+            String cKey = normalizePlaceKey(c.getName());
+            boolean isUsed = false;
+            if (alreadyUsedPlaceNames != null) {
+                for (String used : alreadyUsedPlaceNames) {
+                    if (!cKey.isEmpty() && normalizePlaceKey(used).equals(cKey)) {
+                        isUsed = true;
+                        break;
+                    }
+                }
+            }
+            if (!isUsed) {
                 filtered.add(c);
             }
         }
         if (filtered.isEmpty()) {
-            filtered = new ArrayList<>(candidates);
+            List<SightseeingPlaceDto> allCandidates = recommendationService.getRecommendedPlaces(destName, null, "popularity", null);
+            for (SightseeingPlaceDto c : allCandidates) {
+                String cKey = normalizePlaceKey(c.getName());
+                boolean isUsed = false;
+                if (alreadyUsedPlaceNames != null) {
+                    for (String used : alreadyUsedPlaceNames) {
+                        if (!cKey.isEmpty() && normalizePlaceKey(used).equals(cKey)) {
+                            isUsed = true;
+                            break;
+                        }
+                    }
+                }
+                if (!isUsed) {
+                    filtered.add(c);
+                }
+            }
         }
         Collections.shuffle(filtered);
 
@@ -547,5 +697,16 @@ public class ItineraryService {
                 return null;
             }
         }
+    }
+
+    /**
+     * Normalizes place/attraction names for accurate duplicate detection across days and route stops.
+     * Strips common itinerary activity prefixes ("Visit", "Explore", "Tour") and punctuation.
+     */
+    public static String normalizePlaceKey(String placeName) {
+        if (placeName == null) return "";
+        return placeName.trim().toLowerCase()
+                .replaceAll("(?i)^(visit|explore|see|tour|check\\s*in|depart|travel\\s*to)\\s+", "")
+                .replaceAll("[^a-z0-9]", "");
     }
 }

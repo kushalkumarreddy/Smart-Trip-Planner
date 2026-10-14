@@ -63,14 +63,14 @@
             <!-- Quick Prompt Chips -->
             <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
                 <span class="text-muted small fw-semibold me-1">Examples:</span>
-                <span class="ai-chip" onclick="applyAiPrompt('4 day trip from guntakal, calicut, munar, kodaikenal')">
-                    📍 Guntakal → Calicut, Munnar &amp; Kodaikanal
+                <span class="ai-chip" onclick="applyAiPrompt('4-day trip from Bengaluru to Wayanad, Munnar and Ooty')">
+                    📍 Bengaluru → Wayanad, Munnar &amp; Ooty
                 </span>
                 <span class="ai-chip" onclick="applyAiPrompt('Plan a 4-day family trip from Bengaluru to Coorg with waterfalls and relaxed driving')">
                     🌿 Bengaluru → Coorg (Waterfalls)
                 </span>
-                <span class="ai-chip" onclick="applyAiPrompt('3-day weekend bike trip from Bengaluru to Wayanad with nature and scenic viewpoints')">
-                    🏍️ Bengaluru → Wayanad (Nature)
+                <span class="ai-chip" onclick="applyAiPrompt('3-day coastal trip from Mumbai to Goa with beaches and seafood')">
+                    🌊 Mumbai → Goa (Coastal &amp; Beaches)
                 </span>
             </div>
 
@@ -102,7 +102,7 @@
                             Starting Location <span class="text-danger">*</span>
                         </label>
                         <div class="autocomplete-wrapper">
-                            <input type="text" id="startLocationInput" class="form-control" placeholder="e.g. Guntakal, Bengaluru, Hyderabad" required autocomplete="off">
+                            <input type="text" id="startLocationInput" class="form-control" placeholder="Search your starting location" required autocomplete="off">
                         </div>
                         <div class="form-text text-muted small">Type to search any city, town, or airport.</div>
                     </div>
@@ -533,7 +533,7 @@
                     <div class="col-12">
                         <div class="autocomplete-wrapper">
                             <input type="text" name="destinationNames" class="form-control destination-input" 
-                                   placeholder="Destination name (e.g. Munnar, Kodaikanal, Calicut)" 
+                                   placeholder="Where do you want to go?" 
                                    value="${escapeHtml(nameValue)}" required autocomplete="off" oninput="syncHotelAccordion()">
                         </div>
                     </div>

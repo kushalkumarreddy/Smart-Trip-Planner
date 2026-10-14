@@ -31,7 +31,18 @@ public class RouteSummaryDto {
     // Full trip navigation link in Google Maps
     private String googleMapsFullRouteUrl;
 
+    // Accurate Round-Trip Distance & Return Route Details
+    private RoundTripDetailsDto roundTripDetails;
+
     public RouteSummaryDto() {
+    }
+
+    public RoundTripDetailsDto getRoundTripDetails() {
+        return roundTripDetails;
+    }
+
+    public void setRoundTripDetails(RoundTripDetailsDto roundTripDetails) {
+        this.roundTripDetails = roundTripDetails;
     }
 
     public List<RouteAlternativeDto> getAlternatives() {

@@ -144,6 +144,104 @@
             </div>
         </div>
 
+        <!-- ROUND-TRIP DISTANCE FEATURE (Requirement 3) -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+            <button type="button" id="btnToggleRoundTrip" class="btn-round-trip" onclick="toggleRoundTripDistance()">
+                <i class="bi bi-arrow-left-right"></i>
+                <span id="btnRoundTripText">Show Round-Trip Distance</span>
+            </button>
+            <span class="text-muted small">
+                <i class="bi bi-shield-check text-success me-1"></i>Accurate road distance via highway routing engine
+            </span>
+        </div>
+
+        <!-- Round-Trip Summary Panel (Initially collapsed, reveals full metrics when clicked) -->
+        <div id="roundTripPanel" class="round-trip-card mb-4" style="display: none;">
+            <div class="round-trip-card-header">
+                <div>
+                    <h6 class="fw-bold mb-1 text-dark">
+                        <i class="bi bi-arrow-repeat text-success me-2"></i>Complete Round-Trip Highway Journey
+                    </h6>
+                    <span class="text-muted small">
+                        From <strong th:text="${trip.startLocation}">Origin</strong> &rarr; Itinerary Stops &rarr; Return journey back to <strong th:text="${trip.startLocation}">Origin</strong>
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="rtProviderBadge" class="rt-badge-provider">OSRM Highway Engine</span>
+                    <button type="button" class="btn-close btn-sm" aria-label="Close" onclick="toggleRoundTripDistance()"></button>
+                </div>
+            </div>
+
+            <!-- Calculated Metrics Grid -->
+            <div id="roundTripContent">
+                <div class="round-trip-grid">
+                    <!-- Outbound Route Metric -->
+                    <div class="rt-metric-box">
+                        <div>
+                            <div class="rt-metric-label">
+                                <i class="bi bi-arrow-up-right text-success"></i> Outbound Route
+                            </div>
+                            <div id="rtOutboundDist" class="rt-metric-val" th:text="${trip.totalDistanceKm + ' km'}">0 km</div>
+                        </div>
+                        <div class="rt-metric-sub">
+                            <i class="bi bi-clock text-muted"></i>
+                            <span id="rtOutboundTime" th:text="${trip.formattedTotalTravelTime}">0 hr</span>
+                        </div>
+                    </div>
+
+                    <!-- Return Journey Metric -->
+                    <div class="rt-metric-box">
+                        <div>
+                            <div class="rt-metric-label" style="color: var(--muted-amber);">
+                                <i class="bi bi-arrow-down-left"></i> Return Journey
+                            </div>
+                            <div id="rtReturnDist" class="rt-metric-val">-- km</div>
+                        </div>
+                        <div class="rt-metric-sub">
+                            <i class="bi bi-clock text-muted"></i>
+                            <span id="rtReturnTime">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Round-Trip Metric -->
+                    <div class="rt-metric-box total-box">
+                        <div>
+                            <div class="rt-metric-label text-dark">
+                                <i class="bi bi-signpost-split-fill text-success"></i> Total Round-Trip
+                            </div>
+                            <div id="rtTotalDist" class="rt-metric-val text-success">-- km</div>
+                        </div>
+                        <div class="rt-metric-sub fw-semibold text-dark">
+                            <i class="bi bi-hourglass-split text-success"></i>
+                            <span id="rtTotalTime">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top small text-muted gap-2">
+                    <div>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Return journey calculated from final destination (<strong th:text="${trip.destinations != null and !trip.destinations.empty ? trip.destinations[trip.destinations.size() - 1].name : 'End'}">Final Stop</strong>) directly back to <strong th:text="${trip.startLocation}">Origin</strong>.
+                    </div>
+                    <button type="button" class="btn btn-outline-forest btn-sm" onclick="fetchRoundTripDetails(true)">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Return Route
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="roundTripLoading" class="text-center py-4" style="display: none;">
+                <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                <span class="text-muted small">Calculating authentic highway road return route...</span>
+            </div>
+
+            <!-- Error State -->
+            <div id="roundTripError" class="alert alert-warning py-2 px-3 small mt-2 mb-0" style="display: none;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <span id="roundTripErrorMsg">Could not retrieve return route road data.</span>
+            </div>
+        </div>
+
         <!-- SMART ROUTE OPTIMIZATION SIDE-BY-SIDE PRESENTATION (Requirement 5) -->
         <div th:if="${trip.routeSummary != null and trip.routeSummary.optimizationRecommended}" class="card card-modern p-4 mb-4 border-success">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
@@ -473,7 +571,20 @@
                     </div>
 
                     <!-- Map Canvas Container -->
-                    <div id="mapContainer" class="map-container" style="height: 540px; border-radius: 14px;"></div>
+                    <div style="position: relative;">
+                        <div id="mapContainer" class="map-container" style="height: 540px; border-radius: 14px;"></div>
+                        <!-- Route Legend Overlay -->
+                        <div id="mapRouteLegend" class="map-route-legend" style="display: none;">
+                            <div class="legend-item">
+                                <span class="legend-line-outbound"></span>
+                                <span>Outbound Route</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line-return"></span>
+                                <span>Return Journey</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="d-flex justify-content-between align-items-center mt-2 small text-muted">
                         <div>
@@ -1032,6 +1143,180 @@
             setTimeout(() => {
                 map.invalidateSize();
             }, 300);
+        }
+
+        // =========================================================
+        // Round-Trip Distance Calculation & Map Layer (Requirement 3)
+        // =========================================================
+
+        let roundTripLayerGroup = null;
+        let cachedRoundTripDetails = null;
+
+        function toggleRoundTripDistance() {
+            const panel = document.getElementById("roundTripPanel");
+            const btn = document.getElementById("btnToggleRoundTrip");
+            const btnText = document.getElementById("btnRoundTripText");
+            const legend = document.getElementById("mapRouteLegend");
+
+            if (!panel) return;
+
+            const isCurrentlyVisible = panel.style.display !== "none";
+
+            if (isCurrentlyVisible) {
+                // Collapse panel
+                panel.style.display = "none";
+                btn.classList.remove("active");
+                if (btnText) btnText.textContent = "Show Round-Trip Distance";
+                if (legend) legend.style.display = "none";
+
+                // Remove return route polyline from map
+                if (roundTripLayerGroup && window._currentLeafletMap) {
+                    try {
+                        window._currentLeafletMap.removeLayer(roundTripLayerGroup);
+                        roundTripLayerGroup = null;
+                    } catch (e) {
+                        console.warn("Could not remove return layer:", e);
+                    }
+                }
+            } else {
+                // Expand panel
+                panel.style.display = "block";
+                btn.classList.add("active");
+                if (btnText) btnText.textContent = "Hide Round-Trip Details";
+                if (legend) legend.style.display = "flex";
+
+                fetchRoundTripDetails(false);
+            }
+        }
+
+        async function fetchRoundTripDetails(forceRecalculate = false) {
+            const loading = document.getElementById("roundTripLoading");
+            const content = document.getElementById("roundTripContent");
+            const errorBox = document.getElementById("roundTripError");
+            const errorMsg = document.getElementById("roundTripErrorMsg");
+
+            // If we already have cached details and not forcing refresh, use them
+            if (cachedRoundTripDetails && !forceRecalculate) {
+                renderRoundTripMetrics(cachedRoundTripDetails);
+                renderReturnRouteOnMap(cachedRoundTripDetails);
+                return;
+            }
+
+            // Check if server-rendered trip data already has roundTripDetails
+            if (!forceRecalculate && tripData && tripData.routeSummary && tripData.routeSummary.roundTripDetails) {
+                cachedRoundTripDetails = tripData.routeSummary.roundTripDetails;
+                renderRoundTripMetrics(cachedRoundTripDetails);
+                renderReturnRouteOnMap(cachedRoundTripDetails);
+                return;
+            }
+
+            try {
+                if (loading) loading.style.display = "block";
+                if (content) content.style.display = "none";
+                if (errorBox) errorBox.style.display = "none";
+
+                const response = await fetch(`/api/trips/${tripData.id}/round-trip`);
+                if (!response.ok) {
+                    throw new Error("Unable to obtain return road route from routing engine");
+                }
+
+                const details = await response.json();
+                cachedRoundTripDetails = details;
+
+                renderRoundTripMetrics(details);
+                renderReturnRouteOnMap(details);
+
+                if (loading) loading.style.display = "none";
+                if (content) content.style.display = "block";
+            } catch (err) {
+                console.error("Round trip calculation error:", err);
+                if (loading) loading.style.display = "none";
+                if (errorBox) {
+                    errorMsg.textContent = err.message || "Could not retrieve return route road data.";
+                    errorBox.style.display = "block";
+                }
+            }
+        }
+
+        function renderRoundTripMetrics(details) {
+            if (!details) return;
+
+            const outboundDist = document.getElementById("rtOutboundDist");
+            const outboundTime = document.getElementById("rtOutboundTime");
+            const returnDist = document.getElementById("rtReturnDist");
+            const returnTime = document.getElementById("rtReturnTime");
+            const totalDist = document.getElementById("rtTotalDist");
+            const totalTime = document.getElementById("rtTotalTime");
+            const providerBadge = document.getElementById("rtProviderBadge");
+
+            if (outboundDist) outboundDist.textContent = `${details.outboundDistanceKm} km`;
+            if (outboundTime) outboundTime.textContent = details.outboundDurationFormatted || "0 hr";
+            if (returnDist) returnDist.textContent = `${details.returnDistanceKm} km`;
+            if (returnTime) returnTime.textContent = details.returnDurationFormatted || "--";
+            if (totalDist) totalDist.textContent = `${details.roundTripTotalDistanceKm} km`;
+            if (totalTime) totalTime.textContent = details.roundTripTotalDurationFormatted || "--";
+            if (providerBadge && details.routingProvider) providerBadge.textContent = details.routingProvider;
+        }
+
+        function renderReturnRouteOnMap(details) {
+            const map = window._currentLeafletMap;
+            if (!map || !details) return;
+
+            // Clean up any previous return layer
+            if (roundTripLayerGroup) {
+                try {
+                    map.removeLayer(roundTripLayerGroup);
+                } catch(e) {}
+                roundTripLayerGroup = null;
+            }
+
+            roundTripLayerGroup = L.featureGroup();
+
+            let returnCoords = [];
+            if (details.returnGeometry && details.returnGeometry.length > 1) {
+                returnCoords = details.returnGeometry.map(pt => [pt[0], pt[1]]);
+            }
+
+            if (returnCoords.length > 1) {
+                // Return journey outer casing
+                const casing = L.polyline(returnCoords, {
+                    color: '#18392F',
+                    weight: 6,
+                    opacity: 0.25,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                });
+                roundTripLayerGroup.addLayer(casing);
+
+                // Return journey highway line in warm amber with distinct dash pattern
+                const returnLine = L.polyline(returnCoords, {
+                    color: '#D8A86E',
+                    weight: 4.5,
+                    opacity: 0.95,
+                    dashArray: '10, 8',
+                    lineCap: 'round'
+                });
+                returnLine.bindPopup(`
+                    <div style="padding: 4px; font-family: 'Inter', sans-serif;">
+                        <strong style="color: #18392F;"><i class="bi bi-arrow-left-right me-1"></i> Return Highway Journey</strong>
+                        <div class="small text-muted mt-1">Distance: <strong>${details.returnDistanceKm} km</strong></div>
+                        <div class="small text-muted">Driving time: <strong>${details.returnDurationFormatted}</strong></div>
+                    </div>
+                `);
+                roundTripLayerGroup.addLayer(returnLine);
+            }
+
+            roundTripLayerGroup.addTo(map);
+
+            // Fit bounds to embrace both outbound and return journeys
+            try {
+                const combinedBounds = roundTripLayerGroup.getBounds();
+                if (combinedBounds.isValid()) {
+                    map.fitBounds(combinedBounds, { padding: [50, 50], maxZoom: 13 });
+                }
+            } catch (e) {
+                console.warn("Could not fit return bounds:", e);
+            }
         }
 
         // View Mode Switcher: Split / Timeline Only / Map Only

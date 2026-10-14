@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgHeritage" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18392F" />
+      <stop offset="70%" stop-color="#244F40" />
+      <stop offset="100%" stop-color="#3b2b20" />
+    </linearGradient>
+    <linearGradient id="fortAmber" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D8A86E" />
+      <stop offset="100%" stop-color="#8c5828" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="500" fill="url(#bgHeritage)" />
+
+  <!-- Moon / Ambient Sun -->
+  <circle cx="620" cy="130" r="50" fill="#F7F3EA" opacity="0.85" />
+  <circle cx="620" cy="130" r="70" fill="none" stroke="#D8A86E" stroke-width="2" opacity="0.3" />
+
+  <!-- Distant Fort Ramparts -->
+  <path d="M 0 340 L 120 340 L 130 320 L 160 320 L 170 340 L 260 340 L 270 310 L 310 310 L 320 340 L 480 340 L 490 325 L 520 325 L 530 340 L 800 340 L 800 500 L 0 500 Z" fill="#244F40" opacity="0.6"/>
+
+  <!-- Majestic Palace Silhouette -->
+  <!-- Main central dome -->
+  <path d="M 350 260 C 350 190 400 170 400 150 C 400 170 450 190 450 260 Z" fill="url(#fortAmber)" />
+  <line x1="400" y1="130" x2="400" y2="150" stroke="#F7F3EA" stroke-width="3"/>
+  <circle cx="400" cy="128" r="4" fill="#F7F3EA" />
+
+  <!-- Side domes -->
+  <path d="M 270 270 C 270 220 300 205 300 190 C 300 205 330 220 330 270 Z" fill="url(#fortAmber)" opacity="0.9" />
+  <path d="M 470 270 C 470 220 500 205 500 190 C 500 205 530 220 530 270 Z" fill="url(#fortAmber)" opacity="0.9" />
+
+  <!-- Main Palace Block -->
+  <rect x="220" y="270" width="360" height="180" fill="url(#fortAmber)" />
+
+  <!-- Arched Windows & Doorways (Indo-Saracenic Jharokhas) -->
+  <path d="M 370 380 Q 400 340 430 380 L 430 450 L 370 450 Z" fill="#18392F" />
+  <path d="M 280 320 Q 300 290 320 320 L 320 360 L 280 360 Z" fill="#18392F" opacity="0.8" />
+  <path d="M 480 320 Q 500 290 520 320 L 520 360 L 480 360 Z" fill="#18392F" opacity="0.8" />
+  <path d="M 240 380 Q 255 355 270 380 L 270 420 L 240 420 Z" fill="#18392F" opacity="0.8" />
+  <path d="M 530 380 Q 545 355 560 380 L 560 420 L 530 420 Z" fill="#18392F" opacity="0.8" />
+
+  <!-- Outer Turrets / Minarets -->
+  <rect x="180" y="220" width="30" height="230" fill="url(#fortAmber)" />
+  <path d="M 175 220 C 175 195 195 185 195 175 C 195 185 215 195 215 220 Z" fill="#D8A86E" />
+  <rect x="590" y="220" width="30" height="230" fill="url(#fortAmber)" />
+  <path d="M 585 220 C 585 195 605 185 605 175 C 605 185 625 195 625 220 Z" fill="#D8A86E" />
+
+  <!-- Courtyard & River Pool Reflection -->
+  <rect x="0" y="450" width="800" height="50" fill="#132c24" />
+  <line x1="0" y1="450" x2="800" y2="450" stroke="#D8A86E" stroke-width="2" />
+</svg>

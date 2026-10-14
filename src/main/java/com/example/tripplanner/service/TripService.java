@@ -135,6 +135,7 @@ public class TripService {
 
         // Create Destination Entities & Seed Initial Top Places
         List<Destination> destinations = new ArrayList<>();
+        Set<String> tripSeededPlaces = new HashSet<>();
         for (int i = 0; i < cleanedDestinations.size(); i++) {
             String destName = cleanedDestinations.get(i);
             Destination destination = new Destination(destName, i);
@@ -157,7 +158,7 @@ public class TripService {
 
             Destination savedDest = destinationRepository.save(destination);
 
-            // Seed top sightseeing recommendations into places table
+            // Seed top sightseeing recommendations into places table ensuring no duplicates across stops
             List<SightseeingPlaceDto> recommended = recommendationService.getRecommendedPlaces(
                     destName,
                     request.getPreferredInterests(),
@@ -166,6 +167,14 @@ public class TripService {
             );
 
             for (SightseeingPlaceDto rec : recommended) {
+                String recKey = ItineraryService.normalizePlaceKey(rec.getName());
+                if (!recKey.isEmpty() && tripSeededPlaces.contains(recKey)) {
+                    continue; // Skip duplicate attraction already seeded in earlier stop of this trip
+                }
+                if (!recKey.isEmpty()) {
+                    tripSeededPlaces.add(recKey);
+                }
+
                 Place place = new Place();
                 place.setDestination(savedDest);
                 place.setName(rec.getName());
@@ -487,14 +496,14 @@ public class TripService {
         List<ItineraryItem> allItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
         Set<String> alreadyUsed = new HashSet<>();
         for (ItineraryItem it : allItems) {
-            if (!it.getDayNumber().equals(dayNumber) && it.getLocation() != null) {
-                alreadyUsed.add(it.getLocation().toLowerCase());
+            if (!it.getDayNumber().equals(dayNumber)) {
+                if (it.getActivity() != null) alreadyUsed.add(it.getActivity());
+                if (it.getLocation() != null) alreadyUsed.add(it.getLocation());
             }
         }
         for (ItineraryItem locked : lockedItems) {
-            if (locked.getLocation() != null) {
-                alreadyUsed.add(locked.getLocation().toLowerCase());
-            }
+            if (locked.getActivity() != null) alreadyUsed.add(locked.getActivity());
+            if (locked.getLocation() != null) alreadyUsed.add(locked.getLocation());
         }
 
         // Generate refreshed candidate day
@@ -1537,6 +1546,7 @@ public class TripService {
 
         List<DayItineraryDto> dayDtos = new ArrayList<>();
         LocalDate startDate = trip.getStartDate() != null ? trip.getStartDate() : LocalDate.now();
+        Set<String> seenTripSightseeingKeys = new HashSet<>();
 
         for (Map.Entry<Integer, List<ItineraryItem>> entry : byDay.entrySet()) {
             int dayNumber = entry.getKey();
@@ -1558,6 +1568,16 @@ public class TripService {
             int visitedPlaces = 0;
 
             for (ItineraryItem it : dayItems) {
+                if ("SIGHTSEEING".equalsIgnoreCase(it.getActivityType())) {
+                    String pKey = ItineraryService.normalizePlaceKey(it.getActivity() != null ? it.getActivity() : it.getLocation());
+                    if (!pKey.isEmpty() && seenTripSightseeingKeys.contains(pKey)) {
+                        // Skip repetitive sightseeing visit that duplicates an earlier day
+                        continue;
+                    }
+                    if (!pKey.isEmpty()) {
+                        seenTripSightseeingKeys.add(pKey);
+                    }
+                }
                 ItineraryItemDto dto = new ItineraryItemDto();
                 dto.setId(it.getId());
                 dto.setTripId(trip.getId());

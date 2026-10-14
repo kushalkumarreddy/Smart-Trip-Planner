@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="templeSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18392F" />
+      <stop offset="60%" stop-color="#244F40" />
+      <stop offset="100%" stop-color="#D8A86E" />
+    </linearGradient>
+    <linearGradient id="gopuramStone" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D8A86E" />
+      <stop offset="100%" stop-color="#244F40" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="500" fill="url(#templeSky)" />
+
+  <!-- Sacred Sun Aura -->
+  <circle cx="400" cy="180" r="90" fill="#F7F3EA" opacity="0.3" filter="blur(6px)" />
+  <circle cx="400" cy="180" r="60" fill="#FFE4B5" opacity="0.75" />
+
+  <!-- Classical Indian Temple Gopuram / Tower Silhouette -->
+  <!-- Kalasam Finials at Top -->
+  <polygon points="400,90 395,110 405,110" fill="#FFE4B5" />
+  <polygon points="385,96 380,115 390,115" fill="#FFE4B5" />
+  <polygon points="415,96 410,115 420,115" fill="#FFE4B5" />
+
+  <!-- Tier 1 -->
+  <polygon points="360,140 440,140 430,115 370,115" fill="url(#gopuramStone)" />
+  <rect x="390" y="125" width="20" height="15" fill="#18392F" />
+
+  <!-- Tier 2 -->
+  <polygon points="340,180 460,180 450,140 350,140" fill="url(#gopuramStone)" />
+  <rect x="385" y="155" width="30" height="25" fill="#18392F" />
+
+  <!-- Tier 3 -->
+  <polygon points="320,230 480,230 470,180 330,180" fill="url(#gopuramStone)" />
+  <rect x="380" y="195" width="40" height="35" fill="#18392F" />
+
+  <!-- Tier 4 -->
+  <polygon points="300,290 500,290 490,230 310,230" fill="url(#gopuramStone)" />
+  <rect x="375" y="250" width="50" height="40" fill="#18392F" />
+
+  <!-- Tier 5 -->
+  <polygon points="280,360 520,360 510,290 290,290" fill="url(#gopuramStone)" />
+  <rect x="370" y="310" width="60" height="50" fill="#18392F" />
+
+  <!-- Main Grand Gateway (Mahadwaram Base) -->
+  <rect x="250" y="360" width="300" height="140" fill="#18392F" />
+  <!-- Central Archway -->
+  <path d="M 360 500 L 360 410 Q 400 375 440 410 L 440 500 Z" fill="#D8A86E" />
+  <path d="M 375 500 L 375 425 Q 400 400 425 425 L 425 500 Z" fill="#132c24" />
+
+  <!-- Pillar colonnades -->
+  <rect x="100" y="420" width="150" height="80" fill="#18392F" opacity="0.9" />
+  <rect x="550" y="420" width="150" height="80" fill="#18392F" opacity="0.9" />
+
+  <!-- Diya / Oil Lamp Flame Symbols -->
+  <path d="M 270 410 Q 275 395 280 410 Q 275 415 270 410 Z" fill="#FFE4B5" />
+  <path d="M 520 410 Q 525 395 530 410 Q 525 415 520 410 Z" fill="#FFE4B5" />
+</svg>

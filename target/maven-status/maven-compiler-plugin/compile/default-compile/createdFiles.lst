@@ -14,6 +14,7 @@ com\example\tripplanner\entity\ItineraryItem.class
 com\example\tripplanner\util\GeoUtils.class
 com\example\tripplanner\entity\Trip.class
 com\example\tripplanner\repository\ItineraryItemRepository.class
+com\example\tripplanner\dto\RoundTripDetailsDto.class
 com\example\tripplanner\controller\ConfigApiController.class
 com\example\tripplanner\service\GoogleMapsService.class
 com\example\tripplanner\service\AiTripPlannerService$ExtractedLocations.class

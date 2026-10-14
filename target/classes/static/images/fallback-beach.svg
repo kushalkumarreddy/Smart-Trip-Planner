@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="beachSunset" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18392F" />
+      <stop offset="40%" stop-color="#244F40" />
+      <stop offset="70%" stop-color="#D8A86E" />
+      <stop offset="100%" stop-color="#F7F3EA" />
+    </linearGradient>
+    <linearGradient id="oceanWave" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d6a50" />
+      <stop offset="100%" stop-color="#18392F" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="500" fill="url(#beachSunset)" />
+
+  <!-- Sunset Sun -->
+  <circle cx="480" cy="270" r="45" fill="#FFE4B5" />
+  <circle cx="480" cy="270" r="55" fill="none" stroke="#D8A86E" stroke-width="2" opacity="0.5" />
+
+  <!-- Calm Ocean Water -->
+  <rect x="0" y="270" width="800" height="150" fill="url(#oceanWave)" />
+  <ellipse cx="480" cy="290" rx="60" ry="6" fill="#FFE4B5" opacity="0.6" />
+  <ellipse cx="480" cy="310" rx="90" ry="8" fill="#FFE4B5" opacity="0.4" />
+  <ellipse cx="480" cy="335" rx="120" ry="10" fill="#FFE4B5" opacity="0.2" />
+
+  <!-- Sandy Shoreline -->
+  <path d="M 0 380 Q 300 370 550 420 Q 700 450 800 440 L 800 500 L 0 500 Z" fill="#F7F3EA" />
+  <path d="M 0 385 Q 300 375 550 425 Q 700 455 800 445" stroke="#ffffff" stroke-width="4" fill="none" opacity="0.9" />
+
+  <!-- Coconut Palm Trees Silhouette on Left -->
+  <g fill="#18392F">
+    <!-- Trunk 1 -->
+    <path d="M 70 500 Q 110 350 140 220 L 152 223 Q 120 350 85 500 Z" />
+    <!-- Fronds 1 -->
+    <path d="M 146 221 Q 80 180 30 200 Q 90 220 146 221 Z" />
+    <path d="M 146 221 Q 120 140 80 130 Q 120 180 146 221 Z" />
+    <path d="M 146 221 Q 180 130 230 140 Q 180 180 146 221 Z" />
+    <path d="M 146 221 Q 220 190 260 220 Q 200 230 146 221 Z" />
+    <path d="M 146 221 Q 190 250 200 300 Q 170 260 146 221 Z" />
+
+    <!-- Trunk 2 -->
+    <path d="M 20 500 Q 50 370 50 260 L 60 262 Q 60 370 32 500 Z" opacity="0.85" />
+    <!-- Fronds 2 -->
+    <path d="M 55 261 Q 10 220 -30 240 Q 10 260 55 261 Z" />
+    <path d="M 55 261 Q 40 190 10 180 Q 40 220 55 261 Z" />
+    <path d="M 55 261 Q 90 190 130 200 Q 90 230 55 261 Z" />
+    <path d="M 55 261 Q 110 240 130 280 Q 90 270 55 261 Z" />
+  </g>
+</svg>
