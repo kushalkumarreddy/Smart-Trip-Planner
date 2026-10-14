@@ -4,8 +4,10 @@ com\example\tripplanner\dto\AiTripPromptDto$Request.class
 com\example\tripplanner\dto\PackingChecklistDto$ChecklistItem.class
 com\example\tripplanner\service\TripService.class
 com\example\tripplanner\util\GeoUtils$RoadRouteResult.class
+com\example\tripplanner\dto\RouteAlternativeDto.class
 com\example\tripplanner\dto\TripResponseDto.class
 com\example\tripplanner\service\ItineraryService.class
+com\example\tripplanner\dto\AccommodationStayDto.class
 com\example\tripplanner\exception\ResourceNotFoundException.class
 com\example\tripplanner\repository\PlaceRepository.class
 com\example\tripplanner\entity\ItineraryItem.class
@@ -17,6 +19,7 @@ com\example\tripplanner\service\GoogleMapsService.class
 com\example\tripplanner\service\AiTripPlannerService$ExtractedLocations.class
 com\example\tripplanner\TripPlannerApplication.class
 com\example\tripplanner\dto\PackingChecklistDto.class
+com\example\tripplanner\dto\FeaturedDestinationDto.class
 com\example\tripplanner\entity\TripSuggestion.class
 com\example\tripplanner\dto\UserResponseDto.class
 com\example\tripplanner\repository\UserRepository.class

@@ -133,37 +133,70 @@ public class GeoUtils {
         KNOWN_COORDINATES.put("tirupati", new double[]{13.6288, 79.4192});
         KNOWN_COORDINATES.put("vijayawada", new double[]{16.5062, 80.6480});
 
-        // North & West India
+        // North & West India - Iconic Places
         KNOWN_COORDINATES.put("delhi", new double[]{28.6139, 77.2090});
         KNOWN_COORDINATES.put("new delhi", new double[]{28.6139, 77.2090});
+        KNOWN_COORDINATES.put("red fort", new double[]{28.6562, 77.2410});
+        KNOWN_COORDINATES.put("red fort, delhi", new double[]{28.6562, 77.2410});
         KNOWN_COORDINATES.put("agra", new double[]{27.1767, 78.0081});
+        KNOWN_COORDINATES.put("taj mahal", new double[]{27.1751, 78.0421});
+        KNOWN_COORDINATES.put("taj mahal, agra", new double[]{27.1751, 78.0421});
         KNOWN_COORDINATES.put("jaipur", new double[]{26.9124, 75.7873});
+        KNOWN_COORDINATES.put("jaipur city palace", new double[]{26.9258, 75.8237});
+        KNOWN_COORDINATES.put("city palace, jaipur", new double[]{26.9258, 75.8237});
+        KNOWN_COORDINATES.put("amer fort", new double[]{26.9855, 75.8513});
+        KNOWN_COORDINATES.put("amer fort, jaipur", new double[]{26.9855, 75.8513});
+        KNOWN_COORDINATES.put("amber fort", new double[]{26.9855, 75.8513});
+        KNOWN_COORDINATES.put("hawa mahal", new double[]{26.9239, 75.8267});
+        KNOWN_COORDINATES.put("hawa mahal, jaipur", new double[]{26.9239, 75.8267});
         KNOWN_COORDINATES.put("udaipur", new double[]{24.5854, 73.7125});
         KNOWN_COORDINATES.put("jodhpur", new double[]{26.2389, 73.0243});
         KNOWN_COORDINATES.put("jaisalmer", new double[]{26.9157, 70.9083});
         KNOWN_COORDINATES.put("pushkar", new double[]{26.4897, 74.5511});
         KNOWN_COORDINATES.put("mount abu", new double[]{24.5925, 72.7156});
         KNOWN_COORDINATES.put("manali", new double[]{32.2432, 77.1892});
+        KNOWN_COORDINATES.put("manali, himachal pradesh", new double[]{32.2432, 77.1892});
         KNOWN_COORDINATES.put("shimla", new double[]{31.1048, 77.1734});
         KNOWN_COORDINATES.put("dharamshala", new double[]{32.2190, 76.3234});
         KNOWN_COORDINATES.put("mcleodganj", new double[]{32.2426, 76.3213});
         KNOWN_COORDINATES.put("rishikesh", new double[]{30.0869, 78.2676});
+        KNOWN_COORDINATES.put("rishikesh, uttarakhand", new double[]{30.0869, 78.2676});
         KNOWN_COORDINATES.put("haridwar", new double[]{29.9457, 78.1642});
         KNOWN_COORDINATES.put("dehradun", new double[]{30.3165, 78.0322});
         KNOWN_COORDINATES.put("mussoorie", new double[]{30.4598, 78.0644});
         KNOWN_COORDINATES.put("nainital", new double[]{29.3919, 79.4542});
         KNOWN_COORDINATES.put("amritsar", new double[]{31.6340, 74.8723});
+        KNOWN_COORDINATES.put("golden temple", new double[]{31.6200, 74.8765});
+        KNOWN_COORDINATES.put("golden temple, amritsar", new double[]{31.6200, 74.8765});
+        KNOWN_COORDINATES.put("harmandir sahib", new double[]{31.6200, 74.8765});
         KNOWN_COORDINATES.put("varanasi", new double[]{25.3176, 82.9739});
+        KNOWN_COORDINATES.put("varanasi ghats", new double[]{25.3076, 83.0107});
+        KNOWN_COORDINATES.put("varanasi ghats, varanasi", new double[]{25.3076, 83.0107});
+        KNOWN_COORDINATES.put("dashashwamedh ghat", new double[]{25.3076, 83.0107});
         KNOWN_COORDINATES.put("srinagar", new double[]{34.0837, 74.7973});
         KNOWN_COORDINATES.put("leh", new double[]{34.1526, 77.5771});
         KNOWN_COORDINATES.put("ladakh", new double[]{34.1526, 77.5771});
 
+        // Western & Southern Attractions
+        KNOWN_COORDINATES.put("gateway of india", new double[]{18.9220, 72.8347});
+        KNOWN_COORDINATES.put("gateway of india, mumbai", new double[]{18.9220, 72.8347});
+        KNOWN_COORDINATES.put("mysore palace", new double[]{12.3051, 76.6552});
+        KNOWN_COORDINATES.put("mysore palace, mysuru", new double[]{12.3051, 76.6552});
+        KNOWN_COORDINATES.put("alleppey backwaters", new double[]{9.4981, 76.3388});
+        KNOWN_COORDINATES.put("alleppey backwaters, kerala", new double[]{9.4981, 76.3388});
+        KNOWN_COORDINATES.put("goa beaches", new double[]{15.2993, 74.1240});
+        KNOWN_COORDINATES.put("goa beaches, goa", new double[]{15.2993, 74.1240});
+
         // East & North East
         KNOWN_COORDINATES.put("kolkata", new double[]{22.5726, 88.3639});
         KNOWN_COORDINATES.put("darjeeling", new double[]{27.0410, 88.2663});
+        KNOWN_COORDINATES.put("darjeeling, west bengal", new double[]{27.0410, 88.2663});
         KNOWN_COORDINATES.put("gangtok", new double[]{27.3389, 88.6065});
         KNOWN_COORDINATES.put("shillong", new double[]{25.5788, 91.8933});
         KNOWN_COORDINATES.put("puri", new double[]{19.8135, 85.8312});
+        KNOWN_COORDINATES.put("kaziranga", new double[]{26.5775, 93.1711});
+        KNOWN_COORDINATES.put("kaziranga national park", new double[]{26.5775, 93.1711});
+        KNOWN_COORDINATES.put("kaziranga national park, assam", new double[]{26.5775, 93.1711});
 
         // International Top Destinations
         KNOWN_COORDINATES.put("dubai", new double[]{25.2048, 55.2708});
@@ -268,71 +301,115 @@ public class GeoUtils {
         return Math.round(EARTH_RADIUS_KM * c * 10.0) / 10.0;
     }
 
+    // Testing & Simulation Toggle: Simulate Routing Provider Failure
+    private static volatile boolean simulateRoutingFailure = false;
+
+    public static void setSimulateRoutingFailure(boolean simulate) {
+        simulateRoutingFailure = simulate;
+        ROUTE_CACHE.clear();
+    }
+
+    public static boolean isSimulateRoutingFailure() {
+        return simulateRoutingFailure;
+    }
+
     /**
-     * Resolves highly accurate real road distance and travel time.
-     * Uses OSRM (Open Source Routing Machine) high-speed road network routing with caching.
+     * Resolves geographical address details from clicked coordinates.
+     * Uses Photon reverse geocoding API with high-precision destination fallback.
      */
-    // Curated high-precision highway road metrics for major travel corridors (exact highway mileage)
-    private static final Map<String, double[]> KNOWN_HIGHWAY_PAIRS = new HashMap<>();
+    public static Map<String, Object> reverseGeocode(double lat, double lng) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("lat", lat);
+        result.put("lng", lng);
 
-    static {
-        // Bengaluru - Mysore
-        addHighwayPair("bengaluru", "mysore", 143.5, 150);
-        addHighwayPair("bangalore", "mysore", 143.5, 150);
-        addHighwayPair("bengaluru", "mysuru", 143.5, 150);
-        // Mysore - Coorg
-        addHighwayPair("mysore", "coorg", 118.0, 165);
-        addHighwayPair("mysuru", "coorg", 118.0, 165);
-        addHighwayPair("mysore", "madikeri", 118.0, 165);
-        // Bengaluru - Coorg
-        addHighwayPair("bengaluru", "coorg", 248.0, 310);
-        addHighwayPair("bangalore", "coorg", 248.0, 310);
-        // Mysore - Wayanad
-        addHighwayPair("mysore", "wayanad", 138.0, 190);
-        addHighwayPair("mysuru", "wayanad", 138.0, 190);
-        addHighwayPair("mysore", "sulthan bathery", 115.0, 160);
-        // Coorg - Wayanad
-        addHighwayPair("coorg", "wayanad", 115.0, 180);
-        addHighwayPair("madikeri", "wayanad", 115.0, 180);
-        // Wayanad - Ooty
-        addHighwayPair("wayanad", "ooty", 112.0, 190);
-        // Mysore - Ooty
-        addHighwayPair("mysore", "ooty", 125.0, 175);
-        // Bengaluru - Ooty
-        addHighwayPair("bengaluru", "ooty", 272.0, 340);
-        addHighwayPair("bangalore", "ooty", 272.0, 340);
-        // Coorg - Ooty
-        addHighwayPair("coorg", "ooty", 225.0, 320);
-        // Bengaluru - Chikmagalur
-        addHighwayPair("bengaluru", "chikmagalur", 245.0, 270);
-        addHighwayPair("chikmagalur", "coorg", 140.0, 210);
-        // Bengaluru - Hampi
-        addHighwayPair("bengaluru", "hampi", 345.0, 390);
-        // Goa - Gokarna
-        addHighwayPair("goa", "gokarna", 145.0, 200);
-        // Mumbai - Pune
-        addHighwayPair("mumbai", "pune", 150.0, 180);
-        // Delhi - Agra
-        addHighwayPair("delhi", "agra", 230.0, 210);
-        // Delhi - Jaipur
-        addHighwayPair("delhi", "jaipur", 280.0, 300);
-        // Jaipur - Agra
-        addHighwayPair("jaipur", "agra", 240.0, 270);
-    }
+        // 1. Query live reverse geocoding API
+        try {
+            String url = String.format(Locale.US, "https://photon.komoot.io/reverse?lat=%.6f&lon=%.6f", lat, lng);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("User-Agent", "VoyageCraft-TripPlanner/1.0")
+                    .timeout(Duration.ofSeconds(3))
+                    .GET()
+                    .build();
 
-    private static void addHighwayPair(String placeA, String placeB, double distanceKm, int durationMinutes) {
-        String key1 = placeA.toLowerCase().trim() + "->" + placeB.toLowerCase().trim();
-        String key2 = placeB.toLowerCase().trim() + "->" + placeA.toLowerCase().trim();
-        KNOWN_HIGHWAY_PAIRS.put(key1, new double[]{distanceKm, durationMinutes});
-        KNOWN_HIGHWAY_PAIRS.put(key2, new double[]{distanceKm, durationMinutes});
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200 && response.body() != null) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode features = root.path("features");
+                if (features.isArray() && features.size() > 0) {
+                    JsonNode props = features.get(0).path("properties");
+                    String name = props.path("name").asText("");
+                    String street = props.path("street").asText("");
+                    String city = props.path("city").asText(props.path("county").asText(""));
+                    String state = props.path("state").asText("");
+                    String country = props.path("country").asText("India");
+
+                    StringBuilder address = new StringBuilder();
+                    if (!name.isEmpty()) address.append(name).append(", ");
+                    if (!street.isEmpty() && !street.equals(name)) address.append(street).append(", ");
+                    if (!city.isEmpty()) address.append(city).append(", ");
+                    if (!state.isEmpty()) address.append(state).append(", ");
+                    address.append(country);
+
+                    result.put("name", !name.isEmpty() ? name : (!city.isEmpty() ? city : "Selected Location"));
+                    result.put("formattedAddress", address.toString());
+                    result.put("city", !city.isEmpty() ? city : (!state.isEmpty() ? state : "India"));
+                    result.put("state", state);
+                    result.put("resolved", true);
+                    return result;
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Live reverse geocode lookup error: {}", e.getMessage());
+        }
+
+        // 2. High-precision nearest known destination matching
+        String closestPlace = null;
+        double minDistance = Double.MAX_VALUE;
+        for (Map.Entry<String, double[]> entry : KNOWN_COORDINATES.entrySet()) {
+            double d = calculateHaversineDistanceKm(lat, lng, entry.getValue()[0], entry.getValue()[1]);
+            if (d < minDistance) {
+                minDistance = d;
+                closestPlace = entry.getKey();
+            }
+        }
+
+        if (closestPlace != null && minDistance < 60.0) {
+            String cap = capitalizeWords(closestPlace);
+            String region = getRegionDescription(closestPlace);
+            result.put("name", cap + (minDistance > 2.0 ? String.format(Locale.US, " (%.1f km from %s)", minDistance, cap) : " Vicinity"));
+            result.put("formattedAddress", cap + ", " + region);
+            result.put("city", cap);
+            result.put("state", region);
+            result.put("resolved", true);
+        } else {
+            result.put("name", String.format(Locale.US, "Pin at %.4f, %.4f", lat, lng));
+            result.put("formattedAddress", String.format(Locale.US, "Selected Coordinates: %.4f° N, %.4f° E, India", lat, lng));
+            result.put("city", "Selected Location");
+            result.put("state", "India");
+            result.put("resolved", true);
+        }
+
+        return result;
     }
 
     /**
-     * Resolves highly accurate real road distance and travel time.
-     * Uses OSRM (Open Source Routing Machine) high-speed road network routing with caching
-     * and verified highway route data.
+     * Resolves real road distance and travel time.
+     * Uses live road network routing (OSRM) with intelligent caching.
+     * Failed routing API calls are reported with explicit failure states rather than zero-distance fabrication.
      */
     public static RoadRouteResult calculateRealRoadRoute(double lat1, double lon1, double lat2, double lon2, String transportMode) {
+        // Validation of coordinates
+        if (Double.isNaN(lat1) || Double.isNaN(lon1) || Double.isNaN(lat2) || Double.isNaN(lon2) ||
+                Math.abs(lat1) > 90.0 || Math.abs(lat2) > 90.0 || Math.abs(lon1) > 180.0 || Math.abs(lon2) > 180.0) {
+            return new RoadRouteResult(0.0, 0, false, false, "Invalid coordinate inputs provided for road calculation.", Collections.emptyList(), "INVALID_COORDINATES");
+        }
+
+        // Simulated Provider Failure for deterministic verification
+        if (simulateRoutingFailure) {
+            return new RoadRouteResult(0.0, 0, false, false, "Simulated routing provider failure: unable to obtain live road network directions.", Collections.emptyList(), "SIMULATED_FAILURE");
+        }
+
         String mode = (transportMode != null && !transportMode.trim().isEmpty()) ? transportMode.trim().toUpperCase() : "CAR";
         String cacheKey = String.format(Locale.US, "%.4f,%.4f->%.4f,%.4f-%s", lat1, lon1, lat2, lon2, mode);
         if (ROUTE_CACHE.containsKey(cacheKey)) {
@@ -342,16 +419,16 @@ public class GeoUtils {
         // Check if origins are identical (< 50 meters)
         double aerialKm = calculateHaversineDistanceKm(lat1, lon1, lat2, lon2);
         if (aerialKm < 0.05) {
-            RoadRouteResult zeroResult = new RoadRouteResult(0.0, 0, true, true, null, Collections.singletonList(new double[]{lat1, lon1}));
+            RoadRouteResult zeroResult = new RoadRouteResult(0.0, 0, true, true, null, Collections.singletonList(new double[]{lat1, lon1}), "IDENTICAL_ORIGIN_DESTINATION");
             ROUTE_CACHE.put(cacheKey, zeroResult);
             return zeroResult;
         }
 
-        // 1. Try querying live OSRM public road routing API first (produces accurate highway polyline coordinates)
+        // 1. Query live OSRM public road routing API (produces true highway polyline geometry)
         try {
             String osrmProfile = "driving";
             if ("BIKE".equalsIgnoreCase(mode)) {
-                osrmProfile = "driving"; // OSRM public server hosts driving profile
+                osrmProfile = "driving";
             } else if ("WALKING".equalsIgnoreCase(mode)) {
                 osrmProfile = "driving";
             }
@@ -395,41 +472,24 @@ public class GeoUtils {
                         coords.add(new double[]{lat2, lon2});
                     }
 
-                    RoadRouteResult result = new RoadRouteResult(distanceKm, adjustedMinutes, true, true, null, coords);
+                    RoadRouteResult result = new RoadRouteResult(distanceKm, adjustedMinutes, true, true, null, coords, "LIVE_OSRM");
                     ROUTE_CACHE.put(cacheKey, result);
                     return result;
                 }
             }
         } catch (Exception e) {
-            logger.debug("OSRM route query fallback: {}", e.getMessage());
+            logger.debug("Live OSRM routing unavailable ({}). Utilizing highway detour model.", e.getMessage());
         }
 
-        // 2. Fallback: Check if coordinates match verified highway pairs
-        for (Map.Entry<String, double[]> pair : KNOWN_HIGHWAY_PAIRS.entrySet()) {
-            String[] parts = pair.getKey().split("->");
-            if (parts.length == 2 && KNOWN_COORDINATES.containsKey(parts[0]) && KNOWN_COORDINATES.containsKey(parts[1])) {
-                double[] c1 = KNOWN_COORDINATES.get(parts[0]);
-                double[] c2 = KNOWN_COORDINATES.get(parts[1]);
-                if (Math.abs(c1[0] - lat1) < 0.03 && Math.abs(c1[1] - lon1) < 0.03 &&
-                    Math.abs(c2[0] - lat2) < 0.03 && Math.abs(c2[1] - lon2) < 0.03) {
-                    double distKm = pair.getValue()[0];
-                    int baseMins = (int) pair.getValue()[1];
-                    int adjustedMins = adjustTimeForTransportMode(distKm, baseMins, mode);
-                    RoadRouteResult verifiedResult = new RoadRouteResult(distKm, adjustedMins, true, true, null, Arrays.asList(new double[]{c1[0], c1[1]}, new double[]{c2[0], c2[1]}));
-                    ROUTE_CACHE.put(cacheKey, verifiedResult);
-                    return verifiedResult;
-                }
-            }
-        }
-
-        // 3. Fallback: Calibrated mathematical road network formula based on highway detours & terrain
+        // 2. Calibrated mathematical road network formula based on highway detours & terrain
         double roadDetourFactor = (aerialKm > 100) ? 1.25 : (aerialKm > 30 ? 1.30 : 1.36);
         double estimatedDistanceKm = Math.round(aerialKm * roadDetourFactor * 10.0) / 10.0;
         int estimatedMinutes = estimateTravelTimeMinutes(estimatedDistanceKm, mode);
 
-        RoadRouteResult fallbackResult = new RoadRouteResult(estimatedDistanceKm, estimatedMinutes, false, true, null, Arrays.asList(new double[]{lat1, lon1}, new double[]{lat2, lon2}));
-        ROUTE_CACHE.put(cacheKey, fallbackResult);
-        return fallbackResult;
+        RoadRouteResult calibratedResult = new RoadRouteResult(estimatedDistanceKm, estimatedMinutes, false, true, null,
+                Arrays.asList(new double[]{lat1, lon1}, new double[]{lat2, lon2}), "ESTIMATED_ROAD_NETWORK");
+        ROUTE_CACHE.put(cacheKey, calibratedResult);
+        return calibratedResult;
     }
 
     private static int adjustTimeForTransportMode(double distanceKm, int drivingMinutes, String transportMode) {
@@ -683,22 +743,28 @@ public class GeoUtils {
         private final boolean success;
         private final String errorMessage;
         private final List<double[]> geometryCoordinates;
+        private final String verifiedProvider;
 
         public RoadRouteResult(double distanceKm, int durationMinutes, boolean liveRoadApiUsed) {
-            this(distanceKm, durationMinutes, liveRoadApiUsed, true, null, Collections.emptyList());
+            this(distanceKm, durationMinutes, liveRoadApiUsed, true, null, Collections.emptyList(), liveRoadApiUsed ? "LIVE_OSRM" : "ESTIMATED_ROAD_NETWORK");
         }
 
         public RoadRouteResult(double distanceKm, int durationMinutes, boolean liveRoadApiUsed, boolean success, String errorMessage) {
-            this(distanceKm, durationMinutes, liveRoadApiUsed, success, errorMessage, Collections.emptyList());
+            this(distanceKm, durationMinutes, liveRoadApiUsed, success, errorMessage, Collections.emptyList(), success ? (liveRoadApiUsed ? "LIVE_OSRM" : "ESTIMATED_ROAD_NETWORK") : "FAILED");
         }
 
         public RoadRouteResult(double distanceKm, int durationMinutes, boolean liveRoadApiUsed, boolean success, String errorMessage, List<double[]> geometryCoordinates) {
+            this(distanceKm, durationMinutes, liveRoadApiUsed, success, errorMessage, geometryCoordinates, success ? (liveRoadApiUsed ? "LIVE_OSRM" : "ESTIMATED_ROAD_NETWORK") : "FAILED");
+        }
+
+        public RoadRouteResult(double distanceKm, int durationMinutes, boolean liveRoadApiUsed, boolean success, String errorMessage, List<double[]> geometryCoordinates, String verifiedProvider) {
             this.distanceKm = distanceKm;
             this.durationMinutes = durationMinutes;
             this.liveRoadApiUsed = liveRoadApiUsed;
             this.success = success;
             this.errorMessage = errorMessage;
             this.geometryCoordinates = (geometryCoordinates != null) ? geometryCoordinates : Collections.emptyList();
+            this.verifiedProvider = verifiedProvider != null ? verifiedProvider : (success ? "ESTIMATED_ROAD_NETWORK" : "FAILED");
         }
 
         public double getDistanceKm() {
@@ -723,6 +789,10 @@ public class GeoUtils {
 
         public List<double[]> getGeometryCoordinates() {
             return geometryCoordinates;
+        }
+
+        public String getVerifiedProvider() {
+            return verifiedProvider;
         }
     }
 }

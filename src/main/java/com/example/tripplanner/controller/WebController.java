@@ -22,11 +22,16 @@ public class WebController {
     private final UserService userService;
     private final TripService tripService;
     private final GoogleMapsService googleMapsService;
+    private final com.example.tripplanner.service.RecommendationService recommendationService;
 
-    public WebController(UserService userService, TripService tripService, GoogleMapsService googleMapsService) {
+    public WebController(UserService userService,
+                         TripService tripService,
+                         GoogleMapsService googleMapsService,
+                         com.example.tripplanner.service.RecommendationService recommendationService) {
         this.userService = userService;
         this.tripService = tripService;
         this.googleMapsService = googleMapsService;
+        this.recommendationService = recommendationService;
     }
 
     @GetMapping("/")
@@ -35,6 +40,8 @@ public class WebController {
         if (userDetails != null) {
             model.addAttribute("userEmail", userDetails.getUsername());
         }
+        model.addAttribute("featuredDestinations", recommendationService.getFeaturedDestinations(null, null));
+        model.addAttribute("categories", recommendationService.getAvailableCategories());
         return "index";
     }
 

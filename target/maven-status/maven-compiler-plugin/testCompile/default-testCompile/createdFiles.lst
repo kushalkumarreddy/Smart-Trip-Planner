@@ -1,3 +1,8 @@
+com\example\tripplanner\service\IndianPlacesCatalogTest.class
+com\example\tripplanner\service\RouteAccuracyAndAlternativesTest.class
+com\example\tripplanner\service\AiTripPlannerServiceTest.class
 com\example\tripplanner\service\TripServiceTest.class
 com\example\tripplanner\service\ItineraryServiceTest.class
 com\example\tripplanner\service\RouteServiceTest.class
+com\example\tripplanner\service\AccommodationAndLockTest.class
+com\example\tripplanner\service\PersistenceAndSecurityTest.class

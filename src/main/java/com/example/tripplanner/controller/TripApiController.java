@@ -231,6 +231,117 @@ public class TripApiController {
     }
 
     /**
+     * Map-based Accommodation selection & details (Requirement 4)
+     */
+    @RequestMapping(value = "/{id}/destinations/{destinationId}/accommodation", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<TripResponseDto> updateDestinationAccommodation(@PathVariable("id") Long id,
+                                                                         @PathVariable("destinationId") Long destinationId,
+                                                                         @RequestBody AccommodationStayDto stayDto,
+                                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.updateDestinationAccommodation(id, destinationId, stayDto, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}/destinations/{destinationId}/accommodation")
+    public ResponseEntity<TripResponseDto> removeDestinationAccommodation(@PathVariable("id") Long id,
+                                                                         @PathVariable("destinationId") Long destinationId,
+                                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.removeDestinationAccommodation(id, destinationId, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Lock or Unlock Activity (Requirement 3 & 5)
+     */
+    @PostMapping("/{id}/itinerary-items/{itemId}/lock")
+    public ResponseEntity<Map<String, Object>> toggleActivityLock(@PathVariable("id") Long id,
+                                                                 @PathVariable("itemId") Long itemId,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        Map<String, Object> result = tripService.toggleActivityLock(id, itemId, user);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Edit / Replace Activity
+     */
+    @PutMapping("/{id}/itinerary-items/{itemId}")
+    public ResponseEntity<TripResponseDto> replaceActivity(@PathVariable("id") Long id,
+                                                           @PathVariable("itemId") Long itemId,
+                                                           @RequestBody ItineraryItemDto itemDto,
+                                                           @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.replaceActivity(id, itemId, itemDto, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Delete Activity
+     */
+    @DeleteMapping("/{id}/itinerary-items/{itemId}")
+    public ResponseEntity<TripResponseDto> deleteActivity(@PathVariable("id") Long id,
+                                                          @PathVariable("itemId") Long itemId,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.deleteItineraryItem(id, itemId, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Add Activity to Day
+     */
+    @PostMapping("/{id}/days/{dayNumber}/itinerary-items")
+    public ResponseEntity<TripResponseDto> addActivityToDay(@PathVariable("id") Long id,
+                                                            @PathVariable("dayNumber") Integer dayNumber,
+                                                            @RequestBody ItineraryItemDto itemDto,
+                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.addActivityToDay(id, dayNumber, itemDto, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Add Destination to Trip
+     */
+    @PostMapping("/{id}/destinations")
+    public ResponseEntity<TripResponseDto> addDestination(@PathVariable("id") Long id,
+                                                          @RequestBody Map<String, String> body,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        String destName = body.getOrDefault("name", body.get("destinationName"));
+        TripResponseDto updated = tripService.addDestinationToTrip(id, destName, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Remove Destination from Trip
+     */
+    @DeleteMapping("/{id}/destinations/{destinationId}")
+    public ResponseEntity<TripResponseDto> removeDestination(@PathVariable("id") Long id,
+                                                             @PathVariable("destinationId") Long destinationId,
+                                                             @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.removeDestinationFromTrip(id, destinationId, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Apply Route Alternative (Requirement 5)
+     */
+    @PostMapping("/{id}/apply-alternative")
+    public ResponseEntity<TripResponseDto> applyRouteAlternative(@PathVariable("id") Long id,
+                                                                 @RequestBody Map<String, Object> body,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        @SuppressWarnings("unchecked")
+        List<String> ordered = (List<String>) body.get("orderedDestinations");
+        TripResponseDto updated = tripService.applyRouteAlternative(id, ordered, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
      * Discover Places Along Route within max detour km
      */
     @GetMapping("/{id}/places-along-route")

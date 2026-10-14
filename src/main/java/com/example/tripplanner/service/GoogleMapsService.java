@@ -134,7 +134,7 @@ public class GoogleMapsService {
             }
         }
 
-        // 2. High-precision highway routing engine (OSRM & verified highway routes)
+        // 2. High-precision highway routing engine (OSRM & road network)
         GeoUtils.RoadRouteResult roadResult = GeoUtils.calculateRealRoadRoute(
                 originCoords[0], originCoords[1], destCoords[0], destCoords[1], mode
         );
@@ -146,12 +146,40 @@ public class GoogleMapsService {
                 destCoords,
                 roadResult.isLiveRoadApiUsed(),
                 roadResult.isSuccess(),
-                roadResult.isSuccess() ? null : "Unable to calculate the current route. Please try again.",
-                roadResult.getGeometryCoordinates()
+                roadResult.isSuccess() ? null : (roadResult.getErrorMessage() != null ? roadResult.getErrorMessage() : "Unable to calculate route between " + origin + " and " + destination),
+                roadResult.getGeometryCoordinates(),
+                roadResult.getVerifiedProvider()
         );
 
         routeCache.put(cacheKey, res);
         return res;
+    }
+
+    /**
+     * Resolves location details from coordinates (used for map clicks / accommodation selection).
+     */
+    public java.util.Map<String, Object> reverseGeocode(double lat, double lng) {
+        if (isLiveApiConfigured()) {
+            try {
+                GeoApiContext context = getGeoApiContext();
+                if (context != null) {
+                    com.google.maps.model.LatLng latLng = new com.google.maps.model.LatLng(lat, lng);
+                    GeocodingResult[] results = GeocodingApi.reverseGeocode(context, latLng).await();
+                    if (results != null && results.length > 0) {
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("lat", lat);
+                        map.put("lng", lng);
+                        map.put("name", results[0].formattedAddress != null ? results[0].formattedAddress.split(",")[0] : "Selected Location");
+                        map.put("formattedAddress", results[0].formattedAddress);
+                        map.put("resolved", true);
+                        return map;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Live Google reverse geocode failed for ({}, {}): {}", lat, lng, e.getMessage());
+            }
+        }
+        return GeoUtils.reverseGeocode(lat, lng);
     }
 
     /**
@@ -239,20 +267,25 @@ public class GoogleMapsService {
         private final boolean success;
         private final String errorMessage;
         private final List<double[]> geometryCoords;
+        private final String verifiedProvider;
 
         public RouteCalculationResult(double distanceKm, int durationMinutes) {
-            this(distanceKm, durationMinutes, new double[]{0.0, 0.0}, new double[]{0.0, 0.0}, false, true, null, java.util.Collections.emptyList());
+            this(distanceKm, durationMinutes, new double[]{0.0, 0.0}, new double[]{0.0, 0.0}, false, true, null, java.util.Collections.emptyList(), "ESTIMATED_ROAD_NETWORK");
         }
 
         public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed) {
-            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, true, null, java.util.Collections.emptyList());
+            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, true, null, java.util.Collections.emptyList(), liveApiUsed ? "GOOGLE_DIRECTIONS" : "ESTIMATED_ROAD_NETWORK");
         }
 
         public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed, boolean success, String errorMessage) {
-            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, success, errorMessage, java.util.Collections.emptyList());
+            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, success, errorMessage, java.util.Collections.emptyList(), success ? (liveApiUsed ? "GOOGLE_DIRECTIONS" : "ESTIMATED_ROAD_NETWORK") : "FAILED");
         }
 
         public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed, boolean success, String errorMessage, List<double[]> geometryCoords) {
+            this(distanceKm, durationMinutes, originCoords, destinationCoords, liveApiUsed, success, errorMessage, geometryCoords, success ? (liveApiUsed ? "GOOGLE_DIRECTIONS" : "ESTIMATED_ROAD_NETWORK") : "FAILED");
+        }
+
+        public RouteCalculationResult(double distanceKm, int durationMinutes, double[] originCoords, double[] destinationCoords, boolean liveApiUsed, boolean success, String errorMessage, List<double[]> geometryCoords, String verifiedProvider) {
             this.distanceKm = distanceKm;
             this.durationMinutes = durationMinutes;
             this.originCoords = originCoords;
@@ -261,6 +294,7 @@ public class GoogleMapsService {
             this.success = success;
             this.errorMessage = errorMessage;
             this.geometryCoords = (geometryCoords != null) ? geometryCoords : java.util.Collections.emptyList();
+            this.verifiedProvider = verifiedProvider != null ? verifiedProvider : (success ? "ESTIMATED_ROAD_NETWORK" : "FAILED");
         }
 
         public double getDistanceKm() {
@@ -293,6 +327,10 @@ public class GoogleMapsService {
 
         public List<double[]> getGeometryCoords() {
             return geometryCoords;
+        }
+
+        public String getVerifiedProvider() {
+            return verifiedProvider;
         }
     }
 }

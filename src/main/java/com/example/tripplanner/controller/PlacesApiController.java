@@ -55,4 +55,15 @@ public class PlacesApiController {
         List<Map<String, Object>> suggestions = googleMapsService.autocompletePlaces(query.trim(), limit);
         return ResponseEntity.ok(suggestions);
     }
+
+    /**
+     * Resolves geographical address and place name from clicked map coordinates.
+     */
+    @GetMapping("/reverse-geocode")
+    public ResponseEntity<Map<String, Object>> reverseGeocode(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng) {
+        Map<String, Object> details = googleMapsService.reverseGeocode(lat, lng);
+        return ResponseEntity.ok(details);
+    }
 }

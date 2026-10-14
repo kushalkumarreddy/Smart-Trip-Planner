@@ -1,7 +1,10 @@
 package com.example.tripplanner.service;
 
 import com.example.tripplanner.dto.AiTripPromptDto;
+import com.example.tripplanner.dto.RouteSummaryDto;
 import com.example.tripplanner.util.GeoUtils;
+import com.example.tripplanner.util.TimeUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -11,6 +14,17 @@ import java.util.regex.Pattern;
 
 @Service
 public class AiTripPlannerService {
+
+    private final RouteService routeService;
+
+    @Autowired
+    public AiTripPlannerService(RouteService routeService) {
+        this.routeService = routeService;
+    }
+
+    public AiTripPlannerService() {
+        this.routeService = null;
+    }
 
     // Curated destination recommendations per interest
     private static final Map<String, List<String>> INTEREST_DESTINATIONS = new LinkedHashMap<>();
@@ -174,27 +188,79 @@ public class AiTripPlannerService {
         List<String> interests = extractInterests(lower);
         response.setPreferredInterests(interests);
 
-        // 6. Extract Locations (Origin and Destinations accurately preserving prompt names)
+        // 6. Extract Additional Trip Preferences
+        String accommodationPref = extractAccommodationPreference(lower);
+        response.setAccommodationPreference(accommodationPref);
+
+        String dailyLimits = extractDailyTravelLimit(lower);
+        response.setDailyTravelLimit(dailyLimits);
+
+        String accessibility = extractAccessibilityOrFamily(lower);
+        response.setAccessibilityNotes(accessibility);
+
+        String budget = extractBudget(lower);
+        response.setBudgetRange(budget);
+
+        // 7. Extract Locations
         ExtractedLocations locations = extractLocationsFromPrompt(text, lower, interests);
         String origin = locations.origin;
         List<String> destinations = locations.destinations;
 
+        // Follow-up question handling if essential information is missing
+        if (origin == null || origin.trim().isEmpty() || destinations == null || destinations.isEmpty()) {
+            response.setRequiresFollowUp(true);
+            List<String> questions = new ArrayList<>();
+            if (origin == null || origin.trim().isEmpty()) {
+                questions.add("Where will your journey begin (starting location / city)?");
+            }
+            if (destinations == null || destinations.isEmpty()) {
+                questions.add("Which destinations or regions would you like to explore?");
+            }
+            response.setFollowUpQuestions(questions);
+            response.setStartLocation(origin != null ? origin : "");
+            response.setDestinationNames(destinations != null ? destinations : new ArrayList<>());
+            response.setTripName("Custom Journey Plan");
+            response.setAiSummary("To create your personalized itinerary, please let us know " +
+                    (questions.size() == 2 ? "your starting location and destination(s)." : questions.get(0)));
+            return response;
+        }
+
         response.setStartLocation(origin);
         response.setDestinationNames(destinations);
+        response.setRequiresFollowUp(false);
 
-        // 7. Assign per-destination hotels & build recommendations
+        // Validate Proposed Route with Route Service
+        double validatedDistanceKm = 0.0;
+        int validatedTimeMinutes = 0;
+        if (routeService != null) {
+            RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(origin, destinations, transportMode);
+            if (routeSummary == null || !routeSummary.getRouteCalculationSuccess()) {
+                response.setRouteValidationSuccess(false);
+                String err = (routeSummary != null && routeSummary.getCalculationErrorMessage() != null)
+                        ? routeSummary.getCalculationErrorMessage()
+                        : "The routing provider could not compute a valid highway route for the proposed destinations.";
+                response.setValidationErrorMessage(err);
+                response.setAiSummary("Proposed route validation failed: " + err);
+                return response;
+            }
+            response.setRouteValidationSuccess(true);
+            validatedDistanceKm = routeSummary.getTotalDistanceKm();
+            validatedTimeMinutes = routeSummary.getTotalTravelTimeMinutes();
+        }
+
+        // 8. Assign per-destination hotels & build recommendations
         List<String> hotels = new ArrayList<>();
         List<AiTripPromptDto.DestinationRecommendation> details = new ArrayList<>();
 
         for (String dest : destinations) {
             String key = dest.toLowerCase().trim();
-            String hotel = DESTINATION_HOTELS.getOrDefault(key, "Boutique Resort / Heritage Stay in " + dest);
+            String hotel = DESTINATION_HOTELS.getOrDefault(key, accommodationPref + " in " + dest);
             hotels.add(hotel);
 
             List<String> attractions = DESTINATION_ATTRACTIONS.getOrDefault(key,
                     List.of(dest + " Scenic Walk", dest + " Panoramic Viewpoint", dest + " Nature Gardens"));
 
-            String reason = "Carefully selected stop with scenic highway connectivity from " + origin + ", picturesque landscapes, and handpicked boutique accommodations.";
+            String reason = "Handpicked stop featuring verified road connectivity from " + origin + ", picturesque scenery, and pre-selected stays.";
             if (interests.contains("Waterfalls")) {
                 reason = "Celebrated for beautiful waterfalls, mountain breezes, and tranquil valley viewpoints.";
             } else if (interests.contains("Heritage") || interests.contains("Historical")) {
@@ -207,7 +273,7 @@ public class AiTripPlannerService {
         response.setDestinationHotels(hotels);
         response.setDestinationDetails(details);
 
-        // 8. Generate Trip Name & AI Summary
+        // 9. Generate Trip Name & AI Summary
         String tripTitle;
         if (destinations.isEmpty()) {
             tripTitle = origin + " Road Trip Experience";
@@ -223,7 +289,7 @@ public class AiTripPlannerService {
         response.setTripName(tripTitle);
 
         StringBuilder summary = new StringBuilder();
-        summary.append(String.format("Curated a %d-day %s journey starting from %s to %s with %s travel pace. ",
+        summary.append(String.format("Curated a %d-day %s journey from %s to %s with %s travel pace. ",
                 days,
                 travelers > 2 ? "family" : (travelers == 1 ? "solo" : "couple"),
                 origin,
@@ -231,12 +297,18 @@ public class AiTripPlannerService {
                 travelStyle.toLowerCase()
         ));
 
+        if (validatedDistanceKm > 0) {
+            summary.append(String.format(Locale.US, "Verified highway distance: %.1f km (%s). ",
+                    validatedDistanceKm, TimeUtils.formatDuration(validatedTimeMinutes)));
+        }
+
         if (!interests.isEmpty()) {
-            summary.append(String.format("Handpicked top attractions highlighting %s with realistic driving routes and pre-selected stays. ",
-                    String.join(", ", interests)
+            summary.append(String.format("Handpicked top attractions highlighting %s with realistic driving intervals and %s accommodations. ",
+                    String.join(", ", interests),
+                    accommodationPref.toLowerCase()
             ));
         }
-        summary.append("Your route is ready below—feel free to adjust stops or reorder destinations!");
+        summary.append("Your route is validated and ready below!");
 
         response.setAiSummary(summary.toString());
         return response;
@@ -260,7 +332,7 @@ public class AiTripPlannerService {
         ExtractedLocations result = new ExtractedLocations();
 
         // 1. Look for explicit "from <Origin>"
-        Pattern fromPattern = Pattern.compile("(?i)(?:starting\\s+from|start\\s+from|from)\\s+([^,;\\n\\r]+?)(?:,|;|\\s+to\\b|\\s+via\\b|\\s+->|\\s+-|\\s+with\\b|\\s+for\\b|$)");
+        Pattern fromPattern = Pattern.compile("(?i)(?:starting\\s+from|start\\s+from|from)\\s+([^,;\\n\\r]+?)(?:,|;|\\s+and\\b|\\s+to\\b|\\s+via\\b|\\s+->|\\s+-|\\s+with\\b|\\s+for\\b|$)");
         Matcher fromMatcher = fromPattern.matcher(rawText);
 
         String foundOrigin = null;
@@ -281,11 +353,14 @@ public class AiTripPlannerService {
             // Text after "from <Origin>"
             String remaining = rawText.substring(originEndIdx).trim();
 
+            // Delimit at sentence boundary or keywords
+            String destClause = remaining.split("(?i)[.\\r\\n]|\\binclude\\b|\\bfeaturing\\b")[0].trim();
+
             // Strip leading commas, 'to', 'via', '-'
-            remaining = remaining.replaceAll("^(?:[,;\\-]|->|to\\b|via\\b|and\\b|with\\b)\\s*", "");
+            destClause = destClause.replaceAll("^(?:[,;\\-]|->|to\\b|via\\b|and\\b|with\\b)\\s*", "");
 
             // Split remaining by commas, 'to', 'and', '->', ';'
-            String[] splitTokens = remaining.split("(?i)[,;]|\\s+->\\s*|\\s+to\\s+|\\s+and\\s+|\\s+via\\s+");
+            String[] splitTokens = destClause.split("(?i)[,;]|\\s+->\\s*|\\s+to\\s+|\\s+and\\s+|\\s+via\\s+");
             for (String tok : splitTokens) {
                 String cleaned = cleanPlaceToken(tok);
                 if (isPlausiblePlace(cleaned)) {
@@ -296,7 +371,7 @@ public class AiTripPlannerService {
 
         // 3. If no tokens found after origin, check standard "to <Destinations>"
         if (rawTokens.isEmpty()) {
-            Pattern toPattern = Pattern.compile("(?i)\\bto\\s+([^;\\n\\r]+?)(?:\\s+with\\b|\\s+for\\b|\\s+during\\b|$)");
+            Pattern toPattern = Pattern.compile("(?i)\\bto\\s+([^;\\n\\r.]+?)(?:\\s+with\\b|\\s+for\\b|\\s+during\\b|$)");
             Matcher toMatcher = toPattern.matcher(rawText);
             if (toMatcher.find()) {
                 String toSection = toMatcher.group(1);
@@ -334,11 +409,13 @@ public class AiTripPlannerService {
                 }
             }
 
-            if (!potentialPlaces.isEmpty()) {
+            if (potentialPlaces.size() >= 2) {
                 foundOrigin = potentialPlaces.get(0);
                 for (int i = 1; i < potentialPlaces.size(); i++) {
                     rawTokens.add(potentialPlaces.get(i));
                 }
+            } else if (potentialPlaces.size() == 1) {
+                rawTokens.add(potentialPlaces.get(0));
             }
         }
 
@@ -355,39 +432,16 @@ public class AiTripPlannerService {
             }
         }
 
-        // Finalize Origin
-        if (foundOrigin != null && !foundOrigin.isEmpty()) {
-            result.origin = foundOrigin;
-        } else {
-            result.origin = "Bengaluru"; // Sensible fallback only when completely unspecified
-        }
+        // Finalize Origin (do not fabricate when unspecified - triggers follow-up)
+        result.origin = (foundOrigin != null && !foundOrigin.trim().isEmpty()) ? foundOrigin : null;
 
         // Finalize Destinations (deduplicated, excluding origin)
         for (String dest : rawTokens) {
-            if (!dest.equalsIgnoreCase(result.origin) && !result.destinations.contains(dest)) {
-                result.destinations.add(dest);
-            }
-        }
-
-        // If destinations are still empty, recommend based on interest
-        if (result.destinations.isEmpty()) {
-            for (String interest : interests) {
-                List<String> recs = INTEREST_DESTINATIONS.get(interest.toLowerCase());
-                if (recs != null) {
-                    for (String r : recs) {
-                        if (!r.equalsIgnoreCase(result.origin) && !result.destinations.contains(r)) {
-                            result.destinations.add(r);
-                            if (result.destinations.size() >= 2) break;
-                        }
-                    }
+            if (result.origin == null || !dest.equalsIgnoreCase(result.origin)) {
+                if (!result.destinations.contains(dest)) {
+                    result.destinations.add(dest);
                 }
-                if (result.destinations.size() >= 2) break;
             }
-        }
-
-        // Fallback default if still empty
-        if (result.destinations.isEmpty()) {
-            result.destinations.add("Coorg");
         }
 
         return result;
@@ -408,13 +462,18 @@ public class AiTripPlannerService {
     }
 
     private boolean isPlausiblePlace(String str) {
-        if (str == null || str.length() < 2) return false;
+        if (str == null || str.trim().length() < 2) return false;
         String l = str.toLowerCase().trim();
+        if (l.contains("want") || l.contains("need") || l.contains("looking") || l.contains("planning") ||
+                l.contains("suggest") || l.contains("scenic") || l.contains("would like") || l.contains("explore")) {
+            return false;
+        }
         Set<String> stopWords = Set.of(
                 "trip", "day", "days", "night", "nights", "family", "couple", "solo", "friends",
                 "waterfalls", "nature", "heritage", "temples", "beach", "beaches", "hills",
                 "adventure", "car", "bike", "driving", "driving trip", "relaxed", "fast",
-                "with", "and", "from", "to", "via", "the", "a", "an", "place", "places", "home"
+                "with", "and", "from", "to", "via", "the", "a", "an", "place", "places", "home",
+                "journey", "vacation", "tour", "road trip", "getaway"
         );
         return !stopWords.contains(l);
     }
@@ -458,13 +517,14 @@ public class AiTripPlannerService {
     private List<String> extractInterests(String lower) {
         List<String> interests = new ArrayList<>();
         if (lower.contains("waterfall") || lower.contains("falls") || lower.contains("cascade")) interests.add("Waterfalls");
+        if (lower.contains("viewpoint") || lower.contains("viewpoints")) interests.add("Viewpoints");
         if (lower.contains("nature") || lower.contains("scenic") || lower.contains("green") || lower.contains("plantation") || lower.contains("tea")) interests.add("Nature");
         if (lower.contains("heritage") || lower.contains("palace") || lower.contains("fort") || lower.contains("historic") || lower.contains("monument")) interests.add("Historical");
         if (lower.contains("temple") || lower.contains("spiritual") || lower.contains("shrine")) interests.add("Temples");
-        if (lower.contains("beach") || lower.contains("sea") || lower.contains("ocean") || lower.contains("coastal")) interests.add("Photography");
+        if (lower.contains("beach") || lower.contains("sea") || lower.contains("ocean") || lower.contains("coastal")) interests.add("Beaches");
         if (lower.contains("adventure") || lower.contains("trek") || lower.contains("safari") || lower.contains("hiking")) interests.add("Adventure");
         if (lower.contains("museum") || lower.contains("art") || lower.contains("science")) interests.add("Museums");
-        if (lower.contains("photo") || lower.contains("viewpoint") || lower.contains("sunset")) interests.add("Photography");
+        if (lower.contains("photo") || lower.contains("sunset")) interests.add("Photography");
 
         if (interests.isEmpty()) {
             interests.add("Nature");
@@ -510,5 +570,54 @@ public class AiTripPlannerService {
             } catch (Exception ignored) {}
         }
         return 2;
+    }
+
+    private String extractAccommodationPreference(String lower) {
+        if (lower.contains("comfortable") && (lower.contains("overnight") || lower.contains("stay"))) {
+            return "Comfortable overnight stays";
+        }
+        if (lower.contains("resort") || lower.contains("luxury") || lower.contains("5 star") || lower.contains("villa")) {
+            return "Resort & Luxury Stays";
+        }
+        if (lower.contains("homestay") || lower.contains("estate stay") || lower.contains("coffee estate") || lower.contains("plantation stay")) {
+            return "Homestay & Plantation Stays";
+        }
+        if (lower.contains("hotel") || lower.contains("comfortable stay") || lower.contains("overnight stay")) {
+            return "Comfortable Mid-Scale Hotels";
+        }
+        if (lower.contains("hostel") || lower.contains("dorm") || lower.contains("budget stay")) {
+            return "Budget Stays & Hostels";
+        }
+        return "Hotels / Resorts with comfortable parking";
+    }
+
+    private String extractDailyTravelLimit(String lower) {
+        if (lower.contains("relaxed driving") || lower.contains("less driving") || lower.contains("short driving")) {
+            return "Max 3-4 hours daily driving";
+        }
+        if (lower.contains("long drive") || lower.contains("road trip enthusiast") || lower.contains("highway driving")) {
+            return "Comfortable with 6+ hours driving";
+        }
+        return "Max 4-5 hours comfortable driving";
+    }
+
+    private String extractAccessibilityOrFamily(String lower) {
+        if (lower.contains("family") || lower.contains("kids") || lower.contains("children") || lower.contains("elderly") || lower.contains("parents")) {
+            return "Family-friendly stops with easy walking and clean restrooms";
+        }
+        if (lower.contains("wheelchair") || lower.contains("accessible") || lower.contains("senior")) {
+            return "Wheelchair accessible with minimal stairs";
+        }
+        return "Standard accessibility";
+    }
+
+    private String extractBudget(String lower) {
+        if (lower.contains("luxury") || lower.contains("premium") || lower.contains("high end")) {
+            return "LUXURY";
+        }
+        if (lower.contains("budget") || lower.contains("economical") || lower.contains("cheap") || lower.contains("low cost")) {
+            return "BUDGET";
+        }
+        return "MODERATE";
     }
 }

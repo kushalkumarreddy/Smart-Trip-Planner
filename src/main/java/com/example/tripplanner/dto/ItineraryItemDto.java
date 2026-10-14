@@ -19,6 +19,7 @@ public class ItineraryItemDto {
     private Integer durationMinutes;
     private Double rating;
     private Boolean visited;
+    private Boolean locked = false;
     private String notes;
 
     public ItineraryItemDto() {
@@ -142,6 +143,14 @@ public class ItineraryItemDto {
 
     public void setVisited(Boolean visited) {
         this.visited = visited;
+    }
+
+    public Boolean getLocked() {
+        return locked != null ? locked : false;
+    }
+
+    public void setLocked(Boolean locked) {
+        this.locked = locked;
     }
 
     public String getNotes() {

@@ -13,6 +13,9 @@ public class RouteSegmentDto {
     private String transportMode;
     private String summaryText;
     private String googleMapsSegmentUrl;
+    private Boolean success = true;
+    private String errorMessage;
+    private String verifiedProvider; // GOOGLE_MAPS, OSRM_ROAD_NETWORK, ESTIMATED_ROAD_NETWORK
 
     public RouteSegmentDto() {
     }
@@ -121,5 +124,29 @@ public class RouteSegmentDto {
 
     public void setGeometryCoordinates(java.util.List<double[]> geometryCoordinates) {
         this.geometryCoordinates = geometryCoordinates;
+    }
+
+    public Boolean getSuccess() {
+        return success != null ? success : true;
+    }
+
+    public void setSuccess(Boolean success) {
+        this.success = success;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getVerifiedProvider() {
+        return verifiedProvider;
+    }
+
+    public void setVerifiedProvider(String verifiedProvider) {
+        this.verifiedProvider = verifiedProvider;
     }
 }

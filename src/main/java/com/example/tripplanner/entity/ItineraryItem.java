@@ -53,6 +53,9 @@ public class ItineraryItem {
 
     private Boolean visited = false;
 
+    @Column(name = "locked")
+    private Boolean locked = false;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -186,6 +189,14 @@ public class ItineraryItem {
 
     public void setVisited(Boolean visited) {
         this.visited = visited;
+    }
+
+    public Boolean getLocked() {
+        return locked != null ? locked : false;
+    }
+
+    public void setLocked(Boolean locked) {
+        this.locked = locked;
     }
 
     public String getNotes() {

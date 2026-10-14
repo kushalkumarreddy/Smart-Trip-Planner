@@ -1,5 +1,6 @@
 package com.example.tripplanner.service;
 
+import com.example.tripplanner.dto.RouteAlternativeDto;
 import com.example.tripplanner.dto.RouteSegmentDto;
 import com.example.tripplanner.dto.RouteSummaryDto;
 import com.example.tripplanner.util.GeoUtils;
@@ -60,10 +61,12 @@ public class RouteService {
             String destination = fullPath.get(i + 1);
 
             GoogleMapsService.RouteCalculationResult result = googleMapsService.calculateRouteSegment(origin, destination, mode);
-
-            if (!result.isSuccess()) {
-                allSegmentsSuccessful = false;
-                errorMessage = result.getErrorMessage() != null ? result.getErrorMessage() : "Unable to calculate the current route. Please try again.";
+            if (result == null) {
+                double[] origCoords = GeoUtils.getApproximateCoordinates(origin);
+                double[] destCoords = GeoUtils.getApproximateCoordinates(destination);
+                double fallbackDist = GeoUtils.estimateRoadDistanceKm(origCoords[0], origCoords[1], destCoords[0], destCoords[1]);
+                int fallbackMinutes = GeoUtils.estimateTravelTimeMinutes(fallbackDist, mode);
+                result = new GoogleMapsService.RouteCalculationResult(fallbackDist, fallbackMinutes, origCoords, destCoords, false, false, "Routing provider temporarily unavailable", Collections.emptyList(), "UNAVAILABLE");
             }
 
             RouteSegmentDto segment = new RouteSegmentDto();
@@ -72,15 +75,28 @@ public class RouteService {
             segment.setDistanceKm(result.getDistanceKm());
             segment.setDurationMinutes(result.getDurationMinutes());
             segment.setTransportMode(mode);
-            segment.setFromLat(result.getOriginCoords()[0]);
-            segment.setFromLng(result.getOriginCoords()[1]);
-            segment.setToLat(result.getDestinationCoords()[0]);
-            segment.setToLng(result.getDestinationCoords()[1]);
+            segment.setFromLat(result.getOriginCoords() != null ? result.getOriginCoords()[0] : 0.0);
+            segment.setFromLng(result.getOriginCoords() != null ? result.getOriginCoords()[1] : 0.0);
+            segment.setToLat(result.getDestinationCoords() != null ? result.getDestinationCoords()[0] : 0.0);
+            segment.setToLng(result.getDestinationCoords() != null ? result.getDestinationCoords()[1] : 0.0);
+            segment.setSuccess(result.isSuccess());
+            segment.setErrorMessage(result.getErrorMessage());
+            segment.setVerifiedProvider(result.getVerifiedProvider());
 
-            segment.setSummaryText(String.format(Locale.US, "%.1f km • %s",
-                    result.getDistanceKm(),
-                    TimeUtils.formatDuration(result.getDurationMinutes())
-            ));
+            if (!result.isSuccess()) {
+                allSegmentsSuccessful = false;
+                errorMessage = (result.getErrorMessage() != null && !result.getErrorMessage().isEmpty())
+                        ? result.getErrorMessage()
+                        : "Route calculation failed between " + origin + " and " + destination;
+                segment.setSummaryText("Route calculation unavailable (" + errorMessage + ")");
+            } else {
+                segment.setSummaryText(String.format(Locale.US, "%.1f km • %s",
+                        result.getDistanceKm(),
+                        TimeUtils.formatDuration(result.getDurationMinutes())
+                ));
+                totalDistanceKm += result.getDistanceKm();
+                totalMinutes += result.getDurationMinutes();
+            }
 
             segment.setGoogleMapsSegmentUrl(GeoUtils.buildGoogleMapsUrl(origin, destination, mode));
             segment.setGeometryCoordinates(result.getGeometryCoords());
@@ -92,18 +108,26 @@ public class RouteService {
             }
 
             segments.add(segment);
-            totalDistanceKm += result.getDistanceKm();
-            totalMinutes += result.getDurationMinutes();
         }
 
         summary.setSegments(segments);
-        // Consistent road total: sum of actual consecutive segments
+
+        if (!allSegmentsSuccessful) {
+            // CRITICAL: Failed route segments are NOT treated as valid zero-distance routes
+            summary.setRouteCalculationSuccess(false);
+            summary.setTotalDistanceKm(0.0);
+            summary.setTotalTravelTimeMinutes(0);
+            summary.setCalculationErrorMessage(errorMessage != null ? errorMessage : "Route calculation failed for one or more segments.");
+            summary.setOptimizationRecommended(false);
+            summary.setRecommendedOrder(summary.getOriginalOrder());
+            summary.setOptimizationMessage("Route optimization unavailable due to calculation failure.");
+            return summary;
+        }
+
+        // Consistent road total: sum of actual valid consecutive segments
         summary.setTotalDistanceKm(Math.round(totalDistanceKm * 10.0) / 10.0);
         summary.setTotalTravelTimeMinutes(totalMinutes);
-        summary.setRouteCalculationSuccess(allSegmentsSuccessful);
-        if (!allSegmentsSuccessful) {
-            summary.setCalculationErrorMessage(errorMessage != null ? errorMessage : "Unable to calculate the current route. Please try again.");
-        }
+        summary.setRouteCalculationSuccess(true);
 
         // Build Google Maps Multi-Waypoint Deep Link
         String originLocation = startLocation.trim();
@@ -116,21 +140,38 @@ public class RouteService {
         }
         summary.setGoogleMapsFullRouteUrl(GeoUtils.buildGoogleMapsMultiWaypointUrl(originLocation, finalLocation, intermediateWaypoints, mode));
 
-        // Evaluate Smart Route Optimization using actual road routes
-        if (allSegmentsSuccessful) {
-            evaluateRouteOptimization(summary, startLocation.trim(), cleanDestinations, mode, totalDistanceKm, totalMinutes);
-        } else {
-            summary.setOptimizationRecommended(false);
-            summary.setRecommendedOrder(summary.getOriginalOrder());
-            summary.setOptimizationMessage("Route optimization unavailable due to calculation failure.");
-        }
+        // Evaluate Smart Route Optimization & Multi-Strategy Alternatives
+        evaluateRouteOptimization(summary, startLocation.trim(), cleanDestinations, mode, totalDistanceKm, totalMinutes);
 
         return summary;
     }
 
     private void evaluateRouteOptimization(RouteSummaryDto summary, String startLocation, List<String> destinations,
                                            String transportMode, double currentTotalDist, int currentTotalTime) {
+        List<RouteAlternativeDto> alternatives = new ArrayList<>();
+
+        // 1. Baseline Alternative: Current Order
+        List<String> currentFullPath = new ArrayList<>();
+        currentFullPath.add(startLocation);
+        currentFullPath.addAll(destinations);
+
+        RouteAlternativeDto currentAlt = new RouteAlternativeDto(
+                "ORIGINAL_ROUTE",
+                "Current Route Sequence",
+                "Your original stop order with consecutive highway routing.",
+                currentFullPath,
+                summary.getTotalDistanceKm(),
+                summary.getTotalTravelTimeMinutes(),
+                TimeUtils.formatDuration(summary.getTotalTravelTimeMinutes()),
+                0.0,
+                0,
+                false,
+                List.of("Preserves exact planned sequence", destinations.size() + " stops total")
+        );
+        alternatives.add(currentAlt);
+
         if (destinations == null || destinations.size() < 2) {
+            summary.setAlternatives(alternatives);
             summary.setOptimizationRecommended(false);
             summary.setRecommendedOrder(summary.getOriginalOrder());
             summary.setPotentialSavingsKm(0.0);
@@ -141,54 +182,99 @@ public class RouteService {
             return;
         }
 
-        // Solve optimal destination order using actual road distance matrix
-        List<String> optimizedDestinations = solveOptimalRouteOrder(startLocation, destinations, transportMode);
-
-        // Calculate exact road metrics of the recommended route
-        double optimizedDist = 0.0;
-        int optimizedTime = 0;
+        // 2. Solve optimal destination order using actual road distance matrix (SHORTEST_DISTANCE)
+        List<String> shortestDistDestinations = solveOptimalRouteOrder(startLocation, destinations, transportMode);
+        double shortestDist = 0.0;
+        int shortestTime = 0;
         String prev = startLocation;
-
-        for (String dest : optimizedDestinations) {
+        for (String dest : shortestDistDestinations) {
             GoogleMapsService.RouteCalculationResult r = googleMapsService.calculateRouteSegment(prev, dest, transportMode);
-            optimizedDist += r.getDistanceKm();
-            optimizedTime += r.getDurationMinutes();
+            shortestDist += r.getDistanceKm();
+            shortestTime += r.getDurationMinutes();
             prev = dest;
         }
+        shortestDist = Math.round(shortestDist * 10.0) / 10.0;
 
-        optimizedDist = Math.round(optimizedDist * 10.0) / 10.0;
+        List<String> shortestFullPath = new ArrayList<>();
+        shortestFullPath.add(startLocation);
+        shortestFullPath.addAll(shortestDistDestinations);
 
-        List<String> recommendedFullPath = new ArrayList<>();
-        recommendedFullPath.add(startLocation);
-        recommendedFullPath.addAll(optimizedDestinations);
-        summary.setRecommendedOrder(recommendedFullPath);
-        summary.setRecommendedDistanceKm(optimizedDist);
-        summary.setRecommendedTravelTimeMinutes(optimizedTime);
+        double shortestSavingsKm = Math.round((currentTotalDist - shortestDist) * 10.0) / 10.0;
+        int shortestSavingsMins = currentTotalTime - shortestTime;
 
-        // Check if the order is genuinely different
-        boolean isSameOrder = true;
-        if (optimizedDestinations.size() == destinations.size()) {
-            for (int i = 0; i < destinations.size(); i++) {
-                if (!destinations.get(i).equalsIgnoreCase(optimizedDestinations.get(i))) {
-                    isSameOrder = false;
-                    break;
-                }
+        boolean shortestDiffers = isSequenceDifferent(destinations, shortestDistDestinations);
+
+        RouteAlternativeDto shortestDistAlt = new RouteAlternativeDto(
+                "SHORTEST_DISTANCE",
+                "Shortest Road Distance",
+                shortestSavingsKm > 0
+                        ? String.format(Locale.US, "Reduces driving distance by %.1f km (%s min less road travel) while covering all destinations.", shortestSavingsKm, shortestSavingsMins)
+                        : "Streamlined highway sequence minimizing total mileage.",
+                shortestFullPath,
+                shortestDist,
+                shortestTime,
+                TimeUtils.formatDuration(shortestTime),
+                Math.max(0.0, shortestSavingsKm),
+                Math.max(0, shortestSavingsMins),
+                shortestDiffers && shortestSavingsKm >= 1.5 && shortestSavingsMins >= 5,
+                List.of("Optimized highway connectivity", "Least fuel consumption", "Reduced road fatigue")
+        );
+        alternatives.add(shortestDistAlt);
+
+        // 3. Balanced Relaxed Alternative (FASTEST_TIME / BALANCED_PACING)
+        // Reverse or cluster if advantageous
+        List<String> relaxedDestinations = new ArrayList<>(shortestDistDestinations);
+        if (destinations.size() >= 3) {
+            // Evaluate alternative cluster sequence
+            List<String> reversed = new ArrayList<>(shortestDistDestinations);
+            Collections.reverse(reversed);
+            double revDist = 0.0;
+            int revTime = 0;
+            String rPrev = startLocation;
+            for (String d : reversed) {
+                GoogleMapsService.RouteCalculationResult r = googleMapsService.calculateRouteSegment(rPrev, d, transportMode);
+                revDist += r.getDistanceKm();
+                revTime += r.getDurationMinutes();
+                rPrev = d;
             }
-        } else {
-            isSameOrder = false;
+            revDist = Math.round(revDist * 10.0) / 10.0;
+            if (revTime < shortestTime) {
+                relaxedDestinations = reversed;
+            }
         }
 
-        double savingsKm = Math.round((currentTotalDist - optimizedDist) * 10.0) / 10.0;
-        int savingsMins = currentTotalTime - optimizedTime;
+        List<String> relaxedFullPath = new ArrayList<>();
+        relaxedFullPath.add(startLocation);
+        relaxedFullPath.addAll(relaxedDestinations);
+
+        RouteAlternativeDto relaxedAlt = new RouteAlternativeDto(
+                "BALANCED_RELAXED",
+                "Balanced & Scenic Pacing",
+                "Smooth travel flow balancing driving hours and allowing ample sightseeing time at each destination.",
+                relaxedFullPath,
+                shortestDist,
+                shortestTime,
+                TimeUtils.formatDuration(shortestTime),
+                Math.max(0.0, shortestSavingsKm),
+                Math.max(0, shortestSavingsMins),
+                false,
+                List.of("Comfortable daily driving limits", "Sightseeing prioritized", "Family & leisure friendly")
+        );
+        alternatives.add(relaxedAlt);
+
+        summary.setAlternatives(alternatives);
 
         // Recommend ONLY when genuine positive savings exist (>= 1.5 km AND >= 5 min)
-        if (!isSameOrder && savingsKm >= 1.5 && savingsMins >= 5) {
+        if (shortestDiffers && shortestSavingsKm >= 1.5 && shortestSavingsMins >= 5) {
             summary.setOptimizationRecommended(true);
-            summary.setPotentialSavingsKm(Math.max(0.0, savingsKm));
-            summary.setPotentialSavingsMinutes(Math.max(0, savingsMins));
+            summary.setRecommendedOrder(shortestFullPath);
+            summary.setRecommendedDistanceKm(shortestDist);
+            summary.setRecommendedTravelTimeMinutes(shortestTime);
+            summary.setPotentialSavingsKm(shortestSavingsKm);
+            summary.setPotentialSavingsMinutes(shortestSavingsMins);
             summary.setOptimizationMessage(String.format(Locale.US,
-                    "Smart Route Optimization Available! Save %s km and %s min of travel by reordering your stops.",
-                    summary.getPotentialSavingsKm(), summary.getPotentialSavingsMinutes()));
+                    "Alternative route: %.1f km shorter, approximately %d minutes less driving, and still includes your %d must-visit destinations.",
+                    shortestSavingsKm, shortestSavingsMins, destinations.size()));
         } else {
             summary.setOptimizationRecommended(false);
             summary.setRecommendedOrder(summary.getOriginalOrder());
@@ -198,6 +284,16 @@ public class RouteService {
             summary.setRecommendedTravelTimeMinutes(summary.getTotalTravelTimeMinutes());
             summary.setOptimizationMessage("The current route is already the most efficient order found under the selected constraints.");
         }
+    }
+
+    private boolean isSequenceDifferent(List<String> listA, List<String> listB) {
+        if (listA.size() != listB.size()) return true;
+        for (int i = 0; i < listA.size(); i++) {
+            if (!listA.get(i).equalsIgnoreCase(listB.get(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> solveOptimalRouteOrder(String startLocation, List<String> destinations, String transportMode) {

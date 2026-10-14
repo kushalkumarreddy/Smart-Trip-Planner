@@ -1,5 +1,6 @@
 package com.example.tripplanner.controller;
 
+import com.example.tripplanner.dto.FeaturedDestinationDto;
 import com.example.tripplanner.dto.SightseeingPlaceDto;
 import com.example.tripplanner.entity.Destination;
 import com.example.tripplanner.service.DestinationService;
@@ -25,6 +26,32 @@ public class DestinationApiController {
         this.destinationService = destinationService;
         this.recommendationService = recommendationService;
         this.tripService = tripService;
+    }
+
+    /**
+     * Curated Famous Indian Destinations Catalog (Section 2)
+     */
+    @GetMapping("/featured")
+    public ResponseEntity<List<FeaturedDestinationDto>> getFeaturedDestinations(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "query", required = false) String query) {
+        List<FeaturedDestinationDto> featured = recommendationService.getFeaturedDestinations(category, query);
+        return ResponseEntity.ok(featured);
+    }
+
+    /**
+     * Categories list for filter pills / drawer
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        return ResponseEntity.ok(recommendationService.getAvailableCategories());
+    }
+
+    @GetMapping("/featured/{id}")
+    public ResponseEntity<FeaturedDestinationDto> getFeaturedDestinationById(@PathVariable("id") String id) {
+        return recommendationService.getFeaturedDestinationById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}/visited")

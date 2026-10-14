@@ -425,6 +425,25 @@
                 if (!response.ok) throw new Error('AI analysis failed');
                 const data = await response.json();
 
+                // Handle Follow-up questions when essential data is missing (Requirement 3)
+                if (data.requiresFollowUp && data.followUpQuestions && data.followUpQuestions.length > 0) {
+                    const banner = document.getElementById('aiPlanSuccessBanner');
+                    const msg = document.getElementById('aiPlanSuccessMsg');
+                    if (banner && msg) {
+                        msg.innerHTML = `
+                            <strong><i class="bi bi-question-circle-fill text-warning me-1"></i> Quick Follow-up Question:</strong>
+                            <div class="mt-1">${escapeHtml(data.aiSummary || 'Please specify missing journey details:')}</div>
+                            <ul class="mb-0 mt-1 ps-3">
+                                ${data.followUpQuestions.map(q => `<li><strong>${escapeHtml(q)}</strong></li>`).join('')}
+                            </ul>
+                        `;
+                        banner.className = 'banner-alert warning mt-3 py-2 px-3 small';
+                        banner.classList.remove('d-none');
+                    }
+                    if (data.startLocation) document.getElementById('startLocationInput').value = data.startLocation;
+                    return;
+                }
+
                 // Populate Fields
                 if (data.tripName) document.getElementById('tripName').value = data.tripName;
                 if (data.startLocation) document.getElementById('startLocationInput').value = data.startLocation;
@@ -452,11 +471,22 @@
                     });
                 }
 
-                // Show success feedback
+                // Show success feedback with validation notes
                 const banner = document.getElementById('aiPlanSuccessBanner');
                 const msg = document.getElementById('aiPlanSuccessMsg');
                 if (banner && msg) {
-                    msg.textContent = data.aiSummary || 'Configured trip parameters from your prompt!';
+                    let summaryHtml = `<div>${escapeHtml(data.aiSummary || 'Configured trip parameters from your prompt!')}</div>`;
+                    if (data.routeValidationSuccess) {
+                        summaryHtml += `<div class="mt-1"><span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Verified Route: ${data.totalDistanceKm || 0} km</span></div>`;
+                    }
+                    if (data.dailyTravelLimit) {
+                        summaryHtml += `<div class="small text-muted mt-1"><i class="bi bi-clock me-1"></i>Pace: ${escapeHtml(data.dailyTravelLimit)}</div>`;
+                    }
+                    if (data.accommodationPreference) {
+                        summaryHtml += `<div class="small text-muted"><i class="bi bi-building me-1"></i>Stay style: ${escapeHtml(data.accommodationPreference)}</div>`;
+                    }
+                    msg.innerHTML = summaryHtml;
+                    banner.className = 'banner-alert info mt-3 py-2 px-3 small';
                     banner.classList.remove('d-none');
                 }
 

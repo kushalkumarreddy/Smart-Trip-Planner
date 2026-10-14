@@ -88,16 +88,23 @@ public class AiTripPromptDto {
         private Integer travelersCount = 2;
         private String budgetRange = "Moderate";
         private List<String> preferredInterests = new ArrayList<>();
+        private String accommodationPreference;
+        private String dailyTravelLimit;
+        private String accessibilityNotes;
+        private List<String> followUpQuestions = new ArrayList<>();
+        private Boolean requiresFollowUp = false;
+        private Boolean routeValidationSuccess = true;
+        private String validationErrorMessage;
         private String aiSummary;
 
         public Response() {
         }
 
         public void setPromptDefaults() {
-            this.tripName = "Scenic Weekend Getaway";
-            this.startLocation = "Bengaluru";
-            this.destinationNames = List.of("Coorg");
-            this.destinationHotels = List.of("The Tamara Coorg or Misty Woods Plantation Resort");
+            this.tripName = "New Custom Journey";
+            this.startLocation = "";
+            this.destinationNames = new ArrayList<>();
+            this.destinationHotels = new ArrayList<>();
             this.totalDays = 3;
             this.startDate = LocalDate.now().plusDays(1);
             this.endDate = this.startDate.plusDays(2);
@@ -105,8 +112,13 @@ public class AiTripPromptDto {
             this.travelStyle = "BALANCED";
             this.travelersCount = 2;
             this.budgetRange = "Moderate";
-            this.preferredInterests = List.of("Nature", "Waterfalls");
-            this.aiSummary = "Curated a balanced 3-day getaway from Bengaluru to Coorg featuring scenic hills, waterfalls, and coffee estate stays.";
+            this.preferredInterests = new ArrayList<>();
+            this.requiresFollowUp = true;
+            this.followUpQuestions = List.of(
+                    "Where will your journey begin (starting city)?",
+                    "Which destinations or regions would you like to explore?"
+            );
+            this.aiSummary = "Please describe your journey! For example: 'Plan a 5-day family road trip from Bengaluru to Coorg and Wayanad with waterfalls and relaxed driving.'";
         }
 
         public String getTripName() {
@@ -219,6 +231,62 @@ public class AiTripPromptDto {
 
         public void setAiSummary(String aiSummary) {
             this.aiSummary = aiSummary;
+        }
+
+        public String getAccommodationPreference() {
+            return accommodationPreference;
+        }
+
+        public void setAccommodationPreference(String accommodationPreference) {
+            this.accommodationPreference = accommodationPreference;
+        }
+
+        public String getDailyTravelLimit() {
+            return dailyTravelLimit;
+        }
+
+        public void setDailyTravelLimit(String dailyTravelLimit) {
+            this.dailyTravelLimit = dailyTravelLimit;
+        }
+
+        public String getAccessibilityNotes() {
+            return accessibilityNotes;
+        }
+
+        public void setAccessibilityNotes(String accessibilityNotes) {
+            this.accessibilityNotes = accessibilityNotes;
+        }
+
+        public List<String> getFollowUpQuestions() {
+            return followUpQuestions;
+        }
+
+        public void setFollowUpQuestions(List<String> followUpQuestions) {
+            this.followUpQuestions = followUpQuestions;
+        }
+
+        public Boolean getRequiresFollowUp() {
+            return requiresFollowUp;
+        }
+
+        public void setRequiresFollowUp(Boolean requiresFollowUp) {
+            this.requiresFollowUp = requiresFollowUp;
+        }
+
+        public Boolean getRouteValidationSuccess() {
+            return routeValidationSuccess;
+        }
+
+        public void setRouteValidationSuccess(Boolean routeValidationSuccess) {
+            this.routeValidationSuccess = routeValidationSuccess;
+        }
+
+        public String getValidationErrorMessage() {
+            return validationErrorMessage;
+        }
+
+        public void setValidationErrorMessage(String validationErrorMessage) {
+            this.validationErrorMessage = validationErrorMessage;
         }
     }
 }

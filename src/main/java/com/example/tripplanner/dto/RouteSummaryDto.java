@@ -21,6 +21,9 @@ public class RouteSummaryDto {
     private Integer recommendedTravelTimeMinutes = 0;
     private String optimizationMessage;
 
+    // Viable alternative routes comparing metrics
+    private List<RouteAlternativeDto> alternatives = new ArrayList<>();
+
     // Calculation Status & Error Handling
     private Boolean routeCalculationSuccess = true;
     private String calculationErrorMessage;
@@ -29,6 +32,14 @@ public class RouteSummaryDto {
     private String googleMapsFullRouteUrl;
 
     public RouteSummaryDto() {
+    }
+
+    public List<RouteAlternativeDto> getAlternatives() {
+        return alternatives;
+    }
+
+    public void setAlternatives(List<RouteAlternativeDto> alternatives) {
+        this.alternatives = alternatives;
     }
 
     public Boolean getRouteCalculationSuccess() {

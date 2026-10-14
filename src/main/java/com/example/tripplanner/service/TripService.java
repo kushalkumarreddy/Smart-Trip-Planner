@@ -9,6 +9,7 @@ import com.example.tripplanner.util.TimeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -227,7 +228,7 @@ public class TripService {
 
     public void checkTripAccess(Trip trip, User user, String requiredRole) {
         if (user == null) {
-            return;
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to access trip.");
         }
         // Trip owner has full access
         if (trip.getUser() != null && trip.getUser().getId().equals(user.getId())) {
@@ -268,7 +269,13 @@ public class TripService {
         List<String> destNames = destinations.stream().map(Destination::getName).collect(Collectors.toList());
         RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(trip.getStartLocation(), destNames, trip.getTransportMode());
 
-        List<DayItineraryDto> dayItineraries = itineraryService.generateItineraryPlan(trip, destinations, trip.getTransportMode());
+        List<ItineraryItem> persistedItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
+        List<DayItineraryDto> dayItineraries;
+        if (!persistedItems.isEmpty()) {
+            dayItineraries = buildDayItinerariesFromEntities(persistedItems, trip, destinations);
+        } else {
+            dayItineraries = itineraryService.generateItineraryPlan(trip, destinations, trip.getTransportMode());
+        }
 
         return buildTripResponseDto(trip, routeSummary, dayItineraries, destinations);
     }
@@ -458,7 +465,7 @@ public class TripService {
     }
 
     /**
-     * Regenerates a single day's schedule without rebuilding the entire trip (Requirement 4).
+     * Regenerates a single day's schedule without rebuilding the entire trip, preserving locked items and stays (Requirement 4 & 5).
      */
     @Transactional
     public TripResponseDto regenerateSingleDay(Long tripId, Integer dayNumber, String preference, User user) {
@@ -468,7 +475,15 @@ public class TripService {
 
         List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
 
-        // Collect names of places scheduled in OTHER days to avoid duplicates
+        // Fetch existing items for this day
+        List<ItineraryItem> currentDayItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), dayNumber);
+
+        // Identify locked items and stays that must be preserved
+        List<ItineraryItem> lockedItems = currentDayItems.stream()
+                .filter(it -> Boolean.TRUE.equals(it.getLocked()) || "HOTEL".equalsIgnoreCase(it.getActivityType()))
+                .collect(Collectors.toList());
+
+        // Collect places scheduled in other days + locked locations on this day to avoid duplicate recommendations
         List<ItineraryItem> allItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
         Set<String> alreadyUsed = new HashSet<>();
         for (ItineraryItem it : allItems) {
@@ -476,17 +491,30 @@ public class TripService {
                 alreadyUsed.add(it.getLocation().toLowerCase());
             }
         }
+        for (ItineraryItem locked : lockedItems) {
+            if (locked.getLocation() != null) {
+                alreadyUsed.add(locked.getLocation().toLowerCase());
+            }
+        }
 
-        // Generate refreshed day
+        // Generate refreshed candidate day
         DayItineraryDto refreshedDay = itineraryService.regenerateSingleDay(
                 trip, destinations, dayNumber, preference, trip.getTransportMode(), alreadyUsed
         );
 
-        // Delete old items for that day only
-        itineraryItemRepository.deleteByTripIdAndDayNumber(trip.getId(), dayNumber);
+        // Delete ONLY unlocked non-hotel items for this day
+        List<ItineraryItem> toDelete = currentDayItems.stream()
+                .filter(it -> !Boolean.TRUE.equals(it.getLocked()) && !"HOTEL".equalsIgnoreCase(it.getActivityType()))
+                .collect(Collectors.toList());
+        itineraryItemRepository.deleteAll(toDelete);
 
-        // Save new items
+        boolean hasHotelPreserved = lockedItems.stream().anyMatch(it -> "HOTEL".equalsIgnoreCase(it.getActivityType()));
+
+        // Save new items (skipping redundant HOTEL if already preserved)
         for (ItineraryItemDto itemDto : refreshedDay.getItems()) {
+            if ("HOTEL".equalsIgnoreCase(itemDto.getActivityType()) && hasHotelPreserved) {
+                continue;
+            }
             ItineraryItem item = new ItineraryItem();
             item.setTrip(trip);
             item.setDayNumber(dayNumber);
@@ -501,6 +529,7 @@ public class TripService {
             item.setDurationMinutes(itemDto.getDurationMinutes());
             item.setRating(itemDto.getRating());
             item.setVisited(false);
+            item.setLocked(false);
             item.setNotes(itemDto.getNotes());
             itineraryItemRepository.save(item);
         }
@@ -706,6 +735,498 @@ public class TripService {
                 item.setNotes(itemDto.getNotes());
                 itineraryItemRepository.save(item);
             }
+        }
+
+        tripRepository.save(trip);
+        return getTripDtoById(tripId, user);
+    }
+
+    /**
+     * Map-based accommodation selection & detail update (Requirement 4).
+     */
+    @Transactional
+    public TripResponseDto updateDestinationAccommodation(Long tripId, Long destinationId, AccommodationStayDto stayDto, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        Destination destination = destinationRepository.findById(destinationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
+        if (!destination.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Destination does not belong to this trip.");
+        }
+
+        if (stayDto.getHotelName() != null && !stayDto.getHotelName().trim().isEmpty()) {
+            destination.setHotelName(stayDto.getHotelName().trim());
+        }
+        destination.setHotelAddress(stayDto.getHotelAddress());
+        destination.setHotelLat(stayDto.getHotelLat());
+        destination.setHotelLng(stayDto.getHotelLng());
+        if ((destination.getHotelLat() == null || destination.getHotelLng() == null) && destination.getHotelAddress() != null && !destination.getHotelAddress().trim().isEmpty()) {
+            double[] coords = googleMapsService.geocode(destination.getHotelAddress());
+            if (coords != null && coords.length >= 2) {
+                destination.setHotelLat(coords[0]);
+                destination.setHotelLng(coords[1]);
+            }
+        }
+        destination.setCheckInDate(stayDto.getCheckInDate());
+        destination.setCheckOutDate(stayDto.getCheckOutDate());
+        destination.setCheckInTime(stayDto.getCheckInTime());
+        destination.setCheckOutTime(stayDto.getCheckOutTime());
+        destination.setRoomsCount(stayDto.getRoomsCount() != null ? stayDto.getRoomsCount() : 1);
+        destination.setGuestsCount(stayDto.getGuestsCount() != null ? stayDto.getGuestsCount() : 2);
+        destination.setBookingReference(stayDto.getBookingReference());
+        destination.setHotelNotes(stayDto.getHotelNotes());
+
+        destinationRepository.save(destination);
+
+        // Update itinerary hotel items for this day
+        int targetDayNumber = destination.getSequenceOrder() + 1;
+        List<ItineraryItem> dayItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), targetDayNumber);
+        boolean foundHotelItem = false;
+        for (ItineraryItem it : dayItems) {
+            if ("HOTEL".equalsIgnoreCase(it.getActivityType())) {
+                it.setLocation(destination.getHotelName() != null ? destination.getHotelName() : destination.getName());
+                it.setActivity("🏨 Check-in & Stay at " + (destination.getHotelName() != null ? destination.getHotelName() : destination.getName()));
+                if (destination.getHotelNotes() != null) {
+                    it.setNotes(destination.getHotelNotes());
+                }
+                itineraryItemRepository.save(it);
+                foundHotelItem = true;
+                break;
+            }
+        }
+        if (!foundHotelItem && destination.getHotelName() != null) {
+            ItineraryItem hotelItem = new ItineraryItem();
+            hotelItem.setTrip(trip);
+            hotelItem.setDayNumber(targetDayNumber);
+            hotelItem.setScheduleDate(trip.getStartDate() != null ? trip.getStartDate().plusDays(targetDayNumber - 1) : LocalDate.now());
+            hotelItem.setStartTime("19:30");
+            hotelItem.setEndTime("20:30");
+            hotelItem.setActivity("🏨 Check-in & Stay at " + destination.getHotelName());
+            hotelItem.setLocation(destination.getHotelName());
+            hotelItem.setActivityType("HOTEL");
+            hotelItem.setDurationMinutes(60);
+            hotelItem.setNotes(destination.getHotelNotes());
+            itineraryItemRepository.save(hotelItem);
+        }
+
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto removeDestinationAccommodation(Long tripId, Long destinationId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        Destination destination = destinationRepository.findById(destinationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
+        if (!destination.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Destination does not belong to this trip.");
+        }
+
+        destination.setHotelName(null);
+        destination.setHotelAddress(null);
+        destination.setHotelLat(null);
+        destination.setHotelLng(null);
+        destination.setCheckInDate(null);
+        destination.setCheckOutDate(null);
+        destination.setCheckInTime(null);
+        destination.setCheckOutTime(null);
+        destination.setRoomsCount(1);
+        destination.setGuestsCount(1);
+        destination.setBookingReference(null);
+        destination.setHotelNotes(null);
+
+        destinationRepository.save(destination);
+
+        // Update itinerary hotel items for this day to generic
+        int targetDayNumber = destination.getSequenceOrder() + 1;
+        List<ItineraryItem> dayItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), targetDayNumber);
+        for (ItineraryItem it : dayItems) {
+            if ("HOTEL".equalsIgnoreCase(it.getActivityType())) {
+                it.setLocation("Hotel / Stay in " + destination.getName());
+                it.setActivity("🏨 Relax at Stay in " + destination.getName());
+                it.setNotes(null);
+                itineraryItemRepository.save(it);
+                break;
+            }
+        }
+
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public Map<String, Object> toggleActivityLock(Long tripId, Long itemId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        ItineraryItem item = itineraryItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Itinerary item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Activity does not belong to this trip.");
+        }
+
+        boolean newLockedStatus = !Boolean.TRUE.equals(item.getLocked());
+        item.setLocked(newLockedStatus);
+        itineraryItemRepository.save(item);
+
+        return Map.of("itemId", item.getId(), "locked", newLockedStatus, "message", newLockedStatus ? "Activity locked" : "Activity unlocked");
+    }
+
+    @Transactional
+    public TripResponseDto replaceActivity(Long tripId, Long itemId, ItineraryItemDto updatedItem, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        ItineraryItem item = itineraryItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Itinerary item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Activity does not belong to this trip.");
+        }
+
+        if (updatedItem.getActivity() != null && !updatedItem.getActivity().trim().isEmpty()) {
+            item.setActivity(updatedItem.getActivity().trim());
+        }
+        if (updatedItem.getLocation() != null && !updatedItem.getLocation().trim().isEmpty()) {
+            item.setLocation(updatedItem.getLocation().trim());
+        }
+        if (updatedItem.getStartTime() != null) {
+            item.setStartTime(updatedItem.getStartTime());
+        }
+        if (updatedItem.getEndTime() != null) {
+            item.setEndTime(updatedItem.getEndTime());
+        }
+        if (updatedItem.getActivityType() != null) {
+            item.setActivityType(updatedItem.getActivityType());
+        }
+        if (updatedItem.getDurationMinutes() != null) {
+            item.setDurationMinutes(updatedItem.getDurationMinutes());
+        }
+        if (updatedItem.getTravelDistanceKm() != null) {
+            item.setTravelDistanceKm(updatedItem.getTravelDistanceKm());
+        }
+        if (updatedItem.getTravelTimeMinutes() != null) {
+            item.setTravelTimeMinutes(updatedItem.getTravelTimeMinutes());
+        }
+        if (updatedItem.getRating() != null) {
+            item.setRating(updatedItem.getRating());
+        }
+        if (updatedItem.getNotes() != null) {
+            item.setNotes(updatedItem.getNotes());
+        }
+        if (updatedItem.getLocked() != null) {
+            item.setLocked(updatedItem.getLocked());
+        }
+
+        itineraryItemRepository.save(item);
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto deleteItineraryItem(Long tripId, Long itemId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        ItineraryItem item = itineraryItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Itinerary item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Activity does not belong to this trip.");
+        }
+
+        itineraryItemRepository.delete(item);
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto addActivityToDay(Long tripId, Integer dayNumber, ItineraryItemDto newItem, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        ItineraryItem item = new ItineraryItem();
+        item.setTrip(trip);
+        item.setDayNumber(dayNumber);
+        LocalDate itemDate = (trip.getStartDate() != null) ? trip.getStartDate().plusDays(dayNumber - 1) : LocalDate.now();
+        item.setScheduleDate(itemDate);
+        item.setStartTime(newItem.getStartTime() != null ? newItem.getStartTime() : "10:00");
+        item.setEndTime(newItem.getEndTime() != null ? newItem.getEndTime() : "11:30");
+        item.setActivity(newItem.getActivity() != null ? newItem.getActivity() : "Sightseeing Activity");
+        item.setLocation(newItem.getLocation() != null ? newItem.getLocation() : trip.getStartLocation());
+        item.setActivityType(newItem.getActivityType() != null ? newItem.getActivityType() : "SIGHTSEEING");
+        item.setTravelDistanceKm(newItem.getTravelDistanceKm() != null ? newItem.getTravelDistanceKm() : 2.0);
+        item.setTravelTimeMinutes(newItem.getTravelTimeMinutes() != null ? newItem.getTravelTimeMinutes() : 15);
+        item.setDurationMinutes(newItem.getDurationMinutes() != null ? newItem.getDurationMinutes() : 90);
+        item.setRating(newItem.getRating() != null ? newItem.getRating() : 4.5);
+        item.setVisited(false);
+        item.setLocked(newItem.getLocked() != null ? newItem.getLocked() : false);
+        item.setNotes(newItem.getNotes());
+
+        itineraryItemRepository.save(item);
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto addDestinationToTrip(Long tripId, String destinationName, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (destinationName == null || destinationName.trim().isEmpty()) {
+            throw new BadRequestException("Destination name cannot be blank.");
+        }
+
+        List<Destination> currentDests = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
+        int newSeq = currentDests.size();
+
+        Destination destination = new Destination(destinationName.trim(), newSeq);
+        destination.setTrip(trip);
+        double[] coords = googleMapsService.geocode(destinationName.trim());
+        destination.setLatitude(coords[0]);
+        destination.setLongitude(coords[1]);
+
+        Destination savedDest = destinationRepository.save(destination);
+        currentDests.add(savedDest);
+
+        // Seed recommendations
+        List<SightseeingPlaceDto> recommended = recommendationService.getRecommendedPlaces(
+                destinationName.trim(),
+                trip.getPreferredInterests() != null ? Arrays.asList(trip.getPreferredInterests().split(",")) : null,
+                "popularity",
+                null
+        );
+        for (SightseeingPlaceDto rec : recommended) {
+            Place place = new Place();
+            place.setDestination(savedDest);
+            place.setName(rec.getName());
+            place.setCategory(rec.getCategory());
+            place.setRating(rec.getRating());
+            place.setReviewCount(rec.getReviewCount());
+            place.setLatitude(rec.getLatitude());
+            place.setLongitude(rec.getLongitude());
+            place.setDistanceKm(rec.getDistanceKm());
+            place.setEstimatedVisitDurationMinutes(rec.getEstimatedVisitDurationMinutes());
+            place.setEstimatedTravelTimeMinutes(rec.getEstimatedTravelTimeMinutes());
+            place.setDescription(rec.getDescription());
+            place.setOpeningHours(rec.getOpeningHours());
+            place.setPriority(rec.getPriority());
+            place.setVisited(false);
+            place.setAddedToItinerary(true);
+            placeRepository.save(place);
+            savedDest.getPlaces().add(place);
+        }
+
+        List<String> names = currentDests.stream().map(Destination::getName).collect(Collectors.toList());
+        RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(trip.getStartLocation(), names, trip.getTransportMode());
+
+        for (int i = 0; i < currentDests.size(); i++) {
+            Destination d = currentDests.get(i);
+            d.setSequenceOrder(i);
+            if (i < routeSummary.getSegments().size()) {
+                RouteSegmentDto seg = routeSummary.getSegments().get(i);
+                d.setDistanceFromPrevious(seg.getDistanceKm());
+                d.setTravelTimeFromPrevious(seg.getDurationMinutes());
+            }
+            destinationRepository.save(d);
+        }
+
+        trip.setTotalDistance(routeSummary.getTotalDistanceKm());
+        trip.setTotalTravelTimeMinutes(routeSummary.getTotalTravelTimeMinutes());
+
+        itineraryItemRepository.deleteByTripId(trip.getId());
+        List<DayItineraryDto> days = itineraryService.generateItineraryPlan(trip, currentDests, trip.getTransportMode());
+        for (DayItineraryDto day : days) {
+            for (ItineraryItemDto itemDto : day.getItems()) {
+                ItineraryItem item = new ItineraryItem();
+                item.setTrip(trip);
+                item.setDayNumber(day.getDayNumber());
+                item.setScheduleDate(day.getDate());
+                item.setStartTime(itemDto.getStartTime());
+                item.setEndTime(itemDto.getEndTime());
+                item.setActivity(itemDto.getActivity());
+                item.setLocation(itemDto.getLocation());
+                item.setActivityType(itemDto.getActivityType());
+                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
+                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
+                item.setDurationMinutes(itemDto.getDurationMinutes());
+                item.setRating(itemDto.getRating());
+                item.setVisited(itemDto.getVisited());
+                item.setNotes(itemDto.getNotes());
+                item.setLocked(itemDto.getLocked());
+                itineraryItemRepository.save(item);
+            }
+        }
+
+        tripRepository.save(trip);
+        return buildTripResponseDto(trip, routeSummary, days, currentDests);
+    }
+
+    @Transactional
+    public TripResponseDto removeDestinationFromTrip(Long tripId, Long destinationId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        List<Destination> currentDests = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
+        if (currentDests.size() <= 1) {
+            throw new BadRequestException("A trip must have at least one destination.");
+        }
+
+        Destination toRemove = currentDests.stream()
+                .filter(d -> Objects.equals(d.getId(), destinationId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
+
+        currentDests.remove(toRemove);
+        destinationRepository.delete(toRemove);
+
+        // Re-index remaining destinations
+        for (int i = 0; i < currentDests.size(); i++) {
+            currentDests.get(i).setSequenceOrder(i);
+        }
+
+        List<String> names = currentDests.stream().map(Destination::getName).collect(Collectors.toList());
+        RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(trip.getStartLocation(), names, trip.getTransportMode());
+
+        for (int i = 0; i < currentDests.size(); i++) {
+            Destination d = currentDests.get(i);
+            if (i < routeSummary.getSegments().size()) {
+                RouteSegmentDto seg = routeSummary.getSegments().get(i);
+                d.setDistanceFromPrevious(seg.getDistanceKm());
+                d.setTravelTimeFromPrevious(seg.getDurationMinutes());
+            } else {
+                d.setDistanceFromPrevious(0.0);
+                d.setTravelTimeFromPrevious(0);
+            }
+            destinationRepository.save(d);
+        }
+
+        trip.setTotalDistance(routeSummary.getTotalDistanceKm());
+        trip.setTotalTravelTimeMinutes(routeSummary.getTotalTravelTimeMinutes());
+
+        itineraryItemRepository.deleteByTripId(trip.getId());
+        List<DayItineraryDto> days = itineraryService.generateItineraryPlan(trip, currentDests, trip.getTransportMode());
+        for (DayItineraryDto day : days) {
+            for (ItineraryItemDto itemDto : day.getItems()) {
+                ItineraryItem item = new ItineraryItem();
+                item.setTrip(trip);
+                item.setDayNumber(day.getDayNumber());
+                item.setScheduleDate(day.getDate());
+                item.setStartTime(itemDto.getStartTime());
+                item.setEndTime(itemDto.getEndTime());
+                item.setActivity(itemDto.getActivity());
+                item.setLocation(itemDto.getLocation());
+                item.setActivityType(itemDto.getActivityType());
+                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
+                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
+                item.setDurationMinutes(itemDto.getDurationMinutes());
+                item.setRating(itemDto.getRating());
+                item.setVisited(itemDto.getVisited());
+                item.setNotes(itemDto.getNotes());
+                item.setLocked(itemDto.getLocked());
+                itineraryItemRepository.save(item);
+            }
+        }
+
+        tripRepository.save(trip);
+        return buildTripResponseDto(trip, routeSummary, days, currentDests);
+    }
+
+    @Transactional
+    public TripResponseDto applyRouteAlternative(Long tripId, List<String> orderedDestinations, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (orderedDestinations == null || orderedDestinations.isEmpty()) {
+            throw new BadRequestException("Alternative destination order cannot be empty.");
+        }
+
+        List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
+        Map<String, Destination> destMap = destinations.stream()
+                .collect(Collectors.toMap(d -> d.getName().trim().toLowerCase(), d -> d, (a, b) -> a));
+
+        List<Destination> reordered = new ArrayList<>();
+        for (String destName : orderedDestinations) {
+            Destination d = destMap.get(destName.trim().toLowerCase());
+            if (d != null && !reordered.contains(d)) {
+                reordered.add(d);
+            }
+        }
+
+        for (Destination d : destinations) {
+            if (!reordered.contains(d)) {
+                reordered.add(d);
+            }
+        }
+
+        List<String> names = reordered.stream().map(Destination::getName).collect(Collectors.toList());
+        RouteSummaryDto newRouteSummary = routeService.calculateCompleteRoute(trip.getStartLocation(), names, trip.getTransportMode());
+
+        for (int i = 0; i < reordered.size(); i++) {
+            Destination d = reordered.get(i);
+            d.setSequenceOrder(i);
+            if (i < newRouteSummary.getSegments().size()) {
+                RouteSegmentDto seg = newRouteSummary.getSegments().get(i);
+                d.setDistanceFromPrevious(seg.getDistanceKm());
+                d.setTravelTimeFromPrevious(seg.getDurationMinutes());
+            }
+            destinationRepository.save(d);
+        }
+
+        trip.setTotalDistance(newRouteSummary.getTotalDistanceKm());
+        trip.setTotalTravelTimeMinutes(newRouteSummary.getTotalTravelTimeMinutes());
+
+        List<ItineraryItem> existingItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
+        List<ItineraryItem> lockedItems = existingItems.stream().filter(it -> Boolean.TRUE.equals(it.getLocked())).collect(Collectors.toList());
+
+        itineraryItemRepository.deleteByTripId(trip.getId());
+        List<DayItineraryDto> days = itineraryService.generateItineraryPlan(trip, reordered, trip.getTransportMode());
+
+        for (DayItineraryDto day : days) {
+            for (ItineraryItemDto itemDto : day.getItems()) {
+                ItineraryItem item = new ItineraryItem();
+                item.setTrip(trip);
+                item.setDayNumber(day.getDayNumber());
+                item.setScheduleDate(day.getDate());
+                item.setStartTime(itemDto.getStartTime());
+                item.setEndTime(itemDto.getEndTime());
+                item.setActivity(itemDto.getActivity());
+                item.setLocation(itemDto.getLocation());
+                item.setActivityType(itemDto.getActivityType());
+                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
+                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
+                item.setDurationMinutes(itemDto.getDurationMinutes());
+                item.setRating(itemDto.getRating());
+                item.setVisited(itemDto.getVisited());
+                item.setNotes(itemDto.getNotes());
+                item.setLocked(itemDto.getLocked());
+                itineraryItemRepository.save(item);
+            }
+        }
+
+        for (ItineraryItem locked : lockedItems) {
+            ItineraryItem restored = new ItineraryItem();
+            restored.setTrip(trip);
+            restored.setDayNumber(locked.getDayNumber());
+            restored.setScheduleDate(locked.getScheduleDate());
+            restored.setStartTime(locked.getStartTime());
+            restored.setEndTime(locked.getEndTime());
+            restored.setActivity(locked.getActivity());
+            restored.setLocation(locked.getLocation());
+            restored.setActivityType(locked.getActivityType());
+            restored.setTravelDistanceKm(locked.getTravelDistanceKm());
+            restored.setTravelTimeMinutes(locked.getTravelTimeMinutes());
+            restored.setDurationMinutes(locked.getDurationMinutes());
+            restored.setRating(locked.getRating());
+            restored.setVisited(locked.getVisited());
+            restored.setNotes(locked.getNotes());
+            restored.setLocked(true);
+            itineraryItemRepository.save(restored);
         }
 
         tripRepository.save(trip);
@@ -1010,6 +1531,92 @@ public class TripService {
         return map;
     }
 
+    private List<DayItineraryDto> buildDayItinerariesFromEntities(List<ItineraryItem> items, Trip trip, List<Destination> destinations) {
+        Map<Integer, List<ItineraryItem>> byDay = items.stream()
+                .collect(Collectors.groupingBy(ItineraryItem::getDayNumber, TreeMap::new, Collectors.toList()));
+
+        List<DayItineraryDto> dayDtos = new ArrayList<>();
+        LocalDate startDate = trip.getStartDate() != null ? trip.getStartDate() : LocalDate.now();
+
+        for (Map.Entry<Integer, List<ItineraryItem>> entry : byDay.entrySet()) {
+            int dayNumber = entry.getKey();
+            List<ItineraryItem> dayItems = entry.getValue();
+            LocalDate dayDate = startDate.plusDays(dayNumber - 1);
+
+            int destIdx = Math.min(destinations.size() - 1, dayNumber - 1);
+            String destName = (destIdx >= 0 && destIdx < destinations.size()) ? destinations.get(destIdx).getName() : trip.getStartLocation();
+            String title = "Day " + dayNumber + " • Explore " + destName;
+
+            DayItineraryDto dayDto = new DayItineraryDto(dayNumber, dayDate, title);
+            List<ItineraryItemDto> itemDtos = new ArrayList<>();
+
+            double dayDistance = 0.0;
+            int dayTravelMinutes = 0;
+            int daySightseeingMinutes = 0;
+            int dayBreakMinutes = 0;
+            int totalPlaces = 0;
+            int visitedPlaces = 0;
+
+            for (ItineraryItem it : dayItems) {
+                ItineraryItemDto dto = new ItineraryItemDto();
+                dto.setId(it.getId());
+                dto.setTripId(trip.getId());
+                dto.setDayNumber(it.getDayNumber());
+                dto.setScheduleDate(it.getScheduleDate() != null ? it.getScheduleDate() : dayDate);
+                dto.setStartTime(it.getStartTime());
+                dto.setEndTime(it.getEndTime());
+                dto.setActivity(it.getActivity());
+                dto.setLocation(it.getLocation());
+                dto.setActivityType(it.getActivityType());
+                if (it.getPlace() != null) dto.setPlaceId(it.getPlace().getId());
+                dto.setTravelDistanceKm(it.getTravelDistanceKm() != null ? it.getTravelDistanceKm() : 0.0);
+                dto.setTravelTimeMinutes(it.getTravelTimeMinutes() != null ? it.getTravelTimeMinutes() : 0);
+                dto.setDurationMinutes(it.getDurationMinutes() != null ? it.getDurationMinutes() : 60);
+                dto.setRating(it.getRating());
+                dto.setVisited(it.getVisited() != null && it.getVisited());
+                dto.setLocked(it.getLocked() != null && it.getLocked());
+                dto.setNotes(it.getNotes());
+
+                itemDtos.add(dto);
+
+                dayDistance += dto.getTravelDistanceKm();
+                dayTravelMinutes += dto.getTravelTimeMinutes();
+                if ("SIGHTSEEING".equalsIgnoreCase(dto.getActivityType())) {
+                    daySightseeingMinutes += dto.getDurationMinutes();
+                    totalPlaces++;
+                    if (Boolean.TRUE.equals(dto.getVisited())) visitedPlaces++;
+                } else if ("MEAL".equalsIgnoreCase(dto.getActivityType()) || "REST".equalsIgnoreCase(dto.getActivityType()) || "HOTEL".equalsIgnoreCase(dto.getActivityType())) {
+                    dayBreakMinutes += dto.getDurationMinutes();
+                }
+            }
+
+            dayDto.setItems(itemDtos);
+            dayDto.setTotalDistanceKm(Math.round(dayDistance * 10.0) / 10.0);
+            dayDto.setTravelTimeMinutes(dayTravelMinutes);
+            dayDto.setSightseeingTimeMinutes(daySightseeingMinutes);
+            dayDto.setBreakTimeMinutes(dayBreakMinutes);
+            dayDto.setTotalDurationMinutes(dayTravelMinutes + daySightseeingMinutes + dayBreakMinutes);
+            dayDto.setTotalPlacesCount(totalPlaces);
+            dayDto.setVisitedCount(visitedPlaces);
+
+            if (dayTravelMinutes >= 420) {
+                dayDto.setStatus("⚠️ Long Day");
+                dayDto.setWarningMessage("This day contains " + TimeUtils.formatDuration(dayTravelMinutes) + " of transit!");
+            } else if (dayTravelMinutes + daySightseeingMinutes >= 600) {
+                dayDto.setStatus("Overcrowded");
+                dayDto.setWarningMessage("Schedule is heavily packed.");
+            } else if (dayTravelMinutes < 120 && daySightseeingMinutes < 180) {
+                dayDto.setStatus("Relaxed");
+            } else {
+                dayDto.setStatus("Balanced");
+            }
+
+            dayDtos.add(dayDto);
+        }
+
+        return dayDtos;
+    }
+
     private TripResponseDto buildTripResponseDto(Trip trip, RouteSummaryDto routeSummary, List<DayItineraryDto> dayItineraries) {
         return buildTripResponseDto(trip, routeSummary, dayItineraries, null);
     }
@@ -1082,8 +1689,19 @@ public class TripService {
             }
             dDto.setDistanceFromPrevious(d.getDistanceFromPrevious());
             dDto.setTravelTimeFromPrevious(d.getTravelTimeFromPrevious());
-            dDto.setVisited(d.getVisited());
             dDto.setHotelName(d.getHotelName());
+            dDto.setHotelAddress(d.getHotelAddress());
+            dDto.setHotelLat(d.getHotelLat());
+            dDto.setHotelLng(d.getHotelLng());
+            dDto.setCheckInDate(d.getCheckInDate());
+            dDto.setCheckOutDate(d.getCheckOutDate());
+            dDto.setCheckInTime(d.getCheckInTime());
+            dDto.setCheckOutTime(d.getCheckOutTime());
+            dDto.setRoomsCount(d.getRoomsCount());
+            dDto.setGuestsCount(d.getGuestsCount());
+            dDto.setBookingReference(d.getBookingReference());
+            dDto.setHotelNotes(d.getHotelNotes());
+            dDto.setVisited(d.getVisited());
 
             List<SightseeingPlaceDto> placeDtos = new ArrayList<>();
             if (d.getPlaces() != null) {

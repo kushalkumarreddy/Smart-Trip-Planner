@@ -1,5 +1,6 @@
 package com.example.tripplanner.service;
 
+import com.example.tripplanner.dto.FeaturedDestinationDto;
 import com.example.tripplanner.dto.SightseeingPlaceDto;
 import com.example.tripplanner.util.GeoUtils;
 import org.springframework.stereotype.Service;
@@ -152,6 +153,306 @@ public class RecommendationService {
         guntakalPlaces.add(new PlaceTemplate("Chippagiri Historical Overlook", "Historical", 4.5, 3100, 18.0, 75, 35,
                 "Spiritual and historic hill village associated with medieval Haridasa philosopher Sri Vijayadasaru.", "07:00 AM - 06:00 PM", 15.2800, 77.2100));
         CURATED_PLACES_DB.put("guntakal", guntakalPlaces);
+
+        // Agra
+        List<PlaceTemplate> agraPlaces = new ArrayList<>();
+        agraPlaces.add(new PlaceTemplate("Taj Mahal", "Historical", 4.9, 210000, 3.5, 150, 12,
+                "Magnificent 17th-century white marble mausoleum built by Emperor Shah Jahan, UNESCO World Heritage site and Wonder of the World.", "06:00 AM - 06:30 PM (Closed Fridays)", 27.1751, 78.0421));
+        agraPlaces.add(new PlaceTemplate("Agra Fort", "Historical", 4.7, 78000, 2.5, 120, 10,
+                "Massive 16th-century red sandstone fortress of the Mughal emperors featuring the Jahangiri Mahal, Khas Mahal, and Diwan-i-Khas.", "06:00 AM - 06:00 PM", 27.1795, 78.0211));
+        agraPlaces.add(new PlaceTemplate("Mehtab Bagh", "Parks", 4.5, 29000, 5.2, 60, 18,
+                "Charbagh garden complex situated across the Yamuna River offering iconic sunset views of the Taj Mahal reflected in water.", "06:00 AM - 06:00 PM", 27.1800, 78.0425));
+        agraPlaces.add(new PlaceTemplate("Fatehpur Sikri", "Historical", 4.6, 38000, 36.0, 150, 55,
+                "Spectacular 16th-century Mughal fortified capital featuring Buland Darwaza, Jama Masjid, and Panch Mahal.", "06:00 AM - 06:00 PM", 27.0940, 77.6680));
+        CURATED_PLACES_DB.put("agra", agraPlaces);
+
+        // Jaipur
+        List<PlaceTemplate> jaipurPlaces = new ArrayList<>();
+        jaipurPlaces.add(new PlaceTemplate("Amer Fort", "Historical", 4.8, 142000, 11.0, 150, 30,
+                "Iconic hilltop citadel featuring grand courtyards, Maota Lake panoramas, Sheesh Mahal mirror palace, and Rajput-Mughal architecture.", "08:00 AM - 05:30 PM", 26.9855, 75.8513));
+        jaipurPlaces.add(new PlaceTemplate("Hawa Mahal", "Historical", 4.7, 115000, 1.5, 60, 8,
+                "Palace of Winds built in 1799 with 953 ornate latticework jharokha windows allowing royal women to observe street festivals.", "09:00 AM - 05:00 PM", 26.9239, 75.8267));
+        jaipurPlaces.add(new PlaceTemplate("Jaipur City Palace", "Historical", 4.6, 68000, 2.0, 120, 10,
+                "Opulent royal complex in the heart of Jaipur featuring Mubarak Mahal, Chandra Mahal, museums of royal costumes and armory.", "09:30 AM - 05:00 PM", 26.9258, 75.8237));
+        jaipurPlaces.add(new PlaceTemplate("Jantar Mantar", "Historical", 4.6, 52000, 1.8, 75, 9,
+                "UNESCO astronomical observatory built in 1734 by Maharaja Sawai Jai Singh II housing the world's largest stone sundial.", "09:00 AM - 05:00 PM", 26.9248, 75.8246));
+        jaipurPlaces.add(new PlaceTemplate("Jal Mahal", "Photography", 4.5, 41000, 5.0, 45, 15,
+                "Mesmerizing water palace floating in Man Sagar Lake framed by the Aravalli hills, especially stunning at golden hour.", "Open 24 Hours (Exterior View)", 26.9535, 75.8462));
+        CURATED_PLACES_DB.put("jaipur", jaipurPlaces);
+
+        // Delhi
+        List<PlaceTemplate> delhiPlaces = new ArrayList<>();
+        delhiPlaces.add(new PlaceTemplate("Red Fort", "Historical", 4.6, 125000, 4.0, 120, 20,
+                "Iconic red sandstone Mughal fortress complex constructed by Shah Jahan in 1639, symbol of India's independence celebrations.", "09:30 AM - 04:30 PM (Closed Mondays)", 28.6562, 77.2410));
+        delhiPlaces.add(new PlaceTemplate("Qutub Minar", "Historical", 4.7, 108000, 14.0, 90, 35,
+                "UNESCO World Heritage 72.5-meter red sandstone minaret erected in 1192 surrounded by ancient ruins and the rust-resistant Iron Pillar.", "07:00 AM - 07:00 PM", 28.5245, 77.1855));
+        delhiPlaces.add(new PlaceTemplate("Humayun's Tomb", "Historical", 4.7, 82000, 7.5, 90, 22,
+                "Exquisite 16th-century Persian garden-tomb of Mughal Emperor Humayun, architectural inspiration for the Taj Mahal.", "06:00 AM - 06:00 PM", 28.5933, 77.2507));
+        delhiPlaces.add(new PlaceTemplate("India Gate & Kartavya Path", "Historical", 4.6, 140000, 3.0, 60, 12,
+                "42-meter triumphal war memorial arch commemorating soldiers of World War I surrounded by landscaped lawns and fountains.", "Open 24 Hours", 28.6129, 77.2295));
+        CURATED_PLACES_DB.put("delhi", delhiPlaces);
+        CURATED_PLACES_DB.put("new delhi", delhiPlaces);
+
+        // Amritsar
+        List<PlaceTemplate> amritsarPlaces = new ArrayList<>();
+        amritsarPlaces.add(new PlaceTemplate("Golden Temple", "Temples", 4.9, 185000, 1.2, 150, 8,
+                "Sri Harmandir Sahib, the spiritual epicenter of Sikhism with its gold-plated sanctum surrounded by the sacred Amrit Sarovar lake and community langar.", "Open 24 Hours", 31.6200, 74.8765));
+        amritsarPlaces.add(new PlaceTemplate("Jallianwala Bagh", "Historical", 4.6, 76000, 0.8, 60, 5,
+                "National memorial honoring the martyrs of the 1919 massacre, featuring the Martyrs' Well, eternal flame, and bullet-marked heritage walls.", "06:30 AM - 07:30 PM", 31.6206, 74.8797));
+        amritsarPlaces.add(new PlaceTemplate("Attari-Wagah Border Ceremony", "Adventure", 4.8, 88000, 29.0, 120, 50,
+                "Electric daily evening Beating Retreat military ceremony along the India-Pakistan international border with marching drills.", "04:30 PM - 06:30 PM", 31.6044, 74.5739));
+        CURATED_PLACES_DB.put("amritsar", amritsarPlaces);
+
+        // Varanasi
+        List<PlaceTemplate> varanasiPlaces = new ArrayList<>();
+        varanasiPlaces.add(new PlaceTemplate("Varanasi Ghats & Dashashwamedh", "Temples", 4.8, 120000, 2.0, 120, 12,
+                "Historic sacred riverfront riverbanks along the River Ganges celebrated for the mesmerizing evening Maha Aarti ceremony with brass lamps.", "Open 24 Hours", 25.3076, 83.0107));
+        varanasiPlaces.add(new PlaceTemplate("Kashi Vishwanath Temple", "Temples", 4.8, 95000, 2.2, 90, 15,
+                "One of the twelve sacred Jyotirlinga shrines of Lord Shiva situated by the newly developed Kashi Vishwanath Dham corridor.", "03:00 AM - 11:00 PM", 25.3109, 83.0107));
+        varanasiPlaces.add(new PlaceTemplate("Assi Ghat Sunrise Boat Tour", "Photography", 4.7, 45000, 4.0, 90, 18,
+                "Southernmost major ghat renowned for morning Subah-e-Banaras classical music, yoga, and dawn rowboat rides along the mist.", "05:00 AM - 08:00 PM", 25.2890, 83.0062));
+        varanasiPlaces.add(new PlaceTemplate("Sarnath Buddhist Heritage Site", "Historical", 4.7, 54000, 12.0, 120, 30,
+                "Sacred deer park where Gautama Buddha first taught the Dharma; features Dhamek Stupa, Ashoka Pillar, and ancient monasteries.", "08:00 AM - 06:00 PM", 25.3811, 83.0214));
+        CURATED_PLACES_DB.put("varanasi", varanasiPlaces);
+
+        // Mumbai
+        List<PlaceTemplate> mumbaiPlaces = new ArrayList<>();
+        mumbaiPlaces.add(new PlaceTemplate("Gateway of India", "Historical", 4.7, 135000, 2.0, 60, 10,
+                "Iconic 26-meter basalt triumphal arch built in 1924 overlooking Mumbai Harbour, facing the historic Taj Mahal Palace Hotel.", "Open 24 Hours", 18.9220, 72.8347));
+        mumbaiPlaces.add(new PlaceTemplate("Marine Drive & Queen's Necklace", "Photography", 4.7, 110000, 3.5, 75, 12,
+                "3.6-kilometer C-shaped promenade along the Arabian Sea coast, iconic for seaside breezes and panoramic night lights.", "Open 24 Hours", 18.9432, 72.8230));
+        mumbaiPlaces.add(new PlaceTemplate("Elephanta Caves", "Historical", 4.6, 48000, 11.0, 180, 60,
+                "Rock-cut cave temples on Elephanta Island dating to the 5th century dedicated to Lord Shiva, famous for the Trimurti sculpture.", "09:00 AM - 05:30 PM (Closed Mondays)", 18.9633, 72.9315));
+        mumbaiPlaces.add(new PlaceTemplate("Chhatrapati Shivaji Maharaj Vastu Sangrahalaya", "Museums", 4.6, 28000, 1.8, 90, 8,
+                "Indo-Saracenic museum housing extensive collections of ancient Indian art, Buddhist sculptures, miniature paintings, and armory.", "10:15 AM - 06:00 PM", 18.9269, 72.8327));
+        CURATED_PLACES_DB.put("mumbai", mumbaiPlaces);
+
+        // Hampi
+        List<PlaceTemplate> hampiPlaces = new ArrayList<>();
+        hampiPlaces.add(new PlaceTemplate("Virupaksha Temple", "Temples", 4.8, 48000, 0.5, 90, 4,
+                "7th-century functioning temple dedicated to Lord Shiva with an imposing 50-meter eastern gopuram on the banks of Tungabhadra.", "06:00 AM - 08:00 PM", 15.3353, 76.4597));
+        hampiPlaces.add(new PlaceTemplate("Vijaya Vittala Temple & Stone Chariot", "Historical", 4.8, 56000, 3.5, 120, 12,
+                "Masterpiece of Vijayanagara architecture famous for musical pillars and the iconic stone chariot shrine honoring Garuda.", "08:30 AM - 05:30 PM", 15.3394, 76.4795));
+        hampiPlaces.add(new PlaceTemplate("Lotus Mahal & Elephant Stables", "Historical", 4.7, 34000, 2.8, 75, 10,
+                "Secular enclosure combining Indo-Islamic arches with lotus-bud domes, once used by queens and royal elephant trainers.", "08:00 AM - 06:00 PM", 15.3204, 76.4716));
+        hampiPlaces.add(new PlaceTemplate("Matanga Hill Sunset Point", "Adventure", 4.7, 22000, 1.2, 90, 8,
+                "Highest point in central Hampi offering panoramic 360-degree vistas of boulder-strewn terrain, ancient ruins, and banana plantations.", "05:30 AM - 06:30 PM", 15.3317, 76.4678));
+        CURATED_PLACES_DB.put("hampi", hampiPlaces);
+
+        // Goa
+        List<PlaceTemplate> goaPlaces = new ArrayList<>();
+        goaPlaces.add(new PlaceTemplate("Fort Aguada & Lighthouse", "Historical", 4.6, 62000, 14.0, 75, 25,
+                "17th-century Portuguese fortress and lighthouse guarding the Mandovi River mouth with sweeping Arabian Sea panoramas.", "09:30 AM - 06:00 PM", 15.4924, 73.7737));
+        goaPlaces.add(new PlaceTemplate("Basilica of Bom Jesus", "Historical", 4.7, 58000, 10.0, 60, 20,
+                "UNESCO World Heritage Baroque church in Old Goa holding the mortal remains of St. Francis Xavier, built in 1605.", "09:00 AM - 06:30 PM", 15.5009, 73.9116));
+        goaPlaces.add(new PlaceTemplate("Calangute & Baga Beach Promenade", "Photography", 4.5, 78000, 16.0, 120, 30,
+                "Vibrant North Goa beach shoreline lined with seaside shacks, water sports, golden sands, and sunset views.", "Open 24 Hours", 15.5439, 73.7553));
+        goaPlaces.add(new PlaceTemplate("Dudhsagar Waterfalls", "Waterfalls", 4.7, 42000, 65.0, 180, 90,
+                "Spectacular four-tiered 310-meter milky cascade inside Bhagwan Mahaveer Sanctuary accessible by forest 4x4 jeeps.", "08:30 AM - 04:30 PM", 15.3144, 74.3143));
+        CURATED_PLACES_DB.put("goa", goaPlaces);
+
+        // Rishikesh
+        List<PlaceTemplate> rishikeshPlaces = new ArrayList<>();
+        rishikeshPlaces.add(new PlaceTemplate("Triveni Ghat Ganga Aarti", "Temples", 4.8, 52000, 2.5, 90, 10,
+                "Sacred confluence ghat on the River Ganges hosting magical evening aarti with rhythmic chants, floating leaf lamps, and fire rituals.", "05:00 AM - 08:30 PM", 30.1030, 78.2938));
+        rishikeshPlaces.add(new PlaceTemplate("Ram Jhula & Swarg Ashram Walk", "Photography", 4.7, 61000, 4.0, 75, 12,
+                "Iconic iron suspension footbridge across the turquoise Ganges connecting sacred ashrams, yoga retreats, and cafes.", "Open 24 Hours", 30.1235, 78.3140));
+        rishikeshPlaces.add(new PlaceTemplate("Beatles Ashram (Chaurasi Kutia)", "Historical", 4.5, 29000, 6.0, 90, 18,
+                "Historic forest sanctuary where the Beatles practiced Transcendental Meditation in 1968, adorned with graffiti art.", "09:00 AM - 04:30 PM", 30.1170, 78.3180));
+        rishikeshPlaces.add(new PlaceTemplate("Shivpuri White Water Rafting", "Adventure", 4.8, 44000, 16.0, 150, 40,
+                "Thrilling river rapids through Himalayan gorges including Roller Coaster and Golf Course rapids.", "08:00 AM - 04:00 PM", 30.1370, 78.3890));
+        CURATED_PLACES_DB.put("rishikesh", rishikeshPlaces);
+
+        // Manali
+        List<PlaceTemplate> manaliPlaces = new ArrayList<>();
+        manaliPlaces.add(new PlaceTemplate("Solang Valley Adventure Hub", "Adventure", 4.6, 75000, 13.0, 180, 35,
+                "Glacial mountain valley renowned for paragliding, zorbing, winter skiing, and ropeway cable cars overlooking snow peaks.", "09:00 AM - 06:00 PM", 32.3166, 77.1575));
+        manaliPlaces.add(new PlaceTemplate("Hadimba Devi Temple", "Temples", 4.6, 68000, 2.5, 60, 10,
+                "Unique 16th-century four-tiered pagoda-style wooden temple nestled inside towering Dhungri deodar cedar forests.", "08:00 AM - 06:00 PM", 32.2483, 77.1802));
+        manaliPlaces.add(new PlaceTemplate("Jogini Waterfalls & Vashisht Walk", "Waterfalls", 4.7, 34000, 4.5, 120, 15,
+                "Scenic alpine waterfall cascading down mountain cliffs reached by a tranquil hike through orchards and pine woods.", "06:00 AM - 06:00 PM", 32.2690, 77.1950));
+        manaliPlaces.add(new PlaceTemplate("Atal Tunnel & Sissu Overlook", "Photography", 4.8, 58000, 28.0, 120, 60,
+                "World's longest highway tunnel above 10,000 feet leading to the dramatic Lahaul Valley and Sissu waterfall.", "Open 24 Hours", 32.3610, 77.1650));
+        CURATED_PLACES_DB.put("manali", manaliPlaces);
+
+        // Darjeeling
+        List<PlaceTemplate> darjeelingPlaces = new ArrayList<>();
+        darjeelingPlaces.add(new PlaceTemplate("Tiger Hill Sunrise Point", "Photography", 4.7, 48000, 11.0, 90, 35,
+                "Renowned 2,590m summit lookout offering world-famous sunrise views illuminating Mount Kanchenjunga in golden hues.", "04:00 AM - 06:30 AM", 27.0080, 88.2480));
+        darjeelingPlaces.add(new PlaceTemplate("Batasia Loop & War Memorial", "Historical", 4.6, 39000, 5.0, 60, 18,
+                "Double-loop spiral railway track with manicured gardens affording panoramic vistas of the Eastern Himalayas.", "05:00 AM - 06:30 PM", 27.0167, 88.2472));
+        darjeelingPlaces.add(new PlaceTemplate("Happy Valley Tea Estate", "Nature", 4.6, 31000, 2.8, 90, 12,
+                "One of Darjeeling's oldest organic tea plantations (1854) offering guided estate walks and orthodox tea tasting.", "08:00 AM - 04:30 PM (Closed Mondays)", 27.0520, 88.2610));
+        darjeelingPlaces.add(new PlaceTemplate("Himalayan Mountaineering Institute & Zoo", "Adventure", 4.7, 36000, 2.5, 90, 10,
+                "Prestigious institute founded by Tenzing Norgay alongside Padmaja Naidu Himalayan Zoological Park protecting red pandas.", "08:30 AM - 04:30 PM (Closed Thursdays)", 27.0580, 27.0580));
+        CURATED_PLACES_DB.put("darjeeling", darjeelingPlaces);
+
+        // Kaziranga
+        List<PlaceTemplate> kazirangaPlaces = new ArrayList<>();
+        kazirangaPlaces.add(new PlaceTemplate("Kaziranga Central Range Safari (Kohora)", "Adventure", 4.8, 38000, 2.0, 180, 10,
+                "UNESCO World Heritage sanctuary harboring two-thirds of the world's great one-horned rhinoceroses and wild water buffalo.", "07:30 AM - 04:00 PM (Oct-Apr)", 26.5850, 93.1670));
+        kazirangaPlaces.add(new PlaceTemplate("Bagori Western Range Jeep Safari", "Adventure", 4.8, 29000, 12.0, 150, 25,
+                "Prime wildlife sector celebrated for close-up sightings of rhinos, swamp deer, elephants, and migratory birds.", "07:30 AM - 04:00 PM", 26.5480, 93.0720));
+        kazirangaPlaces.add(new PlaceTemplate("Kaziranga National Orchid & Biodiversity Park", "Parks", 4.5, 21000, 3.5, 90, 12,
+                "Sprawling botanical conservatory cultivating over 500 indigenous orchid species, medicinal plants, and traditional Assamese dances.", "08:30 AM - 05:30 PM", 26.5920, 93.1890));
+        CURATED_PLACES_DB.put("kaziranga", kazirangaPlaces);
+        CURATED_PLACES_DB.put("kaziranga national park", kazirangaPlaces);
+
+        // Alleppey
+        List<PlaceTemplate> alleppeyPlaces = new ArrayList<>();
+        alleppeyPlaces.add(new PlaceTemplate("Alleppey Backwaters Houseboat Cruise", "Nature", 4.8, 86000, 2.0, 180, 8,
+                "Serene network of interconnected canals, lagoons, and Vembanad Lake traversed on traditional Kettuvallam houseboats.", "07:00 AM - 06:00 PM", 9.4981, 76.3388));
+        alleppeyPlaces.add(new PlaceTemplate("Alappuzha Beach & Ancient Sea Pier", "Photography", 4.5, 42000, 3.5, 75, 12,
+                "Atmospheric sandy shoreline featuring a 150-year-old historic pier extending into the Arabian Sea and a striped lighthouse.", "Open 24 Hours", 9.4925, 76.3180));
+        alleppeyPlaces.add(new PlaceTemplate("Marari Beach", "Photography", 4.6, 29000, 14.0, 90, 25,
+                "Quiet pristine white sand beach framed by coconut palm groves and traditional fishing villages, ideal for relaxation.", "Open 24 Hours", 9.6010, 76.2970));
+        CURATED_PLACES_DB.put("alleppey", alleppeyPlaces);
+        CURATED_PLACES_DB.put("alappuzha", alleppeyPlaces);
+    }
+
+    // Curated catalog of famous Indian travel discovery destinations (Section 2)
+    private static final List<FeaturedDestinationDto> FEATURED_DESTINATIONS = new ArrayList<>();
+
+    static {
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_taj_mahal", "Taj Mahal", "Agra", "Uttar Pradesh", "Historical & Heritage",
+                "World-renowned 17th-century white marble mausoleum commissioned by Mughal Emperor Shah Jahan, recognized globally as a masterpiece of symmetry and love.",
+                "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80",
+                "1 - 2 Days", 27.1751, 78.0421, 4.9, 210000,
+                List.of("Mughal Architecture", "Yamuna River Sunset", "UNESCO World Heritage"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_amer_fort", "Amer Fort", "Jaipur", "Rajasthan", "Historical & Heritage",
+                "Imposing hilltop fortress combining Rajput and Mughal artistry, celebrated for the mirror-studded Sheesh Mahal and sweeping views over Maota Lake.",
+                "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 26.9855, 75.8513, 4.8, 142000,
+                List.of("Sheesh Mahal", "Hilltop Panoramas", "Light & Sound Show"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_jaipur_city_palace", "Jaipur City Palace", "Jaipur", "Rajasthan", "Historical & Heritage",
+                "The grand royal residence of the Maharaja of Jaipur featuring courtyard pavilions, royal museum collections, and historic Rajput architecture.",
+                "https://images.unsplash.com/photo-1603288940300-4b2a8d6e32d5?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 26.9258, 75.8237, 4.6, 68000,
+                List.of("Chandra Mahal", "Royal Costumes Gallery", "Mubarak Mahal"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_hawa_mahal", "Hawa Mahal", "Jaipur", "Rajasthan", "Historical & Heritage",
+                "The iconic five-story pink sandstone 'Palace of Winds' with 953 honeycomb windows designed to capture refreshing breezes.",
+                "https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 26.9239, 75.8267, 4.7, 115000,
+                List.of("953 Jharokhas", "Pink City Heart", "Rooftop Overlooks"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_varanasi_ghats", "Varanasi Ghats", "Varanasi", "Uttar Pradesh", "Spiritual & Temples",
+                "The spiritual heart of India along the sacred River Ganges, renowned for ancient bathing ghats, dawn boat rides, and the mesmerizing evening Ganga Aarti.",
+                "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 25.3076, 83.0107, 4.8, 120000,
+                List.of("Ganga Maha Aarti", "Dawn River Cruises", "Ancient Alleyways"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_golden_temple", "Golden Temple", "Amritsar", "Punjab", "Spiritual & Temples",
+                "Harmandir Sahib, the radiant spiritual haven of Sikhism, revered for its gold-sheathed sanctum, the tranquil Amrit Sarovar, and egalitarian community kitchen.",
+                "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80",
+                "1 - 2 Days", 31.6200, 74.8765, 4.9, 185000,
+                List.of("Golden Sanctum", "Amrit Sarovar Lake", "24/7 Community Langar"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_red_fort", "Red Fort", "Delhi", "NCR", "Historical & Heritage",
+                "Vast 17th-century Mughal stronghold built of red sandstone by Emperor Shah Jahan, symbol of sovereign Indian history.",
+                "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 28.6562, 77.2410, 4.6, 125000,
+                List.of("Diwan-i-Khas", "Lahori Gate", "Mughal Gardens"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_gateway_of_india", "Gateway of India", "Mumbai", "Maharashtra", "Historical & Heritage",
+                "Majestic 26-meter basalt arch overlooking the Arabian Sea, standing opposite the heritage Taj Mahal Palace Hotel in vibrant South Mumbai.",
+                "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 18.9220, 72.8347, 4.7, 135000,
+                List.of("Harbour Boat Tours", "Colaba Causeway", "Marine Drive Sunset"), "November to February"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_hampi", "Hampi", "Vijayanagara", "Karnataka", "Historical & Heritage",
+                "UNESCO World Heritage open-air museum amidst surreal granite boulders, showcasing the monumental ruins of the 14th-century Vijayanagara Empire.",
+                "https://images.unsplash.com/photo-1600100397608-f010f443b7cf?auto=format&fit=crop&w=800&q=80",
+                "2 - 4 Days", 15.3350, 76.4600, 4.8, 56000,
+                List.of("Stone Chariot", "Virupaksha Temple", "Matanga Hill Sunrise"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_mysore_palace", "Mysore Palace", "Mysuru", "Karnataka", "Historical & Heritage",
+                "One of India's most visited royal estates, celebrated for its Indo-Saracenic grandeur, stained glass domes, and weekend illuminations with 100,000 bulbs.",
+                "https://images.unsplash.com/photo-1600100397937-c1001a4e5185?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 12.3051, 76.6552, 4.7, 48500,
+                List.of("Weekend Night Illumination", "Golden Throne", "Chamundi Hill Views"), "September to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_coorg", "Coorg", "Kodagu", "Karnataka", "Mountains & Hills",
+                "The Scotland of India, draped in emerald coffee plantations, misty Western Ghat peaks, cascading waterfalls, and fragrant spice estates.",
+                "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=800&q=80",
+                "2 - 4 Days", 12.4244, 75.7382, 4.6, 26000,
+                List.of("Abbey Falls", "Coffee Estate Stays", "Namdroling Golden Temple"), "October to May"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_munnar", "Munnar", "Idukki", "Kerala", "Mountains & Hills",
+                "Serene hill station perched at 1,600m in Kerala's Western Ghats, famed for rolling tea carpet plantations, misty valleys, and rare Nilgiri Tahr.",
+                "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=80",
+                "3 - 4 Days", 10.0889, 77.0595, 4.7, 41000,
+                List.of("Tea Terraces", "Eravikulam National Park", "Top Station Viewpoint"), "September to May"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_alleppey", "Alleppey Backwaters", "Alappuzha", "Kerala", "Beaches & Coastal",
+                "The Venice of the East, celebrated for tranquil palm-fringed backwater lagoons, traditional Kettuvallam houseboats, and village waterways.",
+                "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 9.4981, 76.3388, 4.8, 86000,
+                List.of("Houseboat Overnights", "Vembanad Lake", "Marari Beach"), "October to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_ooty", "Ooty", "Nilgiris", "Tamil Nadu", "Mountains & Hills",
+                "Queen of Hill Stations nestled in the Nilgiri Mountains, famed for the UNESCO Mountain Toy Train, botanical gardens, and cool mountain weather.",
+                "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 11.4102, 76.6950, 4.5, 34000,
+                List.of("Nilgiri Toy Train", "Botanical Gardens", "Doddabetta Peak"), "October to June"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_kodaikanal", "Kodaikanal", "Dindigul", "Tamil Nadu", "Mountains & Hills",
+                "Princess of Hill Stations set around a star-shaped lake, surrounded by towering eucalyptus woods, scenic cliff walks, and Pillar Rocks.",
+                "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 10.2381, 77.4892, 4.6, 38000,
+                List.of("Star-shaped Kodai Lake", "Coaker's Walk Cliff", "Pillar Rocks"), "September to May"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_goa_beaches", "Goa beaches", "Goa", "Goa", "Beaches & Coastal",
+                "India's premier coastal retreat offering sun-drenched Arabian Sea beaches, historic Portuguese churches, vibrant shacks, and seafood.",
+                "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+                "3 - 5 Days", 15.2993, 74.1240, 4.7, 78000,
+                List.of("Aguada Fort", "Sunset Shacks & Water Sports", "Old Goa Churches"), "November to March"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_rishikesh", "Rishikesh", "Dehradun", "Uttarakhand", "Spiritual & Temples",
+                "Yoga Capital of the World along the foothills of the Himalayas, where the Ganges emerges pure for river rafting, meditation, and evening aartis.",
+                "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+                "2 - 4 Days", 30.0869, 78.2676, 4.8, 61000,
+                List.of("White Water Rafting", "Triveni Ghat Aarti", "Beatles Ashram"), "September to April"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_manali", "Manali", "Kullu", "Himachal Pradesh", "Mountains & Hills",
+                "Breathtaking alpine paradise in the Beas River Valley, gateway to Solang Valley, Rohtang Pass, snow activities, and pine-clad trekking trails.",
+                "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80",
+                "3 - 5 Days", 32.2432, 77.1892, 4.7, 75000,
+                List.of("Solang Valley Gliders", "Hadimba Pagoda Temple", "Atal Tunnel Drive"), "October to June"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_darjeeling", "Darjeeling", "Darjeeling", "West Bengal", "Mountains & Hills",
+                "Champagne of Teas hill town offering magnificent morning panoramas of Mount Kanchenjunga, British colonial charm, and the Himalayan Railway.",
+                "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+                "2 - 4 Days", 27.0410, 88.2663, 4.6, 48000,
+                List.of("Tiger Hill Sunrise", "Toy Train Heritage", "Happy Valley Tea Estates"), "October to May"));
+
+        FEATURED_DESTINATIONS.add(new FeaturedDestinationDto(
+                "ind_kaziranga", "Kaziranga National Park", "Golaghat & Nagaon", "Assam", "Wildlife & Nature",
+                "Iconic UNESCO World Heritage reserve in Assam harboring the world's largest population of the great Indian one-horned rhinoceros.",
+                "https://images.unsplash.com/photo-1575550959106-5a7defe28b56?auto=format&fit=crop&w=800&q=80",
+                "2 - 3 Days", 26.5775, 93.1711, 4.8, 38000,
+                List.of("One-Horned Rhino Safari", "Brahmaputra Floodplains", "Assam Tea Trails"), "November to April"));
     }
 
     public List<SightseeingPlaceDto> getRecommendedPlaces(String destinationName, List<String> userInterests, String sortBy, String filterCategory) {
@@ -268,6 +569,45 @@ public class RecommendationService {
                 "Popular shoreline vantage point favored by photographers for golden hour reflections and calm breezes.", "Open 24 Hours",
                 coords[0] + 0.015, coords[1] + 0.011));
         return list;
+    }
+
+    public List<FeaturedDestinationDto> getFeaturedDestinations(String category, String query) {
+        return FEATURED_DESTINATIONS.stream()
+                .filter(d -> {
+                    if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("ALL")) {
+                        if (!d.getCategory().equalsIgnoreCase(category.trim())) {
+                            return false;
+                        }
+                    }
+                    if (query != null && !query.trim().isEmpty()) {
+                        String q = query.trim().toLowerCase();
+                        boolean matchName = d.getName().toLowerCase().contains(q);
+                        boolean matchCity = d.getCity().toLowerCase().contains(q);
+                        boolean matchState = d.getState().toLowerCase().contains(q);
+                        boolean matchDesc = d.getDescription().toLowerCase().contains(q);
+                        return matchName || matchCity || matchState || matchDesc;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getAvailableCategories() {
+        return List.of(
+                "All",
+                "Historical & Heritage",
+                "Spiritual & Temples",
+                "Mountains & Hills",
+                "Beaches & Coastal",
+                "Wildlife & Nature"
+        );
+    }
+
+    public Optional<FeaturedDestinationDto> getFeaturedDestinationById(String id) {
+        if (id == null) return Optional.empty();
+        return FEATURED_DESTINATIONS.stream()
+                .filter(d -> d.getId().equalsIgnoreCase(id.trim()))
+                .findFirst();
     }
 
     private static class PlaceTemplate {

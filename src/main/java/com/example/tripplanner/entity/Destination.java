@@ -1,6 +1,7 @@
 package com.example.tripplanner.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,39 @@ public class Destination {
 
     @Column(name = "hotel_name", length = 255)
     private String hotelName;
+
+    @Column(name = "hotel_address", length = 500)
+    private String hotelAddress;
+
+    @Column(name = "hotel_lat")
+    private Double hotelLat;
+
+    @Column(name = "hotel_lng")
+    private Double hotelLng;
+
+    @Column(name = "check_in_date")
+    private LocalDate checkInDate;
+
+    @Column(name = "check_out_date")
+    private LocalDate checkOutDate;
+
+    @Column(name = "check_in_time", length = 20)
+    private String checkInTime;
+
+    @Column(name = "check_out_time", length = 20)
+    private String checkOutTime;
+
+    @Column(name = "rooms_count")
+    private Integer roomsCount = 1;
+
+    @Column(name = "guests_count")
+    private Integer guestsCount = 1;
+
+    @Column(name = "booking_reference", length = 100)
+    private String bookingReference;
+
+    @Column(name = "hotel_notes", columnDefinition = "TEXT")
+    private String hotelNotes;
 
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("priority ASC, rating DESC")
@@ -159,6 +193,94 @@ public class Destination {
 
     public void setHotelName(String hotelName) {
         this.hotelName = hotelName;
+    }
+
+    public String getHotelAddress() {
+        return hotelAddress;
+    }
+
+    public void setHotelAddress(String hotelAddress) {
+        this.hotelAddress = hotelAddress;
+    }
+
+    public Double getHotelLat() {
+        return hotelLat;
+    }
+
+    public void setHotelLat(Double hotelLat) {
+        this.hotelLat = hotelLat;
+    }
+
+    public Double getHotelLng() {
+        return hotelLng;
+    }
+
+    public void setHotelLng(Double hotelLng) {
+        this.hotelLng = hotelLng;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public void setCheckInDate(LocalDate checkInDate) {
+        this.checkInDate = checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public void setCheckOutDate(LocalDate checkOutDate) {
+        this.checkOutDate = checkOutDate;
+    }
+
+    public String getCheckInTime() {
+        return checkInTime;
+    }
+
+    public void setCheckInTime(String checkInTime) {
+        this.checkInTime = checkInTime;
+    }
+
+    public String getCheckOutTime() {
+        return checkOutTime;
+    }
+
+    public void setCheckOutTime(String checkOutTime) {
+        this.checkOutTime = checkOutTime;
+    }
+
+    public Integer getRoomsCount() {
+        return roomsCount;
+    }
+
+    public void setRoomsCount(Integer roomsCount) {
+        this.roomsCount = roomsCount;
+    }
+
+    public Integer getGuestsCount() {
+        return guestsCount;
+    }
+
+    public void setGuestsCount(Integer guestsCount) {
+        this.guestsCount = guestsCount;
+    }
+
+    public String getBookingReference() {
+        return bookingReference;
+    }
+
+    public void setBookingReference(String bookingReference) {
+        this.bookingReference = bookingReference;
+    }
+
+    public String getHotelNotes() {
+        return hotelNotes;
+    }
+
+    public void setHotelNotes(String hotelNotes) {
+        this.hotelNotes = hotelNotes;
     }
 
     public List<Place> getPlaces() {
