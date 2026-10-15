@@ -46,6 +46,8 @@ class TripServiceTest {
     private TripCollaboratorRepository tripCollaboratorRepository;
     @Mock
     private TripSuggestionRepository tripSuggestionRepository;
+    @Mock
+    private TripChecklistRepository tripChecklistRepository;
 
     @InjectMocks
     private TripService tripService;

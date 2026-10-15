@@ -11,6 +11,15 @@
     <!-- Leaflet CSS for guaranteed interactive map fallback -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('voyagecraft_theme') || 'system';
+            const effectiveTheme = storedTheme === 'system'
+                ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : storedTheme;
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+        })();
+    </script>
 </head>
 <body>
 
@@ -21,6 +30,18 @@
                 <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
             <div class="d-flex align-items-center gap-2">
+                <!-- Theme Selector Dropdown -->
+                <div class="dropdown me-1">
+                    <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
+                        <i class="bi bi-circle-half theme-icon-active"></i>
+                        <span class="d-none d-md-inline theme-name-active">Auto</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('dark')"><i class="bi bi-moon-stars-fill text-info"></i> Dark</button></li>
+                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
+                    </ul>
+                </div>
                 <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm">
                     <i class="bi bi-plus-lg me-1"></i> New Trip
                 </a>
@@ -356,6 +377,26 @@
                                 </button>
                             </div>
 
+                            <!-- Stay Duration Badge & Edit Days Action (Requirement 1) -->
+                            <div class="small d-flex align-items-center gap-1 mt-1 flex-wrap" style="font-size: 0.74rem;">
+                                <span class="stay-badge-pill">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span th:text="${(dest.stayDurationDays != null ? dest.stayDurationDays : 1) + ' Day' + ((dest.stayDurationDays != null and dest.stayDurationDays > 1) ? 's' : '') + (dest.stayDurationNights != null and dest.stayDurationNights > 0 ? ', ' + dest.stayDurationNights + ' Night' + (dest.stayDurationNights > 1 ? 's' : '') : '')}">1 Day</span>
+                                </span>
+                                <span th:if="${dest.arrivalDate != null and dest.departureDate != null}" class="text-muted small">
+                                    (<span th:text="${dest.arrivalDate + ' to ' + dest.departureDate}"></span>)
+                                </span>
+                                <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
+                                        title="Configure stay duration in days and nights"
+                                        th:data-dest-id="${dest.id}"
+                                        th:data-dest-name="${dest.name}"
+                                        th:data-days="${dest.stayDurationDays != null ? dest.stayDurationDays : 1}"
+                                        th:data-nights="${dest.stayDurationNights != null ? dest.stayDurationNights : 0}"
+                                        onclick="openEditDurationModal(this)">
+                                    <i class="bi bi-calendar-event me-1"></i>Edit Days
+                                </button>
+                            </div>
+
                             <!-- Map-based Accommodation Stay per destination -->
                             <div class="small text-muted d-flex align-items-center gap-1 mt-1" style="font-size: 0.76rem;">
                                 <i class="bi bi-building text-primary"></i>
@@ -387,6 +428,7 @@
                 </th:block>
             </div>
         </div>
+
 
         <!-- Controls: View Mode Switcher for Desktop / Tablet / Mobile -->
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -462,6 +504,16 @@
                         </div>
                     </div>
 
+                    <!-- Feasibility & Crowding Warning (Requirement 2) -->
+                    <div th:if="${day.totalDurationMinutes != null and day.totalDurationMinutes > 600}" class="day-crowding-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>
+                            <strong>Feasibility Notice:</strong> Day <span th:text="${day.dayNumber}"></span> looks crowded. Your planned activities require approximately 
+                            <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong> (excluding traffic delays).
+                            Consider moving one attraction to another day.
+                        </div>
+                    </div>
+
                     <!-- Timeline Items -->
                     <div class="timeline-container">
                         <div th:each="item : ${day.items}" class="timeline-item">
@@ -488,7 +540,7 @@
                                         <span class="fw-bold place-title text-dark" th:text="${item.activity}"></span>
                                     </div>
 
-                                    <!-- Item Action Controls (Lock, Edit, Delete, Visited Switch) -->
+                                    <!-- Item Action Controls (Lock, Move, Edit, Delete, Visited Switch) -->
                                     <div class="d-flex align-items-center gap-1">
                                         <!-- Visited Switch -->
                                         <div th:if="${item.placeId != null}" class="form-check form-switch me-1 mb-0">
@@ -507,6 +559,17 @@
                                                 th:data-trip-id="${trip.id}" th:data-item-id="${item.id}"
                                                 onclick="toggleItemLock(this.dataset.tripId, this.dataset.itemId)">
                                             <i th:class="${(item.locked != null and item.locked) ? 'bi bi-lock-fill text-warning' : 'bi bi-unlock text-muted'}"></i>
+                                        </button>
+
+                                        <!-- Move Activity to Another Day (Requirement 2) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                                style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                                title="Move activity to another day"
+                                                th:data-item-id="${item.id}"
+                                                th:data-activity="${item.activity}"
+                                                th:data-current-day="${day.dayNumber}"
+                                                onclick="openMoveActivityModal(this)">
+                                            <i class="bi bi-arrow-left-right text-success"></i>
                                         </button>
 
                                         <!-- Edit Item Button -->
@@ -602,6 +665,91 @@
         </div>
 
     </main>
+
+    <!-- Edit Destination Stay Duration Modal (Requirement 1) -->
+    <div class="modal fade" id="editDurationModal" tabindex="-1" aria-labelledby="editDurationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="editDurationModalLabel">
+                        <i class="bi bi-clock-history text-success me-2"></i>Configure Stay Duration
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Set how many days and nights to stay in <strong id="editDurationDestName" class="text-dark">City</strong>. The itinerary and schedule dates will recalculate dynamically.
+                    </p>
+                    <input type="hidden" id="editDurationDestId">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-dark">Days to Stay</label>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-forest" onclick="adjustEditModalDays(-1)">-</button>
+                                <input type="number" id="editDurationDays" class="form-control text-center fw-bold" value="1" min="1" max="60">
+                                <button type="button" class="btn btn-outline-forest" onclick="adjustEditModalDays(1)">+</button>
+                            </div>
+                            <div class="form-text small text-muted">Sightseeing &amp; explore days</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-dark">Nights</label>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-forest" onclick="adjustEditModalNights(-1)">-</button>
+                                <input type="number" id="editDurationNights" class="form-control text-center fw-bold" value="0" min="0" max="60">
+                                <button type="button" class="btn btn-outline-forest" onclick="adjustEditModalNights(1)">+</button>
+                            </div>
+                            <div class="form-text small text-muted">Hotel &amp; overnight stays</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
+                        <i class="bi bi-info-circle text-success me-1"></i>
+                        <span class="small text-muted">A 1-day stay represents a day visit without an overnight stay. Multi-day stays distribute activities across dedicated daily itineraries without repeats.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-forest px-4" onclick="handleSaveStayDuration()">
+                        <i class="bi bi-check2-circle me-1"></i> Update Duration &amp; Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move Activity to Another Day Modal (Requirement 2) -->
+    <div class="modal fade" id="moveActivityModal" tabindex="-1" aria-labelledby="moveActivityModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="moveActivityModalLabel">
+                        <i class="bi bi-arrow-left-right text-success me-2"></i>Move Activity
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="moveActivityItemId">
+                    <p class="text-muted small mb-2">
+                        Move <strong id="moveActivityTitle" class="text-dark">Activity</strong> to a different day schedule:
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Select Target Day</label>
+                        <select id="moveActivityTargetDay" class="form-select">
+                            <th:block th:each="day : ${trip.dayItineraries}">
+                                <option th:value="${day.dayNumber}" th:text="${'Day ' + day.dayNumber + ' (' + day.date + ')'}"></option>
+                            </th:block>
+                        </select>
+                        <div class="form-text small text-muted">The activity will be rescheduled on the chosen day and clean 15-minute clock times will be computed automatically.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-forest px-4" onclick="handleMoveActivitySubmit()">
+                        <i class="bi bi-check-lg me-1"></i> Move Activity
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Crew Collaboration & Share Modal (Requirement 7) -->
     <div class="modal fade" id="collaborateModal" tabindex="-1" aria-labelledby="collabModalLabel" aria-hidden="true">
@@ -1062,7 +1210,7 @@
             // Custom Origin Icon
             const originIcon = L.divIcon({
                 className: 'custom-map-marker',
-                html: `<div style="background: #1b4332; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.35); border: 2.5px solid #ffffff;"><i class="bi bi-geo-alt-fill"></i></div>`,
+                html: `<div style="background: #0284c7; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(2,132,199,0.35); border: 2.5px solid #ffffff;"><i class="bi bi-geo-alt-fill"></i></div>`,
                 iconSize: [34, 34],
                 iconAnchor: [17, 17],
                 popupAnchor: [0, -20]
@@ -1084,7 +1232,7 @@
 
                     const stopIcon = L.divIcon({
                         className: 'custom-map-marker',
-                        html: `<div style="background: #245747; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(0,0,0,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
+                        html: `<div style="background: #0369a1; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(3,105,161,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
                         iconSize: [32, 32],
                         iconAnchor: [16, 16],
                         popupAnchor: [0, -18]
@@ -1117,7 +1265,7 @@
             if (routePoints.length > 1) {
                 // Route outer casing
                 L.polyline(routePoints, {
-                    color: '#1b4332',
+                    color: '#0284c7',
                     weight: 6,
                     opacity: 0.35,
                     lineCap: 'round',
@@ -1126,7 +1274,7 @@
 
                 // Main vibrant road line
                 const routeLine = L.polyline(routePoints, {
-                    color: '#245747',
+                    color: '#0ea5e9',
                     weight: 4,
                     opacity: 0.95,
                     smoothFactor: 1.0,
@@ -1913,6 +2061,78 @@
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        // =========================================================
+        // Destination Stay Duration Editor (Requirement 1)
+        // =========================================================
+
+        function openEditDurationModal(btn) {
+            const destId = btn.dataset.destId;
+            const destName = btn.dataset.destName;
+            const days = parseInt(btn.dataset.days) || 1;
+            const nights = parseInt(btn.dataset.nights) || 0;
+
+            document.getElementById("editDurationDestId").value = destId;
+            document.getElementById("editDurationDestName").textContent = destName;
+            document.getElementById("editDurationDays").value = days;
+            document.getElementById("editDurationNights").value = nights;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("editDurationModal"));
+            modal.show();
+        }
+
+        function adjustEditModalDays(delta) {
+            const daysInp = document.getElementById("editDurationDays");
+            const nightsInp = document.getElementById("editDurationNights");
+            let days = (parseInt(daysInp.value) || 1) + delta;
+            if (days < 1) days = 1;
+            daysInp.value = days;
+            if (nightsInp) {
+                nightsInp.value = Math.max(0, days - 1);
+            }
+        }
+
+        function adjustEditModalNights(delta) {
+            const nightsInp = document.getElementById("editDurationNights");
+            let nights = (parseInt(nightsInp.value) || 0) + delta;
+            if (nights < 0) nights = 0;
+            nightsInp.value = nights;
+        }
+
+        async function handleSaveStayDuration() {
+            const destId = document.getElementById("editDurationDestId").value;
+            const days = parseInt(document.getElementById("editDurationDays").value) || 1;
+            const nights = parseInt(document.getElementById("editDurationNights").value) || 0;
+
+            await updateDestinationDuration(tripData.id, destId, days, nights);
+        }
+
+        // =========================================================
+        // Move Activity to Day Modal (Requirement 2)
+        // =========================================================
+
+        function openMoveActivityModal(btn) {
+            const itemId = btn.dataset.itemId;
+            const activity = btn.dataset.activity;
+            const currentDay = btn.dataset.currentDay;
+
+            document.getElementById("moveActivityItemId").value = itemId;
+            document.getElementById("moveActivityTitle").textContent = activity || "this activity";
+            const targetSelect = document.getElementById("moveActivityTargetDay");
+            if (targetSelect && currentDay) {
+                targetSelect.value = currentDay;
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("moveActivityModal"));
+            modal.show();
+        }
+
+        async function handleMoveActivitySubmit() {
+            const itemId = document.getElementById("moveActivityItemId").value;
+            const targetDay = document.getElementById("moveActivityTargetDay").value;
+
+            await moveActivityItem(tripData.id, itemId, targetDay);
         }
     </script>
 </body>

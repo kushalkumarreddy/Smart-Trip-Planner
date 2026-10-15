@@ -415,6 +415,104 @@ public class TripApiController {
         return ResponseEntity.ok(checklist);
     }
 
+    /**
+     * Update destination stay duration and optionally recalculate affected schedule
+     */
+    @RequestMapping(value = "/{id}/destinations/{destinationId}/duration", method = {RequestMethod.PUT, RequestMethod.POST})
+    public ResponseEntity<TripResponseDto> updateDestinationStayDuration(@PathVariable("id") Long id,
+                                                                         @PathVariable("destinationId") Long destinationId,
+                                                                         @RequestBody StayDurationUpdateDto updateDto,
+                                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.updateDestinationStayDuration(id, destinationId, updateDto, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Move activity between days (Smart Day Planner manual adjustment)
+     */
+    @PostMapping("/{id}/move-activity")
+    public ResponseEntity<TripResponseDto> moveActivityToDay(@PathVariable("id") Long id,
+                                                             @Valid @RequestBody MoveActivityDto moveDto,
+                                                             @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.moveActivityToDay(id, moveDto, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Dedicated Trip Preparation Checklist - Get all items grouped by category with summary counts
+     */
+    @GetMapping("/{id}/checklist")
+    public ResponseEntity<TripChecklistResponseDto> getTripChecklist(@PathVariable("id") Long id,
+                                                                    @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripChecklistResponseDto checklist = tripService.getTripChecklist(id, user);
+        return ResponseEntity.ok(checklist);
+    }
+
+    /**
+     * Add a custom checklist item to trip
+     */
+    @PostMapping("/{id}/checklist/items")
+    public ResponseEntity<TripChecklistResponseDto> addChecklistItem(@PathVariable("id") Long id,
+                                                                     @Valid @RequestBody ChecklistItemRequestDto request,
+                                                                     @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripChecklistResponseDto updated = tripService.addChecklistItem(id, request, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Edit a checklist item
+     */
+    @PutMapping("/{id}/checklist/items/{itemId}")
+    public ResponseEntity<TripChecklistResponseDto> updateChecklistItem(@PathVariable("id") Long id,
+                                                                        @PathVariable("itemId") Long itemId,
+                                                                        @Valid @RequestBody ChecklistItemRequestDto request,
+                                                                        @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripChecklistResponseDto updated = tripService.updateChecklistItem(id, itemId, request, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Toggle checklist item completion status
+     */
+    @RequestMapping(value = "/{id}/checklist/items/{itemId}/toggle", method = {RequestMethod.POST, RequestMethod.PATCH})
+    public ResponseEntity<TripChecklistResponseDto> toggleChecklistItem(@PathVariable("id") Long id,
+                                                                        @PathVariable("itemId") Long itemId,
+                                                                        @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripChecklistResponseDto updated = tripService.toggleChecklistItem(id, itemId, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Delete a checklist item
+     */
+    @DeleteMapping("/{id}/checklist/items/{itemId}")
+    public ResponseEntity<TripChecklistResponseDto> deleteChecklistItem(@PathVariable("id") Long id,
+                                                                        @PathVariable("itemId") Long itemId,
+                                                                        @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripChecklistResponseDto updated = tripService.deleteChecklistItem(id, itemId, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Reset trip checklist (reset all to unchecked, or reseed defaults)
+     */
+    @PostMapping("/{id}/checklist/reset")
+    public ResponseEntity<TripChecklistResponseDto> resetTripChecklist(@PathVariable("id") Long id,
+                                                                       @RequestBody(required = false) Map<String, Boolean> body,
+                                                                       @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        boolean reseed = (body != null && Boolean.TRUE.equals(body.get("reseedDefaults")));
+        TripChecklistResponseDto updated = tripService.resetTripChecklist(id, reseed, user);
+        return ResponseEntity.ok(updated);
+    }
+
     private User resolveCurrentUser(UserDetails userDetails) {
         if (userDetails != null) {
             return userService.getUserByEmail(userDetails.getUsername());

@@ -77,6 +77,24 @@ public class Destination {
     @Column(name = "hotel_notes", columnDefinition = "TEXT")
     private String hotelNotes;
 
+    @Column(name = "stay_duration_days")
+    private Integer stayDurationDays = 1;
+
+    @Column(name = "stay_duration_nights")
+    private Integer stayDurationNights = 0;
+
+    @Column(name = "arrival_date")
+    private LocalDate arrivalDate;
+
+    @Column(name = "departure_date")
+    private LocalDate departureDate;
+
+    @Column(name = "arrival_time", length = 20)
+    private String arrivalTime;
+
+    @Column(name = "departure_time", length = 20)
+    private String departureTime;
+
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("priority ASC, rating DESC")
     private List<Place> places = new ArrayList<>();
@@ -87,6 +105,15 @@ public class Destination {
     public Destination(String name, Integer sequenceOrder) {
         this.name = name;
         this.sequenceOrder = sequenceOrder;
+        this.stayDurationDays = 1;
+        this.stayDurationNights = 0;
+    }
+
+    public Destination(String name, Integer sequenceOrder, Integer stayDurationDays) {
+        this.name = name;
+        this.sequenceOrder = sequenceOrder;
+        this.stayDurationDays = stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+        this.stayDurationNights = Math.max(0, this.stayDurationDays - 1);
     }
 
     public void addPlace(Place place) {
@@ -289,5 +316,53 @@ public class Destination {
 
     public void setPlaces(List<Place> places) {
         this.places = places;
+    }
+
+    public Integer getStayDurationDays() {
+        return stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+    }
+
+    public void setStayDurationDays(Integer stayDurationDays) {
+        this.stayDurationDays = stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+    }
+
+    public Integer getStayDurationNights() {
+        return stayDurationNights != null ? stayDurationNights : 0;
+    }
+
+    public void setStayDurationNights(Integer stayDurationNights) {
+        this.stayDurationNights = stayDurationNights != null && stayDurationNights >= 0 ? stayDurationNights : 0;
+    }
+
+    public LocalDate getArrivalDate() {
+        return arrivalDate;
+    }
+
+    public void setArrivalDate(LocalDate arrivalDate) {
+        this.arrivalDate = arrivalDate;
+    }
+
+    public LocalDate getDepartureDate() {
+        return departureDate;
+    }
+
+    public void setDepartureDate(LocalDate departureDate) {
+        this.departureDate = departureDate;
+    }
+
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setArrivalTime(String arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
+    public String getDepartureTime() {
+        return departureTime;
+    }
+
+    public void setDepartureTime(String departureTime) {
+        this.departureTime = departureTime;
     }
 }

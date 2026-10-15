@@ -25,6 +25,9 @@ public class User {
     @Column(length = 50)
     private String role = "ROLE_USER";
 
+    @Column(name = "theme_preference", length = 30)
+    private String themePreference = "system";
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -100,5 +103,13 @@ public class User {
 
     public void setTrips(List<Trip> trips) {
         this.trips = trips;
+    }
+
+    public String getThemePreference() {
+        return themePreference != null ? themePreference : "system";
+    }
+
+    public void setThemePreference(String themePreference) {
+        this.themePreference = themePreference != null ? themePreference : "system";
     }
 }

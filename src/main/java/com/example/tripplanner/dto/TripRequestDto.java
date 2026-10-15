@@ -30,6 +30,8 @@ public class TripRequestDto {
     private String dailyEndTime = "20:00";
     private String hotelLocation;
     private List<String> destinationHotels = new ArrayList<>();
+    private List<Integer> destinationStayDurations = new ArrayList<>();
+    private List<Integer> destinationStayNights = new ArrayList<>();
     private String budgetRange;
     private List<String> preferredInterests = new ArrayList<>();
 
@@ -146,5 +148,21 @@ public class TripRequestDto {
 
     public void setPreferredInterests(List<String> preferredInterests) {
         this.preferredInterests = preferredInterests;
+    }
+
+    public List<Integer> getDestinationStayDurations() {
+        return destinationStayDurations;
+    }
+
+    public void setDestinationStayDurations(List<Integer> destinationStayDurations) {
+        this.destinationStayDurations = destinationStayDurations;
+    }
+
+    public List<Integer> getDestinationStayNights() {
+        return destinationStayNights;
+    }
+
+    public void setDestinationStayNights(List<Integer> destinationStayNights) {
+        this.destinationStayNights = destinationStayNights;
     }
 }

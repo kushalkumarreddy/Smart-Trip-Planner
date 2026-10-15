@@ -6,10 +6,13 @@ E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\contro
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\controller\WebController.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\AccommodationStayDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\AiTripPromptDto.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\ChecklistItemDto.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\ChecklistItemRequestDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\DayItineraryDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\DestinationDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\FeaturedDestinationDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\ItineraryItemDto.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\MoveActivityDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\PackingChecklistDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\PlaceAlongRouteDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\RoundTripDetailsDto.java
@@ -17,6 +20,8 @@ E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\Ro
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\RouteSegmentDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\RouteSummaryDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\SightseeingPlaceDto.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\StayDurationUpdateDto.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\TripChecklistResponseDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\TripCollaboratorDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\TripRequestDto.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\dto\TripResponseDto.java
@@ -28,6 +33,7 @@ E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\ItineraryItem.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\Place.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\Trip.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\TripChecklistItem.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\TripCollaborator.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\TripSuggestion.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\entity\User.java
@@ -37,6 +43,7 @@ E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\except
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\DestinationRepository.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\ItineraryItemRepository.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\PlaceRepository.java
+E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\TripChecklistRepository.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\TripCollaboratorRepository.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\TripRepository.java
 E:\Using AntiGravity\Travel Planner\src\main\java\com\example\tripplanner\repository\TripSuggestionRepository.java

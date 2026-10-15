@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(120) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'ROLE_USER',
+    theme_preference VARCHAR(30) DEFAULT 'system',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -52,6 +53,12 @@ CREATE TABLE IF NOT EXISTS destinations (
     latitude DOUBLE,
     longitude DOUBLE,
     sequence_order INT NOT NULL,
+    stay_duration_days INT DEFAULT 1,
+    stay_duration_nights INT DEFAULT 0,
+    arrival_date DATE,
+    departure_date DATE,
+    arrival_time VARCHAR(20),
+    departure_time VARCHAR(20),
     hotel_name VARCHAR(255),
     hotel_address VARCHAR(500),
     hotel_lat DOUBLE,
@@ -145,6 +152,21 @@ CREATE TABLE IF NOT EXISTS trip_suggestions (
     CONSTRAINT fk_suggestion_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 8. Trip Checklists Table (Dedicated Travel Preparation Checklist)
+CREATE TABLE IF NOT EXISTS trip_checklists (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trip_id BIGINT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    notes TEXT,
+    completed BOOLEAN DEFAULT FALSE,
+    essential BOOLEAN DEFAULT FALSE,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_checklist_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Create Indexes for fast querying
 CREATE INDEX idx_trips_user ON trips(user_id);
 CREATE INDEX idx_destinations_trip ON destinations(trip_id);
@@ -152,3 +174,5 @@ CREATE INDEX idx_places_destination ON places(destination_id);
 CREATE INDEX idx_itineraries_trip ON itineraries(trip_id);
 CREATE INDEX idx_collaborators_trip ON trip_collaborators(trip_id);
 CREATE INDEX idx_suggestions_trip ON trip_suggestions(trip_id);
+CREATE INDEX idx_checklists_trip ON trip_checklists(trip_id);
+

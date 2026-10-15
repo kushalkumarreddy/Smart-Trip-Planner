@@ -671,5 +671,141 @@ document.addEventListener("DOMContentLoaded", () => {
             handleImageFallback(this);
         });
     });
+
+    // Initialize Theme
+    if (window.themeManager) {
+        window.themeManager.init();
+    }
 });
+
+// =========================================================
+// 10. Theme Management System (Requirement 5)
+// Light, Dark, and System preference with persistence & zero-flash
+// =========================================================
+
+const themeManager = {
+    STORAGE_KEY: "voyagecraft_theme",
+
+    getStoredTheme() {
+        return localStorage.getItem(this.STORAGE_KEY) || "system";
+    },
+
+    getSystemTheme() {
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    },
+
+    getEffectiveTheme(theme) {
+        return theme === "system" ? this.getSystemTheme() : theme;
+    },
+
+    setTheme(theme) {
+        if (!["light", "dark", "system"].includes(theme)) theme = "system";
+        localStorage.setItem(this.STORAGE_KEY, theme);
+        const effective = this.getEffectiveTheme(theme);
+        document.documentElement.setAttribute("data-theme", effective);
+        this.updateThemeUI(theme);
+
+        // Persist theme to user profile if logged in
+        fetch("/api/config/theme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ theme: theme })
+        }).catch(() => {
+            // Silently ignore if guest
+        });
+    },
+
+    updateThemeUI(theme) {
+        const iconEl = document.querySelector(".theme-icon-active");
+        const nameEl = document.querySelector(".theme-name-active");
+        if (!iconEl && !nameEl) return;
+
+        if (theme === "dark") {
+            if (iconEl) iconEl.className = "bi bi-moon-stars-fill theme-icon-active text-info";
+            if (nameEl) nameEl.textContent = "Dark";
+        } else if (theme === "light") {
+            if (iconEl) iconEl.className = "bi bi-sun-fill theme-icon-active text-warning";
+            if (nameEl) nameEl.textContent = "Light";
+        } else {
+            if (iconEl) iconEl.className = "bi bi-circle-half theme-icon-active";
+            if (nameEl) nameEl.textContent = "Auto";
+        }
+    },
+
+    init() {
+        const theme = this.getStoredTheme();
+        const effective = this.getEffectiveTheme(theme);
+        document.documentElement.setAttribute("data-theme", effective);
+        this.updateThemeUI(theme);
+
+        if (window.matchMedia) {
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+                if (this.getStoredTheme() === "system") {
+                    document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+                }
+            });
+        }
+    }
+};
+
+window.themeManager = themeManager;
+
+// =========================================================
+// 12. Stay Duration & Day Movement Helpers (Requirement 1 & 2)
+// =========================================================
+
+async function updateDestinationDuration(tripId, destinationId, days, nights) {
+    if (!days || days < 1) days = 1;
+    if (nights === undefined || nights === null || nights < 0) nights = Math.max(0, days - 1);
+
+    try {
+        const res = await fetch(`/api/trips/${tripId}/destinations/${destinationId}/duration`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                stayDurationDays: parseInt(days),
+                stayDurationNights: parseInt(nights)
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Failed to update stay duration");
+        }
+
+        window.location.reload();
+    } catch (err) {
+        console.error("Duration update error:", err);
+        alert(err.message || "Could not update stay duration.");
+    }
+}
+
+async function moveActivityItem(tripId, itemId, targetDay) {
+    if (!targetDay || targetDay < 1) return;
+
+    try {
+        const res = await fetch(`/api/trips/${tripId}/move-activity`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                itemId: parseInt(itemId),
+                targetDayNumber: parseInt(targetDay)
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Failed to move activity");
+        }
+
+        window.location.reload();
+    } catch (err) {
+        console.error("Move activity error:", err);
+        alert(err.message || "Could not move activity to specified day.");
+    }
+}
+
+window.updateDestinationDuration = updateDestinationDuration;
+window.moveActivityItem = moveActivityItem;
+
 

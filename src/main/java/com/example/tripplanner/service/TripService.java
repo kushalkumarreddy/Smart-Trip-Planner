@@ -6,6 +6,7 @@ import com.example.tripplanner.exception.BadRequestException;
 import com.example.tripplanner.exception.ResourceNotFoundException;
 import com.example.tripplanner.repository.*;
 import com.example.tripplanner.util.TimeUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,32 @@ public class TripService {
     private final GoogleMapsService googleMapsService;
     private final TripCollaboratorRepository tripCollaboratorRepository;
     private final TripSuggestionRepository tripSuggestionRepository;
+    private final TripChecklistRepository tripChecklistRepository;
+
+    @Autowired
+    public TripService(TripRepository tripRepository,
+                       DestinationRepository destinationRepository,
+                       PlaceRepository placeRepository,
+                       ItineraryItemRepository itineraryItemRepository,
+                       RouteService routeService,
+                       ItineraryService itineraryService,
+                       RecommendationService recommendationService,
+                       GoogleMapsService googleMapsService,
+                       TripCollaboratorRepository tripCollaboratorRepository,
+                       TripSuggestionRepository tripSuggestionRepository,
+                       @Autowired(required = false) TripChecklistRepository tripChecklistRepository) {
+        this.tripRepository = tripRepository;
+        this.destinationRepository = destinationRepository;
+        this.placeRepository = placeRepository;
+        this.itineraryItemRepository = itineraryItemRepository;
+        this.routeService = routeService;
+        this.itineraryService = itineraryService;
+        this.recommendationService = recommendationService;
+        this.googleMapsService = googleMapsService;
+        this.tripCollaboratorRepository = tripCollaboratorRepository;
+        this.tripSuggestionRepository = tripSuggestionRepository;
+        this.tripChecklistRepository = tripChecklistRepository;
+    }
 
     public TripService(TripRepository tripRepository,
                        DestinationRepository destinationRepository,
@@ -38,16 +65,9 @@ public class TripService {
                        GoogleMapsService googleMapsService,
                        TripCollaboratorRepository tripCollaboratorRepository,
                        TripSuggestionRepository tripSuggestionRepository) {
-        this.tripRepository = tripRepository;
-        this.destinationRepository = destinationRepository;
-        this.placeRepository = placeRepository;
-        this.itineraryItemRepository = itineraryItemRepository;
-        this.routeService = routeService;
-        this.itineraryService = itineraryService;
-        this.recommendationService = recommendationService;
-        this.googleMapsService = googleMapsService;
-        this.tripCollaboratorRepository = tripCollaboratorRepository;
-        this.tripSuggestionRepository = tripSuggestionRepository;
+        this(tripRepository, destinationRepository, placeRepository, itineraryItemRepository,
+                routeService, itineraryService, recommendationService, googleMapsService,
+                tripCollaboratorRepository, tripSuggestionRepository, null);
     }
 
     @Transactional
@@ -138,7 +158,15 @@ public class TripService {
         Set<String> tripSeededPlaces = new HashSet<>();
         for (int i = 0; i < cleanedDestinations.size(); i++) {
             String destName = cleanedDestinations.get(i);
-            Destination destination = new Destination(destName, i);
+            int stayDays = (request.getDestinationStayDurations() != null && i < request.getDestinationStayDurations().size() && request.getDestinationStayDurations().get(i) != null && request.getDestinationStayDurations().get(i) > 0)
+                    ? request.getDestinationStayDurations().get(i)
+                    : 1;
+            int stayNights = (request.getDestinationStayNights() != null && i < request.getDestinationStayNights().size() && request.getDestinationStayNights().get(i) != null && request.getDestinationStayNights().get(i) >= 0)
+                    ? request.getDestinationStayNights().get(i)
+                    : Math.max(0, stayDays - 1);
+
+            Destination destination = new Destination(destName, i, stayDays);
+            destination.setStayDurationNights(stayNights);
             destination.setTrip(savedTrip);
 
             // Set destination-specific hotel (Requirement 10)
@@ -231,6 +259,9 @@ public class TripService {
         }
 
         tripRepository.save(savedTrip);
+
+        // Seed dedicated Trip Preparation Checklist
+        seedDefaultChecklist(savedTrip);
 
         return buildTripResponseDto(savedTrip, routeSummary, dayItineraries);
     }
@@ -1553,9 +1584,12 @@ public class TripService {
             List<ItineraryItem> dayItems = entry.getValue();
             LocalDate dayDate = startDate.plusDays(dayNumber - 1);
 
-            int destIdx = Math.min(destinations.size() - 1, dayNumber - 1);
-            String destName = (destIdx >= 0 && destIdx < destinations.size()) ? destinations.get(destIdx).getName() : trip.getStartLocation();
-            String title = "Day " + dayNumber + " • Explore " + destName;
+            Destination d = itineraryService.findDestinationForDay(destinations, dayNumber);
+            int cityDay = itineraryService.getCityDayIndex(destinations, dayNumber);
+            String destName = (d != null) ? d.getName() : trip.getStartLocation();
+            String title = (d != null && d.getStayDurationDays() != null && d.getStayDurationDays() > 1)
+                    ? "Day " + dayNumber + " • " + destName + " (Day " + cityDay + ")"
+                    : "Day " + dayNumber + " • Explore " + destName;
 
             DayItineraryDto dayDto = new DayItineraryDto(dayNumber, dayDate, title);
             List<ItineraryItemDto> itemDtos = new ArrayList<>();
@@ -1583,8 +1617,8 @@ public class TripService {
                 dto.setTripId(trip.getId());
                 dto.setDayNumber(it.getDayNumber());
                 dto.setScheduleDate(it.getScheduleDate() != null ? it.getScheduleDate() : dayDate);
-                dto.setStartTime(it.getStartTime());
-                dto.setEndTime(it.getEndTime());
+                dto.setStartTime(TimeUtils.formatAmPm(it.getStartTime()));
+                dto.setEndTime(TimeUtils.formatAmPm(it.getEndTime()));
                 dto.setActivity(it.getActivity());
                 dto.setLocation(it.getLocation());
                 dto.setActivityType(it.getActivityType());
@@ -1619,12 +1653,14 @@ public class TripService {
             dayDto.setTotalPlacesCount(totalPlaces);
             dayDto.setVisitedCount(visitedPlaces);
 
-            if (dayTravelMinutes >= 420) {
-                dayDto.setStatus("⚠️ Long Day");
-                dayDto.setWarningMessage("This day contains " + TimeUtils.formatDuration(dayTravelMinutes) + " of transit!");
-            } else if (dayTravelMinutes + daySightseeingMinutes >= 600) {
+            int activeMinutes = dayTravelMinutes + daySightseeingMinutes;
+            if (dayTravelMinutes >= 360) {
+                dayDto.setStatus("⚠️ Long Driving Day");
+                dayDto.setWarningMessage("This day contains " + TimeUtils.formatDuration(dayTravelMinutes) + " of transit, exceeding the 6-hour daily driving limit. Consider an intermediate rest stop.");
+            } else if (activeMinutes >= 600) {
+                int approxHours = (int) Math.ceil(activeMinutes / 60.0);
                 dayDto.setStatus("Overcrowded");
-                dayDto.setWarningMessage("Schedule is heavily packed.");
+                dayDto.setWarningMessage("Day " + dayNumber + " looks crowded. Your planned activities require approximately " + approxHours + " hours, excluding unexpected delays. Consider moving one attraction to Day " + (dayNumber + 1) + ".");
             } else if (dayTravelMinutes < 120 && daySightseeingMinutes < 180) {
                 dayDto.setStatus("Relaxed");
             } else {
@@ -1721,6 +1757,12 @@ public class TripService {
             dDto.setGuestsCount(d.getGuestsCount());
             dDto.setBookingReference(d.getBookingReference());
             dDto.setHotelNotes(d.getHotelNotes());
+            dDto.setStayDurationDays(d.getStayDurationDays());
+            dDto.setStayDurationNights(d.getStayDurationNights());
+            dDto.setArrivalDate(d.getArrivalDate());
+            dDto.setDepartureDate(d.getDepartureDate());
+            dDto.setArrivalTime(d.getArrivalTime());
+            dDto.setDepartureTime(d.getDepartureTime());
             dDto.setVisited(d.getVisited());
 
             List<SightseeingPlaceDto> placeDtos = new ArrayList<>();
@@ -1801,6 +1843,14 @@ public class TripService {
             warnings.add("💡 Smart Route Tip: Reordering your destinations can save approximately " + routeSummary.getPotentialSavingsKm() + " km and " + TimeUtils.formatDuration(routeSummary.getPotentialSavingsMinutes()) + "!");
         }
 
+        int sumStayDays = 0;
+        for (Destination d : destinations) {
+            sumStayDays += (d.getStayDurationDays() != null && d.getStayDurationDays() > 0 ? d.getStayDurationDays() : 1);
+        }
+        if (sumStayDays > daysCount) {
+            warnings.add("⚠️ Configured city stay durations (" + sumStayDays + " days total) exceed your trip dates (" + daysCount + " days). Consider extending your trip dates or adjusting city stay durations.");
+        }
+
         dto.setWarnings(warnings);
         return dto;
     }
@@ -1818,5 +1868,397 @@ public class TripService {
         dto.setStatus(s.getStatus());
         dto.setCreatedAt(s.getCreatedAt());
         return dto;
+    }
+
+    // ==========================================
+    // Stay Duration & Recalculation
+    // ==========================================
+    @Transactional
+    public TripResponseDto updateDestinationStayDuration(Long tripId, Long destinationId, StayDurationUpdateDto updateDto, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        Destination destination = destinationRepository.findById(destinationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
+        if (!destination.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Destination does not belong to this trip.");
+        }
+
+        if (updateDto.getStayDurationDays() != null && updateDto.getStayDurationDays() < 1) {
+            throw new BadRequestException("Stay duration must be at least 1 day.");
+        }
+        if (updateDto.getStayDurationNights() != null && updateDto.getStayDurationNights() < 0) {
+            throw new BadRequestException("Stay duration nights cannot be negative.");
+        }
+        if (updateDto.getArrivalDate() != null && updateDto.getDepartureDate() != null && updateDto.getDepartureDate().isBefore(updateDto.getArrivalDate())) {
+            throw new BadRequestException("Departure date cannot be before arrival date.");
+        }
+
+        int days = (updateDto.getStayDurationDays() != null && updateDto.getStayDurationDays() > 0)
+                ? updateDto.getStayDurationDays()
+                : 1;
+        destination.setStayDurationDays(days);
+        if (updateDto.getStayDurationNights() != null) {
+            destination.setStayDurationNights(Math.max(0, updateDto.getStayDurationNights()));
+        } else {
+            destination.setStayDurationNights(Math.max(0, days - 1));
+        }
+
+        if (updateDto.getArrivalDate() != null) destination.setArrivalDate(updateDto.getArrivalDate());
+        if (updateDto.getDepartureDate() != null) destination.setDepartureDate(updateDto.getDepartureDate());
+        if (updateDto.getArrivalTime() != null) destination.setArrivalTime(updateDto.getArrivalTime());
+        if (updateDto.getDepartureTime() != null) destination.setDepartureTime(updateDto.getDepartureTime());
+
+        destinationRepository.save(destination);
+
+        List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
+
+        // Recalculate arrival/departure dates for all destinations in sequence
+        LocalDate curDate = trip.getStartDate() != null ? trip.getStartDate() : LocalDate.now();
+        for (Destination d : destinations) {
+            int dDays = d.getStayDurationDays() != null && d.getStayDurationDays() > 0 ? d.getStayDurationDays() : 1;
+            d.setArrivalDate(curDate);
+            d.setDepartureDate(curDate.plusDays(dDays - 1));
+            if (d.getStayDurationNights() == null) {
+                d.setStayDurationNights(Math.max(0, dDays - 1));
+            }
+            destinationRepository.save(d);
+            curDate = curDate.plusDays(dDays);
+        }
+
+        if (Boolean.TRUE.equals(updateDto.getRecalculateSchedule())) {
+            // Keep locked items and regenerate unlocked items
+            if (itineraryItemRepository != null) {
+                itineraryItemRepository.deleteByTripIdAndLockedFalse(trip.getId());
+            }
+
+            List<DayItineraryDto> freshDays = itineraryService.generateItineraryPlan(trip, destinations, trip.getTransportMode());
+            for (DayItineraryDto day : freshDays) {
+                for (ItineraryItemDto itemDto : day.getItems()) {
+                    ItineraryItem item = new ItineraryItem();
+                    item.setTrip(trip);
+                    item.setDayNumber(day.getDayNumber());
+                    item.setScheduleDate(day.getDate());
+                    item.setStartTime(TimeUtils.roundTime24(itemDto.getStartTime(), 15));
+                    item.setEndTime(TimeUtils.roundTime24(itemDto.getEndTime(), 15));
+                    item.setActivity(itemDto.getActivity());
+                    item.setLocation(itemDto.getLocation());
+                    item.setActivityType(itemDto.getActivityType());
+                    item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
+                    item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
+                    item.setDurationMinutes(itemDto.getDurationMinutes());
+                    item.setRating(itemDto.getRating());
+                    item.setVisited(itemDto.getVisited());
+                    item.setNotes(itemDto.getNotes());
+                    item.setLocked(false);
+                    itineraryItemRepository.save(item);
+                }
+            }
+        }
+
+        return getTripDtoById(tripId, user);
+    }
+
+    // ==========================================
+    // Smart Day Planner - Move Activity Between Days
+    // ==========================================
+    @Transactional
+    public TripResponseDto moveActivityToDay(Long tripId, MoveActivityDto moveDto, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (moveDto.getTargetDayNumber() == null || moveDto.getTargetDayNumber() < 1) {
+            throw new BadRequestException("Target day number must be at least 1.");
+        }
+
+        ItineraryItem item = itineraryItemRepository.findById(moveDto.getItemId())
+                .orElseThrow(() -> new ResourceNotFoundException("Itinerary item not found with ID: " + moveDto.getItemId()));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Item does not belong to this trip.");
+        }
+
+        int targetDay = moveDto.getTargetDayNumber();
+        item.setDayNumber(targetDay);
+        if (trip.getStartDate() != null) {
+            item.setScheduleDate(trip.getStartDate().plusDays(targetDay - 1));
+        }
+
+        // Align times in target day cleanly
+        List<ItineraryItem> targetDayItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), targetDay);
+        int duration = item.getDurationMinutes() != null && item.getDurationMinutes() > 0 ? item.getDurationMinutes() : 60;
+        duration = Math.max(30, (int) Math.round((double) duration / 15.0) * 15);
+
+        String newStart;
+        if (moveDto.getPreferredStartTime() != null && !moveDto.getPreferredStartTime().trim().isEmpty()) {
+            newStart = TimeUtils.roundTime24(moveDto.getPreferredStartTime(), 15);
+        } else {
+            String latestEnd = "10:00";
+            for (ItineraryItem other : targetDayItems) {
+                if (!other.getId().equals(item.getId()) && !"HOTEL".equalsIgnoreCase(other.getActivityType())) {
+                    if (other.getEndTime() != null) {
+                        latestEnd = other.getEndTime();
+                    }
+                }
+            }
+            newStart = TimeUtils.roundUpTime24(TimeUtils.addMinutes(latestEnd, 20), 15);
+        }
+
+        String newEnd = TimeUtils.addMinutes(newStart, duration);
+        item.setStartTime(TimeUtils.roundTime24(newStart, 15));
+        item.setEndTime(TimeUtils.roundTime24(newEnd, 15));
+        itineraryItemRepository.save(item);
+
+        return getTripDtoById(tripId, user);
+    }
+
+    // ==========================================
+    // Dedicated Trip Preparation Checklist
+    // ==========================================
+    @Transactional
+    public TripChecklistResponseDto getTripChecklist(Long tripId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "VIEWER");
+
+        List<TripChecklistItem> items = tripChecklistRepository != null
+                ? tripChecklistRepository.findByTripOrderByCategoryAscSortOrderAscIdAsc(trip)
+                : Collections.emptyList();
+
+        if (items.isEmpty()) {
+            seedDefaultChecklist(trip);
+            items = tripChecklistRepository != null
+                    ? tripChecklistRepository.findByTripOrderByCategoryAscSortOrderAscIdAsc(trip)
+                    : Collections.emptyList();
+        }
+
+        return buildChecklistResponseDto(trip, items);
+    }
+
+    @Transactional
+    public TripChecklistResponseDto addChecklistItem(Long tripId, ChecklistItemRequestDto request, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        String category = (request.getCategory() != null && !request.getCategory().trim().isEmpty())
+                ? request.getCategory().trim()
+                : "General";
+
+        TripChecklistItem item = new TripChecklistItem();
+        item.setTrip(trip);
+        item.setCategory(category);
+        item.setTitle(request.getTitle().trim());
+        item.setNotes(request.getNotes() != null ? request.getNotes().trim() : null);
+        item.setEssential(Boolean.TRUE.equals(request.getEssential()));
+        item.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 99);
+        item.setCompleted(false);
+
+        if (tripChecklistRepository != null) {
+            tripChecklistRepository.save(item);
+        }
+
+        return getTripChecklist(tripId, user);
+    }
+
+    @Transactional
+    public TripChecklistResponseDto updateChecklistItem(Long tripId, Long itemId, ChecklistItemRequestDto request, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (tripChecklistRepository == null) {
+            throw new ResourceNotFoundException("Checklist repository not available.");
+        }
+
+        TripChecklistItem item = tripChecklistRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checklist item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Checklist item does not belong to this trip.");
+        }
+
+        if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+            item.setTitle(request.getTitle().trim());
+        }
+        if (request.getCategory() != null && !request.getCategory().trim().isEmpty()) {
+            item.setCategory(request.getCategory().trim());
+        }
+        if (request.getNotes() != null) {
+            item.setNotes(request.getNotes().trim());
+        }
+        if (request.getEssential() != null) {
+            item.setEssential(request.getEssential());
+        }
+        if (request.getSortOrder() != null) {
+            item.setSortOrder(request.getSortOrder());
+        }
+
+        tripChecklistRepository.save(item);
+        return getTripChecklist(tripId, user);
+    }
+
+    @Transactional
+    public TripChecklistResponseDto toggleChecklistItem(Long tripId, Long itemId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (tripChecklistRepository == null) {
+            throw new ResourceNotFoundException("Checklist repository not available.");
+        }
+
+        TripChecklistItem item = tripChecklistRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checklist item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Checklist item does not belong to this trip.");
+        }
+
+        item.setCompleted(!Boolean.TRUE.equals(item.getCompleted()));
+        tripChecklistRepository.save(item);
+
+        return getTripChecklist(tripId, user);
+    }
+
+    @Transactional
+    public TripChecklistResponseDto deleteChecklistItem(Long tripId, Long itemId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (tripChecklistRepository == null) {
+            throw new ResourceNotFoundException("Checklist repository not available.");
+        }
+
+        TripChecklistItem item = tripChecklistRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Checklist item not found with ID: " + itemId));
+        if (!item.getTrip().getId().equals(trip.getId())) {
+            throw new BadRequestException("Checklist item does not belong to this trip.");
+        }
+
+        tripChecklistRepository.delete(item);
+        return getTripChecklist(tripId, user);
+    }
+
+    @Transactional
+    public TripChecklistResponseDto resetTripChecklist(Long tripId, boolean reseedDefaults, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (tripChecklistRepository == null) {
+            return new TripChecklistResponseDto(trip.getId(), trip.getTripName());
+        }
+
+        if (reseedDefaults) {
+            tripChecklistRepository.deleteByTrip(trip);
+            seedDefaultChecklist(trip);
+        } else {
+            List<TripChecklistItem> items = tripChecklistRepository.findByTripOrderByCategoryAscSortOrderAscIdAsc(trip);
+            for (TripChecklistItem it : items) {
+                it.setCompleted(false);
+                tripChecklistRepository.save(it);
+            }
+        }
+
+        return getTripChecklist(tripId, user);
+    }
+
+    @Transactional
+    public void seedDefaultChecklist(Trip trip) {
+        if (tripChecklistRepository == null) {
+            return;
+        }
+        List<TripChecklistItem> existing = tripChecklistRepository.findByTripOrderByCategoryAscSortOrderAscIdAsc(trip);
+        if (!existing.isEmpty()) {
+            return;
+        }
+
+        List<TripChecklistItem> defaults = new ArrayList<>();
+        // 1. Travel documents
+        defaults.add(new TripChecklistItem(trip, "Travel documents", "Government Photo ID / Passport", "Required for hotel check-ins and identity checks", true, 1));
+        defaults.add(new TripChecklistItem(trip, "Travel documents", "Driving Licence & Vehicle Documents", "Essential if self-driving or renting vehicles", true, 2));
+        defaults.add(new TripChecklistItem(trip, "Travel documents", "Hotel Confirmations & Booking Vouchers", "Digital & printed copies for seamless check-ins", true, 3));
+        defaults.add(new TripChecklistItem(trip, "Travel documents", "Tickets, Permits & Toll Passes", "Attraction passes, FASTag recharge, and forest safari permits", true, 4));
+
+        // 2. Packing
+        defaults.add(new TripChecklistItem(trip, "Packing", "Weather-appropriate Clothes & Daily Outfits", "Comfortable cottons, temple wear, or warm layers as needed", true, 1));
+        defaults.add(new TripChecklistItem(trip, "Packing", "Chargers, Power Banks & Adapters", "Keep phones, cameras, and navigation gadgets powered on the road", true, 2));
+        defaults.add(new TripChecklistItem(trip, "Packing", "Toiletries & Personal Hygiene Kit", "Toothbrush, sunscreen, insect repellent, and sanitizers", true, 3));
+        defaults.add(new TripChecklistItem(trip, "Packing", "Personal Medications & First-Aid Box", "Prescription medicines, motion sickness pills, pain relievers, and bandages", true, 4));
+        defaults.add(new TripChecklistItem(trip, "Packing", "Comfortable Walking Shoes & Rain Jacket", "Sturdy footwear for sightseeing trails and weather protection", false, 5));
+
+        // 3. Road trip preparation
+        defaults.add(new TripChecklistItem(trip, "Road trip preparation", "Fuel Check & Fluid Levels", "Full tank, engine oil, brake fluid, and wiper wash check", true, 1));
+        defaults.add(new TripChecklistItem(trip, "Road trip preparation", "Tyre Pressure & Tread Condition", "Inspect cold tyre PSI including the spare tyre", true, 2));
+        defaults.add(new TripChecklistItem(trip, "Road trip preparation", "Spare Tyre, Jack & Tool Kit", "Ensure jack handle, wheel spanner, and hazard triangle are in trunk", true, 3));
+        defaults.add(new TripChecklistItem(trip, "Road trip preparation", "Vehicle Insurance & Pollution Certificate", "Keep updated physical copies in the glove box", true, 4));
+        defaults.add(new TripChecklistItem(trip, "Road trip preparation", "Planned Highway Rest Stops", "Mark clean fuel stations and highway dhabas along the route", false, 5));
+
+        // 4. Before departure
+        defaults.add(new TripChecklistItem(trip, "Before departure", "Confirm Accommodation & Check-in Times", "Call hotels to reconfirm arrival time and parking availability", true, 1));
+        defaults.add(new TripChecklistItem(trip, "Before departure", "Review the Day-by-Day Itinerary", "Familiarize yourself with daily driving times and key sightseeing stops", true, 2));
+        defaults.add(new TripChecklistItem(trip, "Before departure", "Check Weather Forecasts & Road Advisories", "Check for monsoon landslides, ghat road repairs, or fog alerts", true, 3));
+        defaults.add(new TripChecklistItem(trip, "Before departure", "Download Available Offline Trip Information", "Save offline maps and key reservation screenshots on phone", false, 4));
+        defaults.add(new TripChecklistItem(trip, "Before departure", "Share the Trip Plan with Family", "Share live tracking link, route plan, and hotel contact numbers", false, 5));
+
+        tripChecklistRepository.saveAll(defaults);
+    }
+
+    private TripChecklistResponseDto buildChecklistResponseDto(Trip trip, List<TripChecklistItem> items) {
+        TripChecklistResponseDto response = new TripChecklistResponseDto(trip.getId(), trip.getTripName());
+
+        int total = items.size();
+        int completed = (int) items.stream().filter(it -> Boolean.TRUE.equals(it.getCompleted())).count();
+        int remaining = total - completed;
+        int percentage = total > 0 ? (int) Math.round(((double) completed / total) * 100.0) : 0;
+
+        response.setTotalCount(total);
+        response.setCompletedCount(completed);
+        response.setRemainingCount(remaining);
+        response.setCompletionPercentage(percentage);
+        response.setCompletionSummary(completed + " of " + total + " tasks completed");
+
+        List<String> categoryOrder = Arrays.asList(
+                "Travel documents",
+                "Packing",
+                "Road trip preparation",
+                "Before departure"
+        );
+
+        Map<String, List<ChecklistItemDto>> map = new LinkedHashMap<>();
+        for (String cat : categoryOrder) {
+            map.put(cat, new ArrayList<>());
+        }
+
+        for (TripChecklistItem it : items) {
+            String cat = (it.getCategory() != null && !it.getCategory().trim().isEmpty()) ? it.getCategory().trim() : "General";
+            map.computeIfAbsent(cat, k -> new ArrayList<>()).add(new ChecklistItemDto(
+                    it.getId(), trip.getId(), it.getCategory(), it.getTitle(),
+                    it.getNotes(), it.getCompleted(), it.getEssential(), it.getSortOrder()
+            ));
+        }
+
+        Map<String, String> icons = Map.of(
+                "Travel documents", "bi-file-earmark-lock-fill",
+                "Packing", "bi-backpack4-fill",
+                "Road trip preparation", "bi-car-front-fill",
+                "Before departure", "bi-clock-history"
+        );
+
+        for (Map.Entry<String, List<ChecklistItemDto>> entry : map.entrySet()) {
+            if (entry.getValue().isEmpty() && !categoryOrder.contains(entry.getKey())) {
+                continue;
+            }
+            TripChecklistResponseDto.CategoryGroup group = new TripChecklistResponseDto.CategoryGroup();
+            group.setCategory(entry.getKey());
+            group.setIcon(icons.getOrDefault(entry.getKey(), "bi-check2-square"));
+            group.setItems(entry.getValue());
+            group.setTotalCount(entry.getValue().size());
+            group.setCompletedCount((int) entry.getValue().stream().filter(i -> Boolean.TRUE.equals(i.getCompleted())).count());
+            response.getCategories().add(group);
+        }
+
+        return response;
     }
 }

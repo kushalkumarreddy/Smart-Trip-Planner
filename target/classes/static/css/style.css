@@ -1,31 +1,32 @@
 /* =========================================================
-   VoyageCraft — Premium Travel Explorer Design System
-   Adventure Explorer Palette:
-   - Forest Green:   #244F40
-   - Deep Green:     #18392F
-   - Sage:           #DCE8DC
-   - Warm Cream:     #F7F3EA
-   - Muted Amber:    #D8A86E
-   - Dark Text:      #26332E
-   - Secondary Text: #68756D
+   VoyageCraft — Peaceful Oceanic & Serene Sky Design System
+   Peaceful Serenity Palette:
+   - Sky Azure:       #0284c7
+   - Deep Ocean:      #0369a1
+   - Sapphire Navy:   #0c4a6e
+   - Soft Sky Mist:   #e0f2fe
+   - Airy Blue Tint:  #f0f9ff
+   - Clean Canvas:    #f8fafc
+   - Deep Slate Text: #0f172a
+   - Muted Slate:     #64748b
    ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Brand Adventure Explorer Palette */
-    --forest-green: #244F40;
-    --forest-green-hover: #1b3d32;
-    --deep-green: #18392F;
-    --sage-green: #DCE8DC;
-    --sage-green-light: #f0f6f0;
-    --warm-cream: #F7F3EA;
-    --warm-cream-dark: #ebe3d5;
-    --warm-cream-light: #fdfbf7;
-    --muted-amber: #D8A86E;
-    --muted-amber-hover: #c4965d;
-    --dark-text: #26332E;
-    --secondary-text: #68756D;
+    /* Brand Peaceful Serenity Palette */
+    --forest-green: #0284c7;        /* Calm Sky Azure */
+    --forest-green-hover: #0369a1;  /* Deep Ocean Blue */
+    --deep-green: #0c4a6e;          /* Peaceful Sapphire Navy */
+    --sage-green: #e0f2fe;          /* Soft Sky Mist */
+    --sage-green-light: #f0f9ff;    /* Airy Blue Tint */
+    --warm-cream: #f8fafc;          /* Pure Serene Slate-White */
+    --warm-cream-dark: #f1f5f9;
+    --warm-cream-light: #ffffff;
+    --muted-amber: #0284c7;
+    --muted-amber-hover: #0369a1;
+    --dark-text: #0f172a;           /* Deep Slate Navy (high readability) */
+    --secondary-text: #64748b;      /* Peaceful Muted Slate */
 
     /* Theme Tokens */
     --primary: var(--forest-green);
@@ -36,34 +37,88 @@
     --secondary: var(--dark-text);
     --sand: var(--warm-cream);
     --sand-subtle: var(--warm-cream-light);
-    --accent-amber: var(--muted-amber);
+    --warm-sand: var(--warm-cream);
+    --warm-sand-light: var(--warm-cream-light);
+    --warm-sand-dark: var(--warm-cream-dark);
+    --accent-amber: #0284c7;
 
-    --success: #244F40;
-    --success-light: #DCE8DC;
-    --warning: #D8A86E;
+    --success: #0284c7;
+    --success-light: #e0f2fe;
+    --warning: #f59e0b;
     --warning-light: #fef7ed;
-    --danger: #c53030;
-    --danger-light: #fdf2f2;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
 
-    --bg-main: #fbf9f5;
+    --bg-main: #f8fafc;             /* Crisp, peaceful, clean airy canvas */
     --card-bg: #ffffff;
     --text-primary: var(--dark-text);
     --text-muted: var(--secondary-text);
-    --text-light: #8e9c94;
+    --text-light: #94a3b8;
 
-    --border-color: #e2e8e2;
-    --border-subtle: rgba(36, 79, 64, 0.12);
-    --border-focus: var(--forest-green);
+    --border-color: #e2e8f0;        /* Soft peaceful slate border */
+    --border-subtle: rgba(2, 132, 199, 0.12);
+    --border-focus: #0284c7;
 
-    --shadow-sm: 0 1px 3px rgba(38, 51, 46, 0.05);
-    --shadow-md: 0 4px 14px rgba(38, 51, 46, 0.08);
-    --shadow-lg: 0 12px 28px rgba(38, 51, 46, 0.12);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12);
 
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 20px;
     --radius-full: 9999px;
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   Complete Dark Theme Design Tokens
+   Peaceful Midnight Oceanic & Starry Twilight Palette
+   ========================================================= */
+[data-theme="dark"] {
+    /* Base background & surface tokens */
+    --bg-main: #0b132b;             /* Peaceful deep midnight sky */
+    --card-bg: #111d38;             /* Deep twilight blue surface */
+    --surface-elevated: #172647;    /* Elevated card surface */
+    --card-bg-subtle: #13223f;
+
+    /* Text tokens */
+    --dark-text: #f8fafc;           /* Moonlight soft white */
+    --text-primary: #f8fafc;        /* Moonlight soft white */
+    --secondary-text: #94a3b8;      /* Muted starlight slate */
+    --text-muted: #94a3b8;          /* Muted starlight slate */
+    --text-light: #64748b;
+
+    /* Brand & Accent tokens */
+    --forest-green: #38bdf8;        /* Peaceful sky azure on dark surfaces */
+    --forest-green-hover: #7dd3fc;
+    --deep-green: #060b18;
+    --sage-green: #172d4d;
+    --sage-green-light: #12243e;
+    --warm-cream: #14223f;
+    --warm-cream-dark: #0f1b33;
+    --warm-cream-light: #16284a;
+    --warm-sand: #14223f;
+    --warm-sand-light: #111d38;
+    --warm-sand-dark: #0d172c;
+    --muted-amber: #38bdf8;
+    --muted-amber-hover: #7dd3fc;
+    --accent-amber: #38bdf8;
+
+    /* Semantic tokens */
+    --success: #38bdf8;
+    --success-light: #0c2847;
+    --warning: #fbbf24;
+    --warning-light: #2e2311;
+    --danger: #f87171;
+    --danger-light: #311616;
+
+    /* Borders and Shadows */
+    --border-color: #1e355b;        /* Subtle low-contrast peaceful oceanic border */
+    --border-subtle: rgba(56, 189, 248, 0.15);
+    --border-focus: #38bdf8;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.75);
 }
 
 /* Base Setup */
@@ -225,10 +280,10 @@ h1, h2, h3, h4, h5, h6 {
    ========================================================= */
 .scenic-hero {
     position: relative;
-    background-color: var(--deep-green);
-    background-image: linear-gradient(180deg, rgba(24, 57, 47, 0.88) 0%, rgba(38, 51, 46, 0.94) 100%),
+    background-color: #0369a1;
+    background-image: linear-gradient(135deg, rgba(3, 105, 161, 0.92) 0%, rgba(12, 74, 110, 0.96) 100%),
                       url('/images/hero-travel.svg'),
-                      url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2000&q=80');
+                      url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=80');
     background-position: center center;
     background-size: cover;
     color: #ffffff;
@@ -409,7 +464,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .metric-icon.forest, .metric-icon.blue { background: var(--sage-green); color: var(--forest-green); }
 .metric-icon.sand, .metric-icon.amber { background: var(--warm-sand); color: #8a6418; }
-.metric-icon.green { background: #e8f5e9; color: #2e7d32; }
+.metric-icon.green { background: var(--sage-green); color: var(--forest-green); }
 .metric-icon.purple { background: #f3e8ff; color: #7e22ce; }
 
 .metric-value {
@@ -666,7 +721,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .progress-bar-modern {
-    background: linear-gradient(90deg, #245747 0%, #34d399 100%);
+    background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
     transition: width 0.4s ease;
 }
 
@@ -782,13 +837,13 @@ h1, h2, h3, h4, h5, h6 {
    Dashboard Wanderlust Banner
    ========================================================= */
 .wanderlust-hero-banner {
-    background: linear-gradient(135deg, var(--forest-green) 0%, #153229 100%);
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     border-radius: 18px;
     padding: 2.2rem;
     margin-bottom: 2rem;
     position: relative;
-    box-shadow: 0 10px 30px rgba(36, 87, 71, 0.25);
+    box-shadow: 0 10px 30px rgba(2, 132, 199, 0.25);
 }
 
 .wanderlust-badge {
@@ -938,9 +993,9 @@ footer {
    Round-Trip Distance Feature Styles
    ========================================================= */
 .btn-round-trip {
-    background: linear-gradient(135deg, var(--forest-green) 0%, #1b3d32 100%);
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff !important;
-    border: 1px solid rgba(216, 168, 110, 0.4);
+    border: 1px solid rgba(56, 189, 248, 0.4);
     font-weight: 600;
     font-size: 0.88rem;
     padding: 0.55rem 1.15rem;
@@ -949,22 +1004,22 @@ footer {
     align-items: center;
     gap: 0.5rem;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 8px rgba(36, 79, 64, 0.2);
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
     cursor: pointer;
 }
 
 .btn-round-trip:hover {
-    background: linear-gradient(135deg, #1b3d32 0%, var(--deep-green) 100%);
-    color: var(--muted-amber) !important;
-    border-color: var(--muted-amber);
-    box-shadow: 0 4px 14px rgba(24, 57, 47, 0.35);
+    background: linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%);
+    color: #e0f2fe !important;
+    border-color: #38bdf8;
+    box-shadow: 0 4px 14px rgba(12, 74, 110, 0.35);
     transform: translateY(-1px);
 }
 
 .btn-round-trip.active {
-    background: #18392F;
-    border-color: var(--muted-amber);
-    color: #f7f3ea !important;
+    background: #0c4a6e;
+    border-color: #38bdf8;
+    color: #ffffff !important;
 }
 
 .btn-round-trip i {
@@ -977,13 +1032,13 @@ footer {
 
 /* Round-Trip Details Summary Card */
 .round-trip-card {
-    background: #ffffff;
-    border: 1.5px solid #dce8dc;
-    border-left: 5px solid var(--muted-amber);
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-left: 5px solid var(--forest-green);
     border-radius: var(--radius-md);
     padding: 1.25rem;
     margin-top: 1rem;
-    box-shadow: 0 4px 16px rgba(38, 51, 46, 0.07);
+    box-shadow: 0 4px 16px rgba(12, 74, 110, 0.08);
     transition: all 0.3s ease;
     animation: fadeInSlideDown 0.3s ease-out;
 }
@@ -1021,7 +1076,7 @@ footer {
 }
 
 .rt-metric-box {
-    background: #fbfbf9;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     padding: 0.85rem 1rem;
@@ -1033,11 +1088,11 @@ footer {
 
 .rt-metric-box:hover {
     border-color: var(--forest-green);
-    background: #f6f8f5;
+    background: var(--sage-green-light);
 }
 
 .rt-metric-box.total-box {
-    background: linear-gradient(135deg, #f7f3ea 0%, #edf3eb 100%);
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
     border: 1.5px solid var(--forest-green);
 }
 
@@ -1073,10 +1128,10 @@ footer {
     font-size: 0.72rem;
     padding: 0.2rem 0.55rem;
     border-radius: var(--radius-full);
-    background: #eaf1ea;
+    background: var(--sage-green-light);
     color: var(--forest-green);
     font-weight: 600;
-    border: 1px solid #c9dec9;
+    border: 1px solid var(--border-color);
 }
 
 /* Map Route Legend */
@@ -1108,14 +1163,14 @@ footer {
 .legend-line-outbound {
     width: 22px;
     height: 4px;
-    background: #244F40;
+    background: var(--forest-green);
     border-radius: 2px;
 }
 
 .legend-line-return {
     width: 22px;
     height: 4px;
-    background: repeating-linear-gradient(to right, #D8A86E 0, #D8A86E 6px, transparent 6px, transparent 10px);
+    background: repeating-linear-gradient(to right, #0284c7 0, #0284c7 6px, transparent 6px, transparent 10px);
     border-radius: 2px;
 }
 
@@ -1125,7 +1180,7 @@ footer {
     width: 100%;
     height: 180px;
     overflow: hidden;
-    background-color: #f0f4f0;
+    background-color: var(--sage-green-light);
 }
 
 .travel-card-img-wrapper img {
@@ -1142,8 +1197,459 @@ footer {
 
 .img-fallback-loaded {
     object-fit: contain !important;
-    background: #f7f9f6;
+    background: var(--warm-cream);
     padding: 12px;
 }
+
+/* =========================================================
+   Stay Duration Stepper & Badges (Requirement 1)
+   ========================================================= */
+.stay-duration-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--warm-sand-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.6rem;
+}
+
+.stay-stepper-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.stay-stepper-btn:hover {
+    background: var(--sage-green);
+    color: var(--forest-green);
+    border-color: var(--forest-green);
+}
+
+.stay-stepper-input {
+    width: 38px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.stay-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--sage-green-light);
+    color: var(--forest-green);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 0.25rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.stay-date-range {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   Theme Switcher in Navbar (Requirement 5)
+   ========================================================= */
+.theme-selector-btn {
+    border-radius: var(--radius-full);
+    padding: 0.35rem 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1.5px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.theme-selector-btn:hover {
+    border-color: var(--forest-green);
+    color: var(--forest-green);
+}
+
+/* =========================================================
+   Feasibility and Crowding Warnings (Requirement 2)
+   ========================================================= */
+.day-crowding-warning {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+    color: #92400e;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+}
+
+.day-crowding-warning i {
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* =========================================================
+   Dark Theme Component Adaptations (Full Audit - Peaceful Oceanic Twilight)
+   ========================================================= */
+[data-theme="dark"] body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .navbar-custom {
+    background: rgba(11, 19, 43, 0.96) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .navbar-brand {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .navbar-brand i {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .nav-link {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link.active {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .card-modern,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .destination-card,
+[data-theme="dark"] .destination-card-row,
+[data-theme="dark"] .timeline-content {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .planner-search-card,
+[data-theme="dark"] .ai-planner-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .planner-input-group {
+    background: #0d172c;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .planner-input-group input {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .ai-chip {
+    background: #172647;
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .ai-chip:hover {
+    background: #38bdf8;
+    color: #0b132b;
+}
+
+[data-theme="dark"] .destination-tag-badge {
+    background: rgba(17, 29, 56, 0.92);
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #0d172c;
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #111d38;
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #64748b;
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #0d172c !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #111d38;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #111d38;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: #1c2d52;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .autocomplete-dropdown {
+    background: #111d38;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .autocomplete-item {
+    border-bottom-color: #1c2d52;
+}
+
+[data-theme="dark"] .autocomplete-item:hover,
+[data-theme="dark"] .autocomplete-item.active {
+    background-color: #1c2d52;
+}
+
+[data-theme="dark"] .autocomplete-main {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .autocomplete-pin {
+    background-color: #172647;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .btn-sand {
+    background-color: #172647;
+    border-color: var(--border-color);
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .btn-sand:hover {
+    background-color: #1c2d52;
+}
+
+[data-theme="dark"] .btn-move,
+[data-theme="dark"] .btn-light {
+    background: #172647;
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .btn-outline-forest {
+    border-color: #38bdf8;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .btn-outline-forest:hover {
+    background-color: #38bdf8;
+    color: #0b132b !important;
+}
+
+[data-theme="dark"] .badge-sand {
+    background-color: #172647;
+    border-color: var(--border-color);
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .badge-sage {
+    background-color: #13223f;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .badge-forest {
+    background-color: #0369a1;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .text-dark {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: #111d38 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .border {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .border-top,
+[data-theme="dark"] .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] footer {
+    background: #0b132b;
+    border-top-color: var(--border-color);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .opt-box {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .opt-box.original {
+    background: #0d172c;
+}
+
+[data-theme="dark"] .opt-box.recommended {
+    background: #132847;
+    border-color: #38bdf8;
+}
+
+[data-theme="dark"] .opt-route-pill {
+    background: #172647;
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .savings-highlight {
+    background: #0f2847;
+    border-color: #1e4575;
+    color: #7dd3fc;
+}
+
+[data-theme="dark"] .rt-metric-box {
+    background: #0d172c;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .rt-metric-box.total-box {
+    background: linear-gradient(135deg, #132847 0%, #173866 100%);
+    border-color: #38bdf8;
+}
+
+[data-theme="dark"] .rt-metric-val {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .rt-badge-provider {
+    background: #13223f;
+    color: #38bdf8;
+    border-color: #1e355b;
+}
+
+[data-theme="dark"] .map-route-legend {
+    background: rgba(17, 29, 56, 0.95);
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .timeline-dot {
+    background: #111d38;
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .timeline-content.is-visited {
+    background: #0f2442;
+    border-color: #1e4d82;
+}
+
+[data-theme="dark"] .timeline-content.is-visited .place-title {
+    color: #7dd3fc;
+}
+
+[data-theme="dark"] .day-crowding-warning {
+    background: #2e2311;
+    border-color: #4f3a15;
+    color: #fde68a;
+}
+
+[data-theme="dark"] .stay-duration-control {
+    background: #0d172c;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .stay-stepper-btn {
+    background: #172647;
+    border-color: var(--border-color);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .stay-badge-pill {
+    background: #13223f;
+    border-color: var(--border-color);
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .collaborator-avatar {
+    background: #172647;
+    color: #38bdf8;
+    border-color: #111d38;
+}
+
+/* Map Dark Tile Rendering via peaceful oceanic twilight filter */
+[data-theme="dark"] .leaflet-tile-pane {
+    filter: brightness(0.8) invert(1) contrast(1.6) hue-rotate(185deg) saturate(0.6) brightness(0.8);
+}
+
+[data-theme="dark"] .leaflet-bar a {
+    background-color: #111d38;
+    color: #f8fafc;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .leaflet-popup-content-wrapper,
+[data-theme="dark"] .leaflet-popup-tip {
+    background-color: #111d38;
+    color: #f8fafc;
+    border: 1px solid var(--border-color);
+}
+
 
 

@@ -12,6 +12,8 @@ public interface ItineraryItemRepository extends JpaRepository<ItineraryItem, Lo
     List<ItineraryItem> findByTripOrderByDayNumberAscStartTimeAsc(Trip trip);
     List<ItineraryItem> findByTripIdOrderByDayNumberAscStartTimeAsc(Long tripId);
     List<ItineraryItem> findByTripIdAndDayNumberOrderByStartTimeAsc(Long tripId, Integer dayNumber);
+    List<ItineraryItem> findByTripIdAndLockedTrue(Long tripId);
     void deleteByTripId(Long tripId);
     void deleteByTripIdAndDayNumber(Long tripId, Integer dayNumber);
+    void deleteByTripIdAndLockedFalse(Long tripId);
 }

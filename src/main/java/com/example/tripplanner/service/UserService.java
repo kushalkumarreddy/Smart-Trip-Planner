@@ -70,8 +70,17 @@ public class UserService implements UserDetailsService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
+                user.getThemePreference(),
                 user.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public void updateThemePreference(User user, String themePreference) {
+        if (user != null && themePreference != null) {
+            user.setThemePreference(themePreference);
+            userRepository.save(user);
+        }
     }
 
     @Transactional

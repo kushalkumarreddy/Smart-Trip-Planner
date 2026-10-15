@@ -8,16 +8,22 @@ public class UserResponseDto {
     private String name;
     private String email;
     private String role;
+    private String themePreference = "system";
     private LocalDateTime createdAt;
 
     public UserResponseDto() {
     }
 
     public UserResponseDto(Long id, String name, String email, String role, LocalDateTime createdAt) {
+        this(id, name, email, role, "system", createdAt);
+    }
+
+    public UserResponseDto(Long id, String name, String email, String role, String themePreference, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
+        this.themePreference = themePreference != null ? themePreference : "system";
         this.createdAt = createdAt;
     }
 
@@ -59,5 +65,13 @@ public class UserResponseDto {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getThemePreference() {
+        return themePreference != null ? themePreference : "system";
+    }
+
+    public void setThemePreference(String themePreference) {
+        this.themePreference = themePreference != null ? themePreference : "system";
     }
 }

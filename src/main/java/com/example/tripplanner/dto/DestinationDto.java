@@ -28,6 +28,12 @@ public class DestinationDto {
     private Integer guestsCount;
     private String bookingReference;
     private String hotelNotes;
+    private Integer stayDurationDays = 1;
+    private Integer stayDurationNights = 0;
+    private LocalDate arrivalDate;
+    private LocalDate departureDate;
+    private String arrivalTime;
+    private String departureTime;
     private List<SightseeingPlaceDto> places = new ArrayList<>();
 
     public DestinationDto() {
@@ -37,6 +43,16 @@ public class DestinationDto {
         this.id = id;
         this.name = name;
         this.sequenceOrder = sequenceOrder;
+        this.stayDurationDays = 1;
+        this.stayDurationNights = 0;
+    }
+
+    public DestinationDto(Long id, String name, Integer sequenceOrder, Integer stayDurationDays) {
+        this.id = id;
+        this.name = name;
+        this.sequenceOrder = sequenceOrder;
+        this.stayDurationDays = stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+        this.stayDurationNights = Math.max(0, this.stayDurationDays - 1);
     }
 
     public Long getId() {
@@ -221,5 +237,53 @@ public class DestinationDto {
 
     public void setPlaces(List<SightseeingPlaceDto> places) {
         this.places = places;
+    }
+
+    public Integer getStayDurationDays() {
+        return stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+    }
+
+    public void setStayDurationDays(Integer stayDurationDays) {
+        this.stayDurationDays = stayDurationDays != null && stayDurationDays > 0 ? stayDurationDays : 1;
+    }
+
+    public Integer getStayDurationNights() {
+        return stayDurationNights != null ? stayDurationNights : 0;
+    }
+
+    public void setStayDurationNights(Integer stayDurationNights) {
+        this.stayDurationNights = stayDurationNights != null && stayDurationNights >= 0 ? stayDurationNights : 0;
+    }
+
+    public LocalDate getArrivalDate() {
+        return arrivalDate;
+    }
+
+    public void setArrivalDate(LocalDate arrivalDate) {
+        this.arrivalDate = arrivalDate;
+    }
+
+    public LocalDate getDepartureDate() {
+        return departureDate;
+    }
+
+    public void setDepartureDate(LocalDate departureDate) {
+        this.departureDate = departureDate;
+    }
+
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setArrivalTime(String arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
+    public String getDepartureTime() {
+        return departureTime;
+    }
+
+    public void setDepartureTime(String departureTime) {
+        this.departureTime = departureTime;
     }
 }
