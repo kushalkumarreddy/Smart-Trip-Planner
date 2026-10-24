@@ -381,21 +381,24 @@ public class TripApiController {
     }
 
     /**
-     * Discover Places Along Route within max detour km
+     * Discover Places Along Route within corridor and optional detour limits
      */
     @GetMapping("/{id}/places-along-route")
     public ResponseEntity<List<PlaceAlongRouteDto>> getPlacesAlongRoute(@PathVariable("id") Long id,
-                                                                        @RequestParam(value = "maxDetourKm", required = false, defaultValue = "25.0") Double maxDetourKm,
+                                                                        @RequestParam(value = "category", required = false) String category,
+                                                                        @RequestParam(value = "maxDetourMinutes", required = false) Integer maxDetourMinutes,
+                                                                        @RequestParam(value = "maxDetourKm", required = false) Double maxDetourKm,
+                                                                        @RequestParam(value = "query", required = false) String query,
                                                                         @AuthenticationPrincipal UserDetails userDetails) {
         User user = resolveCurrentUser(userDetails);
-        List<PlaceAlongRouteDto> places = tripService.getPlacesAlongRoute(id, maxDetourKm, user);
+        List<PlaceAlongRouteDto> places = tripService.getPlacesAlongRoute(id, category, maxDetourMinutes, maxDetourKm, query, user);
         return ResponseEntity.ok(places);
     }
 
     /**
      * Add a discovered stop along the route directly into trip destinations
      */
-    @PostMapping("/{id}/places-along-route")
+    @PostMapping(value = {"/{id}/places-along-route", "/{id}/add-place-along-route"})
     public ResponseEntity<TripResponseDto> addPlaceAlongRouteAsDestination(@PathVariable("id") Long id,
                                                                            @RequestBody PlaceAlongRouteDto placeDto,
                                                                            @AuthenticationPrincipal UserDetails userDetails) {
@@ -513,6 +516,81 @@ public class TripApiController {
         return ResponseEntity.ok(updated);
     }
 
+    // ==========================================
+    // Trip Version History Endpoints
+    // ==========================================
+
+    /**
+     * Get all version snapshots of a trip (newest first)
+     */
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<List<TripVersionSummaryDto>> getTripVersions(@PathVariable("id") Long id,
+                                                                       @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        List<TripVersionSummaryDto> versions = tripService.getTripVersions(id, user);
+        return ResponseEntity.ok(versions);
+    }
+
+    /**
+     * Get detailed snapshot of a specific version
+     */
+    @GetMapping("/{id}/versions/{versionId}")
+    public ResponseEntity<TripVersionDetailDto> getVersionDetail(@PathVariable("id") Long id,
+                                                                 @PathVariable("versionId") Long versionId,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripVersionDetailDto detail = tripService.getVersionDetail(id, versionId, user);
+        return ResponseEntity.ok(detail);
+    }
+
+    /**
+     * Create a manual version snapshot with an optional custom label
+     */
+    @PostMapping("/{id}/versions")
+    public ResponseEntity<TripVersionSummaryDto> createManualVersion(@PathVariable("id") Long id,
+                                                                     @RequestBody(required = false) Map<String, String> body,
+                                                                     @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        String label = (body != null) ? body.get("label") : null;
+        var version = tripService.createManualVersion(id, label, user);
+        TripVersionSummaryDto dto = new TripVersionSummaryDto();
+        if (version != null) {
+            dto.setId(version.getId());
+            dto.setTripId(id);
+            dto.setVersionNumber(version.getVersionNumber());
+            dto.setChangeDescription(version.getChangeDescription());
+            dto.setChangeSource(version.getChangeSource());
+            dto.setCreatedByName(version.getCreatedByName());
+            dto.setCreatedAt(version.getCreatedAt());
+        }
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * Compare two saved versions of a trip
+     */
+    @GetMapping("/{id}/versions/compare")
+    public ResponseEntity<TripVersionComparisonDto> compareVersions(@PathVariable("id") Long id,
+                                                                    @RequestParam("v1") Long v1,
+                                                                    @RequestParam("v2") Long v2,
+                                                                    @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripVersionComparisonDto comparison = tripService.compareVersions(id, v1, v2, user);
+        return ResponseEntity.ok(comparison);
+    }
+
+    /**
+     * Safely restore an older trip version
+     */
+    @PostMapping("/{id}/versions/{versionId}/restore")
+    public ResponseEntity<TripResponseDto> restoreVersion(@PathVariable("id") Long id,
+                                                          @PathVariable("versionId") Long versionId,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto restored = tripService.restoreVersion(id, versionId, user);
+        return ResponseEntity.ok(restored);
+    }
+
     private User resolveCurrentUser(UserDetails userDetails) {
         if (userDetails != null) {
             return userService.getUserByEmail(userDetails.getUsername());
@@ -520,3 +598,4 @@ public class TripApiController {
         return userService.getOrCreateDemoUser();
     }
 }
+

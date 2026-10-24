@@ -167,6 +167,20 @@ CREATE TABLE IF NOT EXISTS trip_checklists (
     CONSTRAINT fk_checklist_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 9. Trip Versions Table (Trip Version History & Snapshots)
+CREATE TABLE IF NOT EXISTS trip_versions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trip_id BIGINT NOT NULL,
+    version_number INT NOT NULL,
+    change_description VARCHAR(255) NOT NULL,
+    change_source VARCHAR(50) DEFAULT 'USER_ACTION',
+    created_by_name VARCHAR(100),
+    created_by_email VARCHAR(120),
+    snapshot_data LONGTEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_version_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Create Indexes for fast querying
 CREATE INDEX idx_trips_user ON trips(user_id);
 CREATE INDEX idx_destinations_trip ON destinations(trip_id);
@@ -175,4 +189,6 @@ CREATE INDEX idx_itineraries_trip ON itineraries(trip_id);
 CREATE INDEX idx_collaborators_trip ON trip_collaborators(trip_id);
 CREATE INDEX idx_suggestions_trip ON trip_suggestions(trip_id);
 CREATE INDEX idx_checklists_trip ON trip_checklists(trip_id);
+CREATE INDEX idx_versions_trip ON trip_versions(trip_id);
+
 

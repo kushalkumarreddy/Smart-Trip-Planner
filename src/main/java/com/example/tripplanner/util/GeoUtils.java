@@ -301,6 +301,95 @@ public class GeoUtils {
         return Math.round(EARTH_RADIUS_KM * c * 10.0) / 10.0;
     }
 
+    /**
+     * Calculates the minimum perpendicular distance from a point to a great-circle segment in kilometers.
+     * Uses equirectangular projection parameterized along the segment.
+     */
+    public static double calculateDistanceToSegmentKm(double pLat, double pLon, double lat1, double lon1, double lat2, double lon2) {
+        double d1 = calculateHaversineDistanceKm(pLat, pLon, lat1, lon1);
+        double d2 = calculateHaversineDistanceKm(pLat, pLon, lat2, lon2);
+        double segLength = calculateHaversineDistanceKm(lat1, lon1, lat2, lon2);
+
+        if (segLength < 0.01) {
+            return d1;
+        }
+
+        double latMid = Math.toRadians((lat1 + lat2) / 2.0);
+        double cosLat = Math.cos(latMid);
+        double degToKm = (Math.PI / 180.0) * EARTH_RADIUS_KM;
+
+        double xA = lon1 * cosLat * degToKm;
+        double yA = lat1 * degToKm;
+        double xB = lon2 * cosLat * degToKm;
+        double yB = lat2 * degToKm;
+        double xP = pLon * cosLat * degToKm;
+        double yP = pLat * degToKm;
+
+        double dx = xB - xA;
+        double dy = yB - yA;
+        double lenSq = dx * dx + dy * dy;
+
+        if (lenSq < 1e-6) {
+            return d1;
+        }
+
+        double t = ((xP - xA) * dx + (yP - yA) * dy) / lenSq;
+        if (t <= 0.0) {
+            return d1;
+        } else if (t >= 1.0) {
+            return d2;
+        }
+
+        double projX = xA + t * dx;
+        double projY = yA + t * dy;
+        double distKm = Math.sqrt((xP - projX) * (xP - projX) + (yP - projY) * (yP - projY));
+        return Math.round(distKm * 10.0) / 10.0;
+    }
+
+    /**
+     * Calculates the minimum distance from a coordinate to any segment in a polyline geometry.
+     */
+    public static double calculateDistanceToPolylineKm(double pLat, double pLon, List<double[]> polyline) {
+        if (polyline == null || polyline.isEmpty()) {
+            return Double.MAX_VALUE;
+        }
+        if (polyline.size() == 1) {
+            return calculateHaversineDistanceKm(pLat, pLon, polyline.get(0)[0], polyline.get(0)[1]);
+        }
+
+        double minDistance = Double.MAX_VALUE;
+        for (int i = 0; i < polyline.size() - 1; i++) {
+            double[] pt1 = polyline.get(i);
+            double[] pt2 = polyline.get(i + 1);
+            double dist = calculateDistanceToSegmentKm(pLat, pLon, pt1[0], pt1[1], pt2[0], pt2[1]);
+            if (dist < minDistance) {
+                minDistance = dist;
+            }
+        }
+        return minDistance;
+    }
+
+    /**
+     * Finds the index of the polyline segment that is closest to a given coordinate.
+     */
+    public static int findClosestSegmentIndex(double pLat, double pLon, List<double[]> polyline) {
+        if (polyline == null || polyline.size() < 2) {
+            return 0;
+        }
+        double minDistance = Double.MAX_VALUE;
+        int bestIdx = 0;
+        for (int i = 0; i < polyline.size() - 1; i++) {
+            double[] pt1 = polyline.get(i);
+            double[] pt2 = polyline.get(i + 1);
+            double dist = calculateDistanceToSegmentKm(pLat, pLon, pt1[0], pt1[1], pt2[0], pt2[1]);
+            if (dist < minDistance) {
+                minDistance = dist;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+
     // Testing & Simulation Toggle: Simulate Routing Provider Failure
     private static volatile boolean simulateRoutingFailure = false;
 

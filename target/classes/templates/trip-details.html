@@ -84,8 +84,11 @@
                     </p>
                 </div>
 
-                <!-- Action Controls: Crew Collaboration, Share, External Navigation -->
+                <!-- Action Controls: Version History, Crew Collaboration, Share, External Navigation -->
                 <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" class="btn btn-outline-forest btn-sm" onclick="openVersionHistoryModal()" title="View trip timeline, snapshots, and restore previous versions">
+                        <i class="bi bi-clock-history me-1"></i> Version History <span id="topVersionBadge" class="badge bg-secondary ms-1" style="display: none;">0</span>
+                    </button>
                     <button type="button" class="btn btn-sand btn-sm" data-bs-toggle="modal" data-bs-target="#collaborateModal">
                         <i class="bi bi-people-fill text-success me-1"></i> Crew &amp; Share
                     </button>
@@ -260,6 +263,135 @@
             <div id="roundTripError" class="alert alert-warning py-2 px-3 small mt-2 mb-0" style="display: none;">
                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
                 <span id="roundTripErrorMsg">Could not retrieve return route road data.</span>
+            </div>
+        </div>
+
+        <!-- SMART STOPS ALONG THE HIGHWAY ROUTE -->
+        <div class="card card-modern p-4 mb-4 border-0 shadow-sm" id="smartStopsSection" style="background: var(--bg-card); border-radius: 16px;">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 border-bottom mb-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-success-subtle text-success fw-semibold px-2 py-1 rounded-pill small">
+                            <i class="bi bi-radar me-1"></i> Highway Corridor Engine
+                        </span>
+                        <span class="badge bg-light text-muted border small" id="smartStopsProviderBadge">Real Route Geometry</span>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-signpost-split text-success me-2"></i>Smart Stops Along the Route
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">
+                        Find verified fuel stations, dining, restrooms, EV chargers, viewpoints &amp; stays directly along your driving route corridor.
+                    </p>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Max Detour Preference -->
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="smartStopDetourSelect" class="small fw-semibold text-muted text-nowrap"><i class="bi bi-clock me-1"></i>Max Detour:</label>
+                        <select id="smartStopDetourSelect" class="form-select form-select-sm" style="width: auto;" onchange="loadSmartStopsAlongRoute()">
+                            <option value="" selected>Any detour</option>
+                            <option value="5">Up to 5 mins</option>
+                            <option value="10">Up to 10 mins</option>
+                            <option value="20">Up to 20 mins</option>
+                        </select>
+                    </div>
+
+                    <!-- Show/Hide Stops on Map Toggle -->
+                    <button type="button" id="btnToggleStopsMap" class="btn btn-outline-forest btn-sm" onclick="toggleSmartStopsOnMap()">
+                        <i class="bi bi-map me-1"></i> <span id="toggleStopsMapText">Hide Stops on Map</span>
+                    </button>
+
+                    <!-- Refresh Route Stops -->
+                    <button type="button" class="btn btn-sand btn-sm" onclick="loadSmartStopsAlongRoute(true)" title="Refresh corridor search">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills & Search Input -->
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-12 col-xl-8">
+                    <div class="d-flex flex-wrap gap-1" id="smartStopCategoryPills">
+                        <button type="button" class="btn btn-sm btn-category-pill active" data-category="ALL" onclick="filterSmartStopsCategory('ALL', this)">
+                            <i class="bi bi-grid-fill me-1"></i> All Stops
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="FUEL" onclick="filterSmartStopsCategory('FUEL', this)">
+                            <i class="bi bi-fuel-pump me-1"></i> Fuel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="RESTAURANT" onclick="filterSmartStopsCategory('RESTAURANT', this)">
+                            <i class="bi bi-cup-hot me-1"></i> Food &amp; Cafes
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="REST_STOP" onclick="filterSmartStopsCategory('REST_STOP', this)">
+                            <i class="bi bi-shield-shaded me-1"></i> Restrooms &amp; Plazas
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="EV_CHARGING" onclick="filterSmartStopsCategory('EV_CHARGING', this)">
+                            <i class="bi bi-lightning-charge me-1"></i> EV Chargers
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="VIEWPOINT" onclick="filterSmartStopsCategory('VIEWPOINT', this)">
+                            <i class="bi bi-camera me-1"></i> Viewpoints
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="ATTRACTION" onclick="filterSmartStopsCategory('ATTRACTION', this)">
+                            <i class="bi bi-star me-1"></i> Attractions
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="PARKING" onclick="filterSmartStopsCategory('PARKING', this)">
+                            <i class="bi bi-p-square me-1"></i> Parking
+                        </button>
+                        <button type="button" class="btn btn-sm btn-category-pill" data-category="HOTEL" onclick="filterSmartStopsCategory('HOTEL', this)">
+                            <i class="bi bi-building me-1"></i> Hotels
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="smartStopSearchInput" class="form-control border-start-0" placeholder="Search stop by name or chain..." oninput="debounceSmartStopSearch()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearSmartStopSearch()" title="Clear filter"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filter Status Bar -->
+            <div class="d-flex justify-content-between align-items-center mb-3 text-muted small" id="smartStopsStatusBar">
+                <div>
+                    Found <strong id="smartStopsCountText" class="text-dark">0</strong> stops near your driving route corridor
+                    <span id="smartStopsCorridorNote" class="text-muted ms-1">(within 25 km corridor)</span>
+                </div>
+                <div id="smartStopsDetourInfo" class="text-success fw-semibold"></div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="smartStopsLoading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-success mb-2" role="status"></div>
+                <div class="fw-semibold text-dark">Scanning route geometry for highway stops...</div>
+                <div class="text-muted small">Querying highway corridor coordinates and road detour durations</div>
+            </div>
+
+            <!-- Error State -->
+            <div id="smartStopsError" class="alert alert-warning py-3 px-4 rounded-3" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                        <div>
+                            <strong id="smartStopsErrorTitle">Could not fetch stops along route.</strong>
+                            <div id="smartStopsErrorMsg" class="small text-muted"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-dark btn-sm" onclick="loadSmartStopsAlongRoute(true)">Retry Search</button>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="smartStopsEmpty" class="text-center py-5 border rounded-3 bg-light" style="display: none;">
+                <i class="bi bi-geo-alt text-muted fs-2 mb-2 d-block"></i>
+                <h6 class="fw-bold text-dark mb-1">No stops match your current filters along this route corridor</h6>
+                <p class="text-muted small mb-3">Try adjusting your category filter, increasing the max detour limit, or clearing your keyword search.</p>
+                <button type="button" class="btn btn-outline-forest btn-sm" onclick="resetSmartStopsFilters()">Reset All Filters</button>
+            </div>
+
+            <!-- Stops Cards Grid -->
+            <div class="row g-3" id="smartStopsGrid">
+                <!-- Populated dynamically by JavaScript -->
             </div>
         </div>
 
@@ -1152,6 +1284,151 @@
         </div>
     </div>
 
+    <!-- 6. Add Smart Stop to Itinerary Modal -->
+    <div class="modal fade" id="addSmartStopModal" tabindex="-1" aria-labelledby="addSmartStopModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="addSmartStopModalLabel">
+                        <i class="bi bi-signpost-plus text-success me-2"></i>Add Stop to Route
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="p-3 rounded-3 mb-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
+                        <div class="fw-bold text-dark fs-6" id="addStopPlaceName">Place Name</div>
+                        <div class="small text-muted" id="addStopPlaceCategory">Category</div>
+                        <div class="small text-muted mt-1" id="addStopPlaceDetour">Detour details</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Insert Position along Route</label>
+                        <select id="addStopPositionSelect" class="form-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <div class="form-text small text-muted">
+                            All existing destinations and stay dates will be preserved while the road route legs are recalculated.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-forest px-4" id="btnConfirmAddSmartStop" onclick="executeAddSmartStop()">
+                        <i class="bi bi-plus-circle me-1"></i> Insert Stop &amp; Recalculate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Trip Version History Modal -->
+    <div class="modal fade" id="versionHistoryModal" tabindex="-1" aria-labelledby="versionHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="versionHistoryModalLabel">
+                            <i class="bi bi-clock-history text-success me-2"></i>Trip Version History
+                        </h5>
+                        <span class="text-muted small">Every major itinerary edit, route optimization, and stop change is automatically snapshot</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-forest btn-sm" onclick="promptCreateManualSnapshot()">
+                            <i class="bi bi-camera me-1"></i> Save Snapshot Now
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Comparison Bar: when 2 versions are checked -->
+                    <div id="versionCompareBar" class="p-3 mb-3 rounded-3 bg-light border d-flex justify-content-between align-items-center" style="display: none !important;">
+                        <span class="small fw-semibold text-dark">
+                            <i class="bi bi-shuffle text-success me-1"></i> 2 versions selected for comparison
+                        </span>
+                        <button type="button" class="btn btn-forest btn-sm px-3" onclick="triggerVersionsComparison()">
+                            <i class="bi bi-arrows-collapse me-1"></i> Compare Selected Versions
+                        </button>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="versionsLoading" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                        <span class="text-muted small">Loading version timeline...</span>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="versionsError" class="alert alert-danger py-2 px-3 small" style="display: none;">
+                        Could not load version history.
+                    </div>
+
+                    <!-- Timeline Container -->
+                    <div id="versionTimelineList" class="version-timeline">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between">
+                    <span class="text-muted small"><i class="bi bi-shield-check text-success me-1"></i>Safe recovery backup automatically protects your current trip before any restore</span>
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Version Comparison Diff Modal -->
+    <div class="modal fade" id="compareVersionsModal" tabindex="-1" aria-labelledby="compareVersionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="compareVersionsModalLabel">
+                        <i class="bi bi-arrow-left-right text-success me-2"></i>Version Comparison
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="compareVersionsModalBody">
+                    <!-- Populated dynamically -->
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Close Comparison</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Restore Version Confirmation Modal -->
+    <div class="modal fade" id="restoreConfirmModal" tabindex="-1" aria-labelledby="restoreConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold text-dark" id="restoreConfirmModalLabel">
+                        <i class="bi bi-arrow-counterclockwise text-warning me-2"></i>Confirm Version Restore
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 px-3 small mb-3">
+                        <i class="bi bi-shield-check me-1"></i>
+                        <strong>Safe Restore:</strong> VoyageCraft will automatically save your current trip state as a new backup version before restoring.
+                    </div>
+                    <p class="text-dark mb-2">
+                        Are you sure you want to restore <strong id="restoreTargetVersionLabel">Version X</strong>?
+                    </p>
+                    <div class="p-3 rounded-3 bg-light border small text-muted mb-3" id="restoreTargetVersionDetails">
+                        <!-- Target details -->
+                    </div>
+                    <div class="small text-muted">
+                        Your destinations, overnight stays, activity schedule, and route metrics will be replaced with this version's snapshot and real road routes will be recalculated.
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-sand" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning fw-semibold px-4" id="btnExecuteRestore" onclick="executeRestoreVersion()">
+                        <i class="bi bi-check2-circle me-1"></i> Yes, Restore Version
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="py-4 text-center">
         <div class="container">
@@ -1179,6 +1456,8 @@
                 shareInput.value = window.location.origin + '/trip/' + tripData.id + (tripData.shareCode ? ('?invite=' + tripData.shareCode) : '');
             }
             initTripWorkspaceMap(tripData);
+            loadVersionHistoryCount();
+            loadSmartStopsAlongRoute();
         });
 
         // Initialize Workspace Map with Real Route Highway Polyline
@@ -2133,6 +2412,799 @@
             const targetDay = document.getElementById("moveActivityTargetDay").value;
 
             await moveActivityItem(tripData.id, itemId, targetDay);
+        }
+
+        // =========================================================
+        // FEATURE 1: SMART STOPS ALONG THE ROUTE
+        // =========================================================
+
+        let currentSmartStopsCategory = 'ALL';
+        let currentSmartStopsList = [];
+        let smartStopsLayerGroup = null;
+        let smartStopsVisibleOnMap = true;
+        let smartStopsSearchTimeout = null;
+        let selectedStopForAdd = null;
+
+        const CATEGORY_META = {
+            'FUEL': { name: 'Fuel Station', icon: 'bi-fuel-pump', color: '#ea580c', bg: '#ffedd5' },
+            'RESTAURANT': { name: 'Food & Dining', icon: 'bi-cup-hot', color: '#0284c7', bg: '#e0f2fe' },
+            'REST_STOP': { name: 'Rest Stop / Plaza', icon: 'bi-shield-shaded', color: '#10b981', bg: '#d1fae5' },
+            'EV_CHARGING': { name: 'EV Charging', icon: 'bi-lightning-charge-fill', color: '#0d9488', bg: '#ccfbf1' },
+            'VIEWPOINT': { name: 'Scenic Viewpoint', icon: 'bi-camera-fill', color: '#7c3aed', bg: '#ede9fe' },
+            'ATTRACTION': { name: 'Attraction', icon: 'bi-star-fill', color: '#d97706', bg: '#fef3c7' },
+            'PARKING': { name: 'Parking Area', icon: 'bi-p-square-fill', color: '#475569', bg: '#f1f5f9' },
+            'HOTEL': { name: 'Hotel / Stay', icon: 'bi-building', color: '#2563eb', bg: '#dbeafe' }
+        };
+
+        function getCategoryMeta(cat) {
+            return CATEGORY_META[cat] || { name: cat || 'Stop', icon: 'bi-geo-alt', color: '#0284c7', bg: '#e0f2fe' };
+        }
+
+        async function loadSmartStopsAlongRoute(forceRefresh = false) {
+            const loading = document.getElementById("smartStopsLoading");
+            const grid = document.getElementById("smartStopsGrid");
+            const errorBox = document.getElementById("smartStopsError");
+            const errorMsg = document.getElementById("smartStopsErrorMsg");
+            const emptyBox = document.getElementById("smartStopsEmpty");
+            const countText = document.getElementById("smartStopsCountText");
+            const detourSelect = document.getElementById("smartStopDetourSelect");
+            const searchInput = document.getElementById("smartStopSearchInput");
+            const detourInfo = document.getElementById("smartStopsDetourInfo");
+            const providerBadge = document.getElementById("smartStopsProviderBadge");
+
+            if (!grid || !tripData || !tripData.id) return;
+
+            const category = currentSmartStopsCategory;
+            const maxDetour = detourSelect ? detourSelect.value : '';
+            const query = searchInput ? searchInput.value.trim() : '';
+
+            try {
+                if (loading) loading.style.display = "block";
+                if (grid) grid.style.display = "none";
+                if (errorBox) errorBox.style.display = "none";
+                if (emptyBox) emptyBox.style.display = "none";
+
+                let url = `/api/trips/${tripData.id}/places-along-route?category=${encodeURIComponent(category)}`;
+                if (maxDetour) {
+                    url += `&maxDetourMinutes=${encodeURIComponent(maxDetour)}`;
+                }
+                if (query) {
+                    url += `&query=${encodeURIComponent(query)}`;
+                }
+
+                const res = await fetch(url);
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({}));
+                    throw new Error(errJson.message || "Route stops service unavailable");
+                }
+
+                const stops = await res.json();
+                currentSmartStopsList = stops || [];
+
+                if (countText) countText.textContent = currentSmartStopsList.length;
+                if (detourInfo) {
+                    detourInfo.textContent = maxDetour ? `Filtered: ≤ ${maxDetour} min detour` : `Showing all detours`;
+                }
+
+                if (currentSmartStopsList.length === 0) {
+                    if (loading) loading.style.display = "none";
+                    if (emptyBox) emptyBox.style.display = "block";
+                    renderSmartStopsOnMap([]);
+                    return;
+                }
+
+                // Identify provider from first stop if available
+                if (providerBadge && currentSmartStopsList.length > 0 && currentSmartStopsList[0].providerSource) {
+                    providerBadge.textContent = currentSmartStopsList[0].providerSource;
+                }
+
+                renderSmartStopsCards(currentSmartStopsList);
+                renderSmartStopsOnMap(currentSmartStopsList);
+
+                if (loading) loading.style.display = "none";
+                if (grid) grid.style.display = "flex";
+            } catch (err) {
+                console.error("Smart Stops fetch failed:", err);
+                if (loading) loading.style.display = "none";
+                if (errorBox) {
+                    if (errorMsg) errorMsg.textContent = err.message || "Failed to query corridor points along driving route.";
+                    errorBox.style.display = "block";
+                }
+            }
+        }
+
+        function renderSmartStopsCards(stops) {
+            const grid = document.getElementById("smartStopsGrid");
+            if (!grid) return;
+
+            grid.innerHTML = "";
+
+            stops.forEach(stop => {
+                const meta = getCategoryMeta(stop.categoryCode);
+                const col = document.createElement("div");
+                col.className = "col-12 col-md-6 col-xl-4";
+                col.id = `stop-card-${stop.id}`;
+
+                let detourHtml = '';
+                if (stop.detourCalculated) {
+                    if (stop.detourMinutes === 0 || stop.detourMinutes < 1) {
+                        detourHtml = `<span class="smart-stop-detour-badge"><i class="bi bi-lightning-charge me-1"></i>Direct highway (< 1 min)</span>`;
+                    } else {
+                        detourHtml = `<span class="smart-stop-detour-badge"><i class="bi bi-clock-history me-1"></i>+${stop.detourMinutes} min (+${stop.detourDistanceKm} km)</span>`;
+                    }
+                } else if (stop.detourUnavailableReason) {
+                    detourHtml = `<span class="smart-stop-detour-badge unavailable" title="${escapeHtml(stop.detourUnavailableReason)}"><i class="bi bi-dash-circle me-1"></i>Detour uncalc</span>`;
+                }
+
+                const ratingHtml = stop.rating != null ? `<span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-star-fill text-warning me-1"></i>${stop.rating.toFixed(1)}</span>` : '';
+                const openStatusHtml = (stop.openNow === true) ? `<span class="badge bg-success-subtle text-success">Open</span>` : ((stop.openNow === false) ? `<span class="badge bg-danger-subtle text-danger">Closed</span>` : '');
+
+                const offRouteText = stop.distanceFromRouteKm != null ? `${stop.distanceFromRouteKm.toFixed(1)} km off highway` : '';
+
+                col.innerHTML = `
+                    <div class="smart-stop-card">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge" style="background-color: ${meta.bg}; color: ${meta.color}; font-weight: 600;">
+                                    <i class="bi ${meta.icon} me-1"></i>${escapeHtml(meta.name)}
+                                </span>
+                                <div class="d-flex gap-1">
+                                    ${openStatusHtml}
+                                    ${ratingHtml}
+                                </div>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-dark">${escapeHtml(stop.name)}</h6>
+                            <p class="text-muted small mb-2 text-truncate" title="${escapeHtml(stop.address || stop.name)}">
+                                <i class="bi bi-geo-alt me-1"></i>${escapeHtml(stop.address || 'Along route corridor')}
+                            </p>
+                            <div class="d-flex flex-wrap gap-1 align-items-center mb-3">
+                                ${detourHtml}
+                                ${offRouteText ? `<span class="badge bg-light text-muted border small"><i class="bi bi-arrow-right-short"></i>${offRouteText}</span>` : ''}
+                                <span class="badge bg-light text-muted border small" style="font-size: 0.68rem;">${escapeHtml(stop.providerSource || 'Corridor')}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top gap-1">
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-light btn-sm text-secondary" style="font-size: 0.75rem;" onclick="focusStopOnMap(${stop.latitude}, ${stop.longitude}, '${escapeHtml(stop.name)}')">
+                                    <i class="bi bi-crosshair me-1"></i>Map
+                                </button>
+                                <button type="button" class="btn btn-light btn-sm text-muted" style="font-size: 0.75rem;" onclick="dismissSmartStop(${stop.id}, this)" title="Dismiss this stop">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-forest btn-sm fw-semibold" style="font-size: 0.78rem;" onclick='openAddSmartStopModal(${JSON.stringify(stop).replace(/'/g, "&#39;")})'>
+                                <i class="bi bi-plus-circle me-1"></i>Add Stop
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        }
+
+        function filterSmartStopsCategory(category, btn) {
+            currentSmartStopsCategory = category;
+            const pills = document.querySelectorAll("#smartStopCategoryPills .btn-category-pill");
+            pills.forEach(p => p.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            loadSmartStopsAlongRoute();
+        }
+
+        function debounceSmartStopSearch() {
+            clearTimeout(smartStopsSearchTimeout);
+            smartStopsSearchTimeout = setTimeout(() => {
+                loadSmartStopsAlongRoute();
+            }, 300);
+        }
+
+        function clearSmartStopSearch() {
+            const input = document.getElementById("smartStopSearchInput");
+            if (input) input.value = "";
+            loadSmartStopsAlongRoute();
+        }
+
+        function resetSmartStopsFilters() {
+            currentSmartStopsCategory = 'ALL';
+            const pills = document.querySelectorAll("#smartStopCategoryPills .btn-category-pill");
+            pills.forEach(p => p.classList.remove("active"));
+            const allBtn = document.querySelector("#smartStopCategoryPills [data-category='ALL']");
+            if (allBtn) allBtn.classList.add("active");
+
+            const detourSelect = document.getElementById("smartStopDetourSelect");
+            if (detourSelect) detourSelect.value = "";
+
+            const input = document.getElementById("smartStopSearchInput");
+            if (input) input.value = "";
+
+            loadSmartStopsAlongRoute();
+        }
+
+        function toggleSmartStopsOnMap() {
+            smartStopsVisibleOnMap = !smartStopsVisibleOnMap;
+            const btnText = document.getElementById("toggleStopsMapText");
+            if (btnText) {
+                btnText.textContent = smartStopsVisibleOnMap ? "Hide Stops on Map" : "Show Stops on Map";
+            }
+            if (!smartStopsVisibleOnMap) {
+                if (smartStopsLayerGroup && window._currentLeafletMap) {
+                    try { window._currentLeafletMap.removeLayer(smartStopsLayerGroup); } catch(e){}
+                }
+            } else {
+                renderSmartStopsOnMap(currentSmartStopsList);
+            }
+        }
+
+        function renderSmartStopsOnMap(stops) {
+            if (!window._currentLeafletMap) return;
+
+            if (smartStopsLayerGroup) {
+                try {
+                    window._currentLeafletMap.removeLayer(smartStopsLayerGroup);
+                } catch(e) {}
+            }
+
+            if (!smartStopsVisibleOnMap || !stops || stops.length === 0) return;
+
+            smartStopsLayerGroup = L.featureGroup();
+
+            stops.forEach(stop => {
+                if (!stop.latitude || !stop.longitude) return;
+                const meta = getCategoryMeta(stop.categoryCode);
+
+                const stopIcon = L.divIcon({
+                    className: 'custom-stop-marker',
+                    html: `<div style="background: ${meta.color}; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 3px 8px rgba(0,0,0,0.25); border: 2px solid #ffffff;"><i class="bi ${meta.icon}"></i></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14],
+                    popupAnchor: [0, -16]
+                });
+
+                let detourInfo = '';
+                if (stop.detourCalculated) {
+                    detourInfo = `<div class="small text-success mt-1 fw-semibold"><i class="bi bi-clock me-1"></i>+${stop.detourMinutes} min detour (+${stop.detourDistanceKm} km)</div>`;
+                }
+
+                const popupHtml = `
+                    <div style="min-width: 170px;">
+                        <span class="badge" style="background-color: ${meta.bg}; color: ${meta.color}; font-weight: 600;">${escapeHtml(meta.name)}</span>
+                        <div class="fw-bold fs-6 text-dark mt-1">${escapeHtml(stop.name)}</div>
+                        <div class="text-muted small">${escapeHtml(stop.address || 'Along route corridor')}</div>
+                        ${stop.distanceFromRouteKm ? `<div class="small text-muted mt-1">🛣️ ${stop.distanceFromRouteKm.toFixed(1)} km from highway</div>` : ''}
+                        ${detourInfo}
+                        <button type="button" class="btn btn-forest btn-sm w-100 mt-2 py-1" onclick='openAddSmartStopModal(${JSON.stringify(stop).replace(/'/g, "&#39;")})'>
+                            <i class="bi bi-plus-circle me-1"></i>Add Stop
+                        </button>
+                    </div>
+                `;
+
+                const marker = L.marker([stop.latitude, stop.longitude], { icon: stopIcon })
+                    .bindPopup(popupHtml);
+
+                marker._stopData = stop;
+                smartStopsLayerGroup.addLayer(marker);
+            });
+
+            smartStopsLayerGroup.addTo(window._currentLeafletMap);
+        }
+
+        function focusStopOnMap(lat, lng, name) {
+            if (!window._currentLeafletMap) return;
+            window._currentLeafletMap.setView([lat, lng], 13);
+            if (smartStopsLayerGroup) {
+                smartStopsLayerGroup.eachLayer(layer => {
+                    if (layer._stopData && Math.abs(layer._stopData.latitude - lat) < 0.0001 && Math.abs(layer._stopData.longitude - lng) < 0.0001) {
+                        layer.openPopup();
+                    }
+                });
+            }
+        }
+
+        function dismissSmartStop(stopId, btn) {
+            const card = document.getElementById(`stop-card-${stopId}`);
+            if (card) {
+                card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+                card.style.opacity = "0";
+                card.style.transform = "scale(0.9)";
+                setTimeout(() => {
+                    card.remove();
+                    currentSmartStopsList = currentSmartStopsList.filter(s => s.id !== stopId);
+                    const countText = document.getElementById("smartStopsCountText");
+                    if (countText) countText.textContent = currentSmartStopsList.length;
+                    renderSmartStopsOnMap(currentSmartStopsList);
+                }, 300);
+            }
+        }
+
+        function openAddSmartStopModal(stop) {
+            selectedStopForAdd = stop;
+            document.getElementById("addStopPlaceName").textContent = stop.name;
+            const meta = getCategoryMeta(stop.categoryCode);
+            document.getElementById("addStopPlaceCategory").innerHTML = `<i class="bi ${meta.icon} me-1"></i>${escapeHtml(meta.name)} &bull; ${escapeHtml(stop.address || 'Highway corridor')}`;
+
+            let detourText = 'Along road route corridor';
+            if (stop.detourCalculated) {
+                detourText = stop.detourMinutes < 1 ? 'Direct along route (< 1 min detour)' : `+${stop.detourMinutes} min road detour (+${stop.detourDistanceKm} km)`;
+            }
+            document.getElementById("addStopPlaceDetour").textContent = detourText;
+
+            // Populate insertion positions
+            const select = document.getElementById("addStopPositionSelect");
+            select.innerHTML = "";
+
+            const destinations = (tripData && tripData.destinations) ? tripData.destinations : [];
+
+            if (destinations.length === 0) {
+                const opt = document.createElement("option");
+                opt.value = "first";
+                opt.textContent = `As first destination after ${tripData.startLocation || 'origin'}`;
+                select.appendChild(opt);
+            } else {
+                // Option: Before first destination
+                const optFirst = document.createElement("option");
+                optFirst.value = JSON.stringify({ before: destinations[0].name });
+                optFirst.textContent = `Before ${destinations[0].name} (Leg: ${tripData.startLocation || 'Origin'} ➔ Stop ➔ ${destinations[0].name})`;
+                select.appendChild(optFirst);
+
+                // Options: Between intermediate destinations
+                for (let i = 0; i < destinations.length - 1; i++) {
+                    const opt = document.createElement("option");
+                    opt.value = JSON.stringify({ after: destinations[i].name });
+                    opt.textContent = `Between ${destinations[i].name} and ${destinations[i + 1].name}`;
+                    if (stop.insertAfterDestination && stop.insertAfterDestination.toLowerCase() === destinations[i].name.toLowerCase()) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                }
+
+                // Option: After last destination
+                const optLast = document.createElement("option");
+                const lastDest = destinations[destinations.length - 1];
+                optLast.value = JSON.stringify({ after: lastDest.name });
+                optLast.textContent = `After ${lastDest.name} (At the end of route)`;
+                if (stop.insertAfterDestination && stop.insertAfterDestination.toLowerCase() === lastDest.name.toLowerCase()) {
+                    optLast.selected = true;
+                }
+                select.appendChild(optLast);
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("addSmartStopModal"));
+            modal.show();
+        }
+
+        async function executeAddSmartStop() {
+            if (!selectedStopForAdd || !tripData || !tripData.id) return;
+
+            const btn = document.getElementById("btnConfirmAddSmartStop");
+            const select = document.getElementById("addStopPositionSelect");
+            let insertAfter = null;
+            let insertBefore = null;
+
+            try {
+                if (select.value) {
+                    const parsed = JSON.parse(select.value);
+                    if (parsed.after) insertAfter = parsed.after;
+                    if (parsed.before) insertBefore = parsed.before;
+                }
+            } catch(e){}
+
+            const payload = {
+                name: selectedStopForAdd.name,
+                category: selectedStopForAdd.category || selectedStopForAdd.categoryCode,
+                latitude: selectedStopForAdd.latitude,
+                longitude: selectedStopForAdd.longitude,
+                address: selectedStopForAdd.address,
+                googlePlaceId: selectedStopForAdd.googlePlaceId,
+                insertAfterDestination: insertAfter,
+                insertBeforeDestination: insertBefore
+            };
+
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Inserting stop...`;
+                }
+
+                const res = await fetch(`/api/trips/${tripData.id}/add-place-along-route`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || "Could not add stop to route");
+                }
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById("addSmartStopModal"));
+                if (modal) modal.hide();
+
+                window.location.reload();
+            } catch (err) {
+                console.error("Add smart stop failed:", err);
+                alert("Failed to insert stop: " + err.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="bi bi-plus-circle me-1"></i> Insert Stop &amp; Recalculate`;
+                }
+            }
+        }
+
+        // =========================================================
+        // FEATURE 2: TRIP VERSION HISTORY
+        // =========================================================
+
+        let selectedVersionIdsForCompare = [];
+        let versionToRestoreTarget = null;
+
+        async function loadVersionHistoryCount() {
+            if (!tripData || !tripData.id) return;
+            try {
+                const res = await fetch(`/api/trips/${tripData.id}/versions`);
+                if (res.ok) {
+                    const versions = await res.json();
+                    const badge = document.getElementById("topVersionBadge");
+                    if (badge && versions && versions.length > 0) {
+                        badge.textContent = `v${versions[0].versionNumber}`;
+                        badge.style.display = "inline-block";
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not load version history count:", e);
+            }
+        }
+
+        async function openVersionHistoryModal() {
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("versionHistoryModal"));
+            modal.show();
+
+            const loading = document.getElementById("versionsLoading");
+            const errorBox = document.getElementById("versionsError");
+            const list = document.getElementById("versionTimelineList");
+            const compareBar = document.getElementById("versionCompareBar");
+
+            selectedVersionIdsForCompare = [];
+            if (compareBar) compareBar.style.setProperty("display", "none", "important");
+
+            try {
+                if (loading) loading.style.display = "block";
+                if (errorBox) errorBox.style.display = "none";
+                if (list) list.innerHTML = "";
+
+                const res = await fetch(`/api/trips/${tripData.id}/versions`);
+                if (!res.ok) throw new Error("Could not load trip versions");
+
+                const versions = await res.json();
+                if (loading) loading.style.display = "none";
+
+                if (!versions || versions.length === 0) {
+                    list.innerHTML = `<div class="text-center py-4 text-muted small">No saved versions found for this trip yet.</div>`;
+                    return;
+                }
+
+                renderVersionTimeline(versions);
+            } catch (err) {
+                console.error("Version history load error:", err);
+                if (loading) loading.style.display = "none";
+                if (errorBox) {
+                    errorBox.textContent = err.message || "Failed to load version history.";
+                    errorBox.style.display = "block";
+                }
+            }
+        }
+
+        function renderVersionTimeline(versions) {
+            const list = document.getElementById("versionTimelineList");
+            if (!list) return;
+
+            list.innerHTML = "";
+
+            versions.forEach(v => {
+                const item = document.createElement("div");
+                item.className = `timeline-version-item ${v.isCurrent ? 'is-current' : ''}`;
+
+                const sourceBadge = formatSourceBadge(v.changeSource);
+
+                item.innerHTML = `
+                    <div class="timeline-version-dot"></div>
+                    <div class="version-card-content">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-2 mb-2">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="fw-bold fs-6 text-dark">Version ${v.versionNumber}</span>
+                                    ${v.isCurrent ? '<span class="badge bg-success-subtle text-success fw-semibold">Current Active</span>' : ''}
+                                    ${sourceBadge}
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="bi bi-clock me-1"></i>${escapeHtml(v.formattedCreatedAt || '')} 
+                                    &bull; by <strong>${escapeHtml(v.createdByName || 'User')}</strong>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="form-check me-1" title="Select to compare diff">
+                                    <input class="form-check-input version-diff-check" type="checkbox" value="${v.id}" id="check-v-${v.id}" onchange="toggleVersionCheckbox(this)">
+                                    <label class="form-check-label small text-muted" for="check-v-${v.id}">Compare</label>
+                                </div>
+                                ${!v.isCurrent ? `
+                                    <button type="button" class="btn btn-outline-warning btn-sm py-1 px-3 fw-semibold text-dark" onclick="openRestoreConfirmation(${v.id}, ${v.versionNumber}, '${escapeHtml(v.changeDescription || '')}', '${escapeHtml(v.destinationsSummary || '')}')">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Restore
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <p class="mb-2 text-dark small fw-medium">
+                            <i class="bi bi-chat-left-text me-1 text-muted"></i>${escapeHtml(v.changeDescription || 'Trip updated')}
+                        </p>
+
+                        <div class="p-2 rounded bg-light border small text-muted d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div>
+                                <i class="bi bi-signpost me-1 text-success"></i>
+                                <span class="fw-semibold text-dark">${escapeHtml(v.destinationsSummary || 'Trip')}</span>
+                            </div>
+                            <div>
+                                <span>${v.destinationsCount || 0} stops</span> &bull;
+                                <span>${v.totalDistanceKm || 0} km</span> &bull;
+                                <span>${escapeHtml(v.formattedTravelTime || '0 hr')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function formatSourceBadge(src) {
+            if (!src) return '';
+            switch (src) {
+                case 'ROUTE_OPTIMIZATION':
+                    return '<span class="badge bg-primary-subtle text-primary">Route Optimized</span>';
+                case 'REORDER_STOPS':
+                    return '<span class="badge bg-secondary-subtle text-secondary">Stops Reordered</span>';
+                case 'ADD_STOP':
+                    return '<span class="badge bg-success-subtle text-success">Stop Added</span>';
+                case 'REMOVE_STOP':
+                    return '<span class="badge bg-danger-subtle text-danger">Stop Removed</span>';
+                case 'UPDATE_STAY_DURATION':
+                    return '<span class="badge bg-info-subtle text-info">Stay Changed</span>';
+                case 'PRE_RESTORE_BACKUP':
+                    return '<span class="badge bg-warning-subtle text-warning">Pre-Restore Backup</span>';
+                case 'USER_SNAPSHOT':
+                    return '<span class="badge bg-dark-subtle text-dark">Manual Snapshot</span>';
+                default:
+                    return `<span class="badge bg-light text-muted border">${escapeHtml(src)}</span>`;
+            }
+        }
+
+        async function promptCreateManualSnapshot() {
+            const desc = prompt("Enter a label or description for this trip version snapshot (e.g. 'Before changing hotels'):");
+            if (desc === null) return;
+
+            try {
+                const res = await fetch(`/api/trips/${tripData.id}/versions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: desc.trim() || 'Manual user snapshot' })
+                });
+
+                if (!res.ok) throw new Error("Could not save snapshot");
+
+                openVersionHistoryModal();
+                loadVersionHistoryCount();
+            } catch (err) {
+                alert("Failed to create snapshot: " + err.message);
+            }
+        }
+
+        function toggleVersionCheckbox(cb) {
+            const vId = parseInt(cb.value);
+            if (cb.checked) {
+                if (selectedVersionIdsForCompare.length >= 2) {
+                    cb.checked = false;
+                    alert("You can select up to 2 versions at a time to compare differences.");
+                    return;
+                }
+                selectedVersionIdsForCompare.push(vId);
+            } else {
+                selectedVersionIdsForCompare = selectedVersionIdsForCompare.filter(id => id !== vId);
+            }
+
+            const bar = document.getElementById("versionCompareBar");
+            if (bar) {
+                if (selectedVersionIdsForCompare.length === 2) {
+                    bar.style.setProperty("display", "flex", "important");
+                } else {
+                    bar.style.setProperty("display", "none", "important");
+                }
+            }
+        }
+
+        async function triggerVersionsComparison() {
+            if (selectedVersionIdsForCompare.length !== 2) return;
+
+            const [v1, v2] = selectedVersionIdsForCompare;
+            const modalBody = document.getElementById("compareVersionsModalBody");
+
+            try {
+                modalBody.innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-success me-2"></div>Computing diff between snapshots...</div>`;
+                const compModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("compareVersionsModal"));
+                compModal.show();
+
+                const res = await fetch(`/api/trips/${tripData.id}/versions/compare?v1=${v1}&v2=${v2}`);
+                if (!res.ok) throw new Error("Could not compare versions");
+
+                const diff = await res.json();
+                renderVersionDiff(diff);
+            } catch (err) {
+                console.error("Compare error:", err);
+                modalBody.innerHTML = `<div class="alert alert-danger py-2 px-3 small">${err.message || 'Comparison failed'}</div>`;
+            }
+        }
+
+        function renderVersionDiff(diff) {
+            const body = document.getElementById("compareVersionsModalBody");
+            if (!body) return;
+
+            const vA = diff.versionA || {};
+            const vB = diff.versionB || {};
+
+            let sectionsHtml = '';
+
+            if (diff.identical) {
+                sectionsHtml = `
+                    <div class="alert alert-info py-3 px-4 rounded-3 text-center mb-3">
+                        <i class="bi bi-check-circle-fill fs-4 text-info d-block mb-2"></i>
+                        <h6 class="fw-bold mb-1">Both versions are identical</h6>
+                        <p class="text-muted small mb-0">No changes detected in destinations, stay durations, accommodation, dates, or activity schedules.</p>
+                    </div>
+                `;
+            } else {
+                if (diff.destinationChanges && diff.destinationChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-signpost-2 text-primary me-2"></i>Destination &amp; Route Stops</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.destinationChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-primary me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (diff.stayDurationChanges && diff.stayDurationChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history text-warning me-2"></i>City Stay Durations</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.stayDurationChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-warning me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (diff.accommodationChanges && diff.accommodationChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-building text-info me-2"></i>Accommodation &amp; Stays</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.accommodationChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-info me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (diff.travelDateChanges && diff.travelDateChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-calendar3 text-success me-2"></i>Trip Dates</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.travelDateChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-success me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (diff.routePreferenceChanges && diff.routePreferenceChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-sliders text-secondary me-2"></i>Travel Preferences</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.routePreferenceChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-secondary me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (diff.activityChanges && diff.activityChanges.length > 0) {
+                    sectionsHtml += `
+                        <div class="card card-modern p-3 mb-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-list-task text-primary me-2"></i>Scheduled Activities</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                ${diff.activityChanges.map(c => `<li class="py-1"><i class="bi bi-arrow-right-circle text-primary me-2"></i>${escapeHtml(c)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+
+            body.innerHTML = `
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="badge bg-secondary mb-1">Version ${vA.versionNumber || 'A'}</span>
+                            <div class="fw-bold text-dark small">${escapeHtml(vA.changeDescription || 'Snapshot')}</div>
+                            <div class="text-muted small mt-1">${escapeHtml(vA.formattedCreatedAt || '')}</div>
+                            <div class="text-muted small mt-1">${vA.destinationsCount || 0} stops &bull; ${vA.totalDistanceKm || 0} km</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <span class="badge bg-forest mb-1">Version ${vB.versionNumber || 'B'}</span>
+                            <div class="fw-bold text-dark small">${escapeHtml(vB.changeDescription || 'Snapshot')}</div>
+                            <div class="text-muted small mt-1">${escapeHtml(vB.formattedCreatedAt || '')}</div>
+                            <div class="text-muted small mt-1">${vB.destinationsCount || 0} stops &bull; ${vB.totalDistanceKm || 0} km</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-3 mb-3 d-flex justify-content-between align-items-center" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
+                    <div>
+                        <span class="fw-bold text-dark small">Road Distance Delta:</span>
+                        <span class="fw-semibold ms-1 ${diff.distanceDiffKm > 0 ? 'text-danger' : (diff.distanceDiffKm < 0 ? 'text-success' : 'text-muted')}">
+                            ${diff.distanceDiffKm > 0 ? '+' : ''}${diff.distanceDiffKm} km
+                        </span>
+                    </div>
+                    <div>
+                        <span class="fw-bold text-dark small">Driving Time Delta:</span>
+                        <span class="fw-semibold ms-1 ${diff.travelTimeDiffMinutes > 0 ? 'text-danger' : (diff.travelTimeDiffMinutes < 0 ? 'text-success' : 'text-muted')}">
+                            ${diff.travelTimeDiffMinutes > 0 ? '+' : ''}${diff.travelTimeDiffMinutes} mins
+                        </span>
+                    </div>
+                </div>
+
+                ${sectionsHtml}
+            `;
+        }
+
+        function openRestoreConfirmation(versionId, versionNumber, changeDesc, stopsSummary) {
+            versionToRestoreTarget = versionId;
+            document.getElementById("restoreTargetVersionLabel").textContent = `Version ${versionNumber}`;
+            document.getElementById("restoreTargetVersionDetails").innerHTML = `
+                <div><strong>Description:</strong> ${escapeHtml(changeDesc)}</div>
+                <div class="mt-1"><strong>Route stops:</strong> ${escapeHtml(stopsSummary)}</div>
+            `;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("restoreConfirmModal"));
+            modal.show();
+        }
+
+        async function executeRestoreVersion() {
+            if (!versionToRestoreTarget || !tripData || !tripData.id) return;
+
+            const btn = document.getElementById("btnExecuteRestore");
+
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Restoring trip state...`;
+                }
+
+                const res = await fetch(`/api/trips/${tripData.id}/versions/${versionToRestoreTarget}/restore`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || "Failed to restore version");
+                }
+
+                window.location.reload();
+            } catch (err) {
+                console.error("Restore failed:", err);
+                alert("Restore failed: " + err.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="bi bi-check2-circle me-1"></i> Yes, Restore Version`;
+                }
+            }
         }
     </script>
 </body>

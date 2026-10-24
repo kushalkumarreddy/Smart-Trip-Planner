@@ -14,9 +14,13 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class TripService {
+
+    private static final Logger logger = LoggerFactory.getLogger(TripService.class);
 
     private final TripRepository tripRepository;
     private final DestinationRepository destinationRepository;
@@ -29,6 +33,8 @@ public class TripService {
     private final TripCollaboratorRepository tripCollaboratorRepository;
     private final TripSuggestionRepository tripSuggestionRepository;
     private final TripChecklistRepository tripChecklistRepository;
+    private TripVersionService tripVersionService;
+    private SmartStopsService smartStopsService;
 
     @Autowired
     public TripService(TripRepository tripRepository,
@@ -41,7 +47,9 @@ public class TripService {
                        GoogleMapsService googleMapsService,
                        TripCollaboratorRepository tripCollaboratorRepository,
                        TripSuggestionRepository tripSuggestionRepository,
-                       @Autowired(required = false) TripChecklistRepository tripChecklistRepository) {
+                       @Autowired(required = false) TripChecklistRepository tripChecklistRepository,
+                       @Autowired(required = false) TripVersionService tripVersionService,
+                       @Autowired(required = false) SmartStopsService smartStopsService) {
         this.tripRepository = tripRepository;
         this.destinationRepository = destinationRepository;
         this.placeRepository = placeRepository;
@@ -53,6 +61,8 @@ public class TripService {
         this.tripCollaboratorRepository = tripCollaboratorRepository;
         this.tripSuggestionRepository = tripSuggestionRepository;
         this.tripChecklistRepository = tripChecklistRepository;
+        this.tripVersionService = tripVersionService;
+        this.smartStopsService = smartStopsService;
     }
 
     public TripService(TripRepository tripRepository,
@@ -67,7 +77,15 @@ public class TripService {
                        TripSuggestionRepository tripSuggestionRepository) {
         this(tripRepository, destinationRepository, placeRepository, itineraryItemRepository,
                 routeService, itineraryService, recommendationService, googleMapsService,
-                tripCollaboratorRepository, tripSuggestionRepository, null);
+                tripCollaboratorRepository, tripSuggestionRepository, null, null, null);
+    }
+
+    public void setTripVersionService(TripVersionService tripVersionService) {
+        this.tripVersionService = tripVersionService;
+    }
+
+    public void setSmartStopsService(SmartStopsService smartStopsService) {
+        this.smartStopsService = smartStopsService;
     }
 
     @Transactional
@@ -263,7 +281,16 @@ public class TripService {
         // Seed dedicated Trip Preparation Checklist
         seedDefaultChecklist(savedTrip);
 
-        return buildTripResponseDto(savedTrip, routeSummary, dayItineraries);
+        TripResponseDto createdDto = buildTripResponseDto(savedTrip, routeSummary, dayItineraries);
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(savedTrip, "Initial trip creation", "INITIAL_CREATION", user);
+            } catch (Exception e) {
+                logger.warn("Could not create initial version snapshot: {}", e.getMessage());
+            }
+        }
+
+        return createdDto;
     }
 
     public void checkTripAccess(Trip trip, User user, String requiredRole) {
@@ -378,6 +405,14 @@ public class TripService {
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
         checkTripAccess(trip, user, "EDITOR");
 
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(trip, "Before route optimization", "OPTIMIZATION", user);
+            } catch (Exception e) {
+                logger.warn("Could not create snapshot before optimization: {}", e.getMessage());
+            }
+        }
+
         List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
         List<String> destNames = destinations.stream().map(Destination::getName).collect(Collectors.toList());
 
@@ -448,6 +483,14 @@ public class TripService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
         checkTripAccess(trip, user, "EDITOR");
+
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(trip, "Before destination reorder", "REORDER", user);
+            } catch (Exception e) {
+                logger.warn("Could not create snapshot before reordering: {}", e.getMessage());
+            }
+        }
 
         List<Destination> currentDests = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
         Map<Long, Destination> idMap = currentDests.stream().collect(Collectors.toMap(Destination::getId, d -> d));
@@ -1020,6 +1063,14 @@ public class TripService {
             throw new BadRequestException("Destination name cannot be blank.");
         }
 
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(trip, "Before adding destination: " + destinationName.trim(), "DESTINATION_CHANGE", user);
+            } catch (Exception e) {
+                logger.warn("Could not create snapshot before adding destination: {}", e.getMessage());
+            }
+        }
+
         List<Destination> currentDests = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
         int newSeq = currentDests.size();
 
@@ -1120,6 +1171,15 @@ public class TripService {
                 .filter(d -> Objects.equals(d.getId(), destinationId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
+
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(trip, "Before removing destination: " + toRemove.getName(), "DESTINATION_CHANGE", user);
+            } catch (Exception e) {
+                logger.warn("Could not create snapshot before removing destination: {}", e.getMessage());
+            }
+        }
+
 
         currentDests.remove(toRemove);
         destinationRepository.delete(toRemove);
@@ -1274,17 +1334,36 @@ public class TripService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlaceAlongRouteDto> getPlacesAlongRoute(Long tripId, Double maxDetourKm, User user) {
+    public List<PlaceAlongRouteDto> getPlacesAlongRoute(Long tripId,
+                                                        String category,
+                                                        Integer maxDetourMinutes,
+                                                        Double maxDetourKm,
+                                                        String query,
+                                                        User user) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
         checkTripAccess(trip, user, "VIEWER");
-
-        double limitKm = (maxDetourKm != null && maxDetourKm > 0) ? maxDetourKm : 25.0;
 
         List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
         if (destinations.isEmpty()) {
             return Collections.emptyList();
         }
+
+        if (smartStopsService != null) {
+            return smartStopsService.findSmartStopsAlongRoute(
+                    trip, destinations, category, maxDetourMinutes, maxDetourKm, query);
+        }
+
+        return getLegacyPlacesAlongRoute(trip, destinations, maxDetourKm);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlaceAlongRouteDto> getPlacesAlongRoute(Long tripId, Double maxDetourKm, User user) {
+        return getPlacesAlongRoute(tripId, "ALL", null, maxDetourKm, null, user);
+    }
+
+    private List<PlaceAlongRouteDto> getLegacyPlacesAlongRoute(Trip trip, List<Destination> destinations, Double maxDetourKm) {
+        double limitKm = (maxDetourKm != null && maxDetourKm > 0) ? maxDetourKm : 25.0;
 
         List<String> routePoints = new ArrayList<>();
         routePoints.add(trip.getStartLocation());
@@ -1367,21 +1446,71 @@ public class TripService {
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
         checkTripAccess(trip, user, "EDITOR");
 
-        List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
-        int insertIdx = (placeDto.getInsertIndex() != null && placeDto.getInsertIndex() >= 0 && placeDto.getInsertIndex() <= destinations.size())
-                ? placeDto.getInsertIndex() + 1
-                : destinations.size();
+        if (placeDto == null || placeDto.getName() == null || placeDto.getName().trim().isEmpty()) {
+            throw new BadRequestException("Stop place details cannot be empty.");
+        }
 
-        Destination newDest = new Destination(placeDto.getName(), insertIdx);
+        List<Destination> destinations = destinationRepository.findByTripOrderBySequenceOrderAsc(trip);
+
+        // Avoid duplicate insertion when the same stop is selected repeatedly
+        String placeNameNorm = placeDto.getName().trim().toLowerCase();
+        for (Destination existing : destinations) {
+            if (existing.getName().trim().toLowerCase().equals(placeNameNorm)) {
+                logger.info("Stop '{}' already exists in itinerary. Returning current trip state without duplicate insertion.", placeDto.getName());
+                return getTripDtoById(tripId, user);
+            }
+        }
+
+        // Save a version history snapshot before adding the stop
+        if (tripVersionService != null) {
+            try {
+                tripVersionService.createSnapshot(trip, "Before adding stop: " + placeDto.getName().trim(), "STOP_ADDED", user);
+            } catch (Exception e) {
+                logger.warn("Could not create snapshot before adding stop: {}", e.getMessage());
+            }
+        }
+
+        // Determine insertion position (before/after destination or insertIndex)
+        int insertIdx;
+        if (placeDto.getInsertAfterDestination() != null && !placeDto.getInsertAfterDestination().trim().isEmpty()) {
+            String targetAfter = placeDto.getInsertAfterDestination().trim().toLowerCase();
+            int matchIdx = -1;
+            for (int i = 0; i < destinations.size(); i++) {
+                if (destinations.get(i).getName().trim().toLowerCase().equals(targetAfter)) {
+                    matchIdx = i;
+                    break;
+                }
+            }
+            insertIdx = (matchIdx >= 0) ? matchIdx + 1 : destinations.size();
+        } else if (placeDto.getInsertBeforeDestination() != null && !placeDto.getInsertBeforeDestination().trim().isEmpty()) {
+            String targetBefore = placeDto.getInsertBeforeDestination().trim().toLowerCase();
+            int matchIdx = -1;
+            for (int i = 0; i < destinations.size(); i++) {
+                if (destinations.get(i).getName().trim().toLowerCase().equals(targetBefore)) {
+                    matchIdx = i;
+                    break;
+                }
+            }
+            insertIdx = (matchIdx >= 0) ? matchIdx : 0;
+        } else if (placeDto.getInsertIndex() != null && placeDto.getInsertIndex() >= 0 && placeDto.getInsertIndex() <= destinations.size()) {
+            insertIdx = placeDto.getInsertIndex() + 1;
+        } else {
+            insertIdx = destinations.size();
+        }
+
+        insertIdx = Math.max(0, Math.min(insertIdx, destinations.size()));
+
+        Destination newDest = new Destination(placeDto.getName().trim(), insertIdx);
         newDest.setTrip(trip);
         double[] coords = (placeDto.getLatitude() != null && placeDto.getLongitude() != null)
                 ? new double[]{placeDto.getLatitude(), placeDto.getLongitude()}
-                : googleMapsService.geocode(placeDto.getName());
+                : googleMapsService.geocode(placeDto.getName().trim());
         newDest.setLatitude(coords[0]);
         newDest.setLongitude(coords[1]);
 
         destinations.add(insertIdx, newDest);
 
+        // Recalculate affected route legs using configured routing provider
         List<String> names = destinations.stream().map(Destination::getName).collect(Collectors.toList());
         RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(trip.getStartLocation(), names, trip.getTransportMode());
 
@@ -1399,6 +1528,15 @@ public class TripService {
         trip.setTotalDistance(routeSummary.getTotalDistanceKm());
         trip.setTotalTravelTimeMinutes(routeSummary.getTotalTravelTimeMinutes());
 
+        // Invalidate previous route optimization results
+        tripRepository.save(trip);
+
+        // Invalidate smart stops search cache
+        if (smartStopsService != null) {
+            smartStopsService.clearCache();
+        }
+
+        // Re-generate day itineraries
         itineraryItemRepository.deleteByTripId(trip.getId());
         List<DayItineraryDto> days = itineraryService.generateItineraryPlan(trip, destinations, trip.getTransportMode());
         for (DayItineraryDto day : days) {
@@ -1422,9 +1560,57 @@ public class TripService {
             }
         }
 
-        tripRepository.save(trip);
         return buildTripResponseDto(trip, routeSummary, days, destinations);
     }
+
+    // ==========================================
+    // Trip Version History Delegations
+    // ==========================================
+
+    @Transactional
+    public TripVersion createManualVersion(Long tripId, String label, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+        String desc = (label != null && !label.trim().isEmpty()) ? label.trim() : "Manual version snapshot";
+        if (tripVersionService != null) {
+            return tripVersionService.createSnapshot(trip, desc, "MANUAL", user);
+        }
+        return null;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TripVersionSummaryDto> getTripVersions(Long tripId, User user) {
+        if (tripVersionService != null) {
+            return tripVersionService.getTripVersions(tripId, user);
+        }
+        return Collections.emptyList();
+    }
+
+    @Transactional(readOnly = true)
+    public TripVersionDetailDto getVersionDetail(Long tripId, Long versionId, User user) {
+        if (tripVersionService != null) {
+            return tripVersionService.getVersionDetail(tripId, versionId, user);
+        }
+        throw new ResourceNotFoundException("Version service unavailable");
+    }
+
+    @Transactional(readOnly = true)
+    public TripVersionComparisonDto compareVersions(Long tripId, Long v1Id, Long v2Id, User user) {
+        if (tripVersionService != null) {
+            return tripVersionService.compareVersions(tripId, v1Id, v2Id, user);
+        }
+        throw new ResourceNotFoundException("Version service unavailable");
+    }
+
+    @Transactional
+    public TripResponseDto restoreVersion(Long tripId, Long versionId, User user) {
+        if (tripVersionService != null) {
+            return tripVersionService.restoreVersion(tripId, versionId, user);
+        }
+        throw new ResourceNotFoundException("Version service unavailable");
+    }
+
 
     @Transactional(readOnly = true)
     public PackingChecklistDto getPackingChecklist(Long tripId, User user) {

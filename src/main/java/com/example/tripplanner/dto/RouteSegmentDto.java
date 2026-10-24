@@ -130,6 +130,10 @@ public class RouteSegmentDto {
         return success != null ? success : true;
     }
 
+    public boolean isSuccess() {
+        return Boolean.TRUE.equals(success);
+    }
+
     public void setSuccess(Boolean success) {
         this.success = success;
     }

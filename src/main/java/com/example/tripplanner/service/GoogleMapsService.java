@@ -79,19 +79,25 @@ public class GoogleMapsService {
             return new RouteCalculationResult(0.0, 0, new double[]{12.9716, 77.5946}, new double[]{12.9716, 77.5946}, false, false, "Origin and destination cannot be null");
         }
 
+        double[] originCoords = geocode(origin);
+        double[] destCoords = geocode(destination);
+
+        return calculateRouteBetweenCoordinates(originCoords[0], originCoords[1], destCoords[0], destCoords[1], transportMode);
+    }
+
+    public RouteCalculationResult calculateRouteBetweenCoordinates(double fromLat, double fromLng, double toLat, double toLng, String transportMode) {
         String mode = (transportMode != null && !transportMode.trim().isEmpty()) ? transportMode.trim().toUpperCase() : "CAR";
-        String cacheKey = origin.trim().toLowerCase() + "->" + destination.trim().toLowerCase() + "@" + mode;
+        String cacheKey = String.format(java.util.Locale.US, "%.5f,%.5f->%.5f,%.5f@%s", fromLat, fromLng, toLat, toLng, mode);
 
         if (routeCache.containsKey(cacheKey)) {
             return routeCache.get(cacheKey);
         }
 
-        double[] originCoords = geocode(origin);
-        double[] destCoords = geocode(destination);
+        double[] originCoords = new double[]{fromLat, fromLng};
+        double[] destCoords = new double[]{toLat, toLng};
 
-        // Check if origins are identical
-        if (origin.trim().equalsIgnoreCase(destination.trim()) ||
-                (Math.abs(originCoords[0] - destCoords[0]) < 0.0005 && Math.abs(originCoords[1] - destCoords[1]) < 0.0005)) {
+        // Check if origins are identical (< 50 meters)
+        if (Math.abs(fromLat - toLat) < 0.0005 && Math.abs(fromLng - toLng) < 0.0005) {
             RouteCalculationResult zeroResult = new RouteCalculationResult(0.0, 0, originCoords, destCoords, true, true, null, java.util.Collections.singletonList(originCoords));
             routeCache.put(cacheKey, zeroResult);
             return zeroResult;
@@ -104,8 +110,8 @@ public class GoogleMapsService {
                 if (context != null) {
                     TravelMode travelMode = mapTravelMode(mode);
                     DirectionsResult result = DirectionsApi.newRequest(context)
-                            .origin(origin)
-                            .destination(destination)
+                            .origin(new com.google.maps.model.LatLng(fromLat, fromLng))
+                            .destination(new com.google.maps.model.LatLng(toLat, toLng))
                             .mode(travelMode)
                             .await();
 
@@ -130,13 +136,13 @@ public class GoogleMapsService {
                     }
                 }
             } catch (Exception e) {
-                logger.warn("Live Google Directions failed between '{}' and '{}': {}. Falling back to road engine.", origin, destination, e.getMessage());
+                logger.warn("Live Google Directions failed between ({}, {}) and ({}, {}): {}. Falling back to road engine.", fromLat, fromLng, toLat, toLng, e.getMessage());
             }
         }
 
         // 2. High-precision highway routing engine (OSRM & road network)
         GeoUtils.RoadRouteResult roadResult = GeoUtils.calculateRealRoadRoute(
-                originCoords[0], originCoords[1], destCoords[0], destCoords[1], mode
+                fromLat, fromLng, toLat, toLng, mode
         );
 
         RouteCalculationResult res = new RouteCalculationResult(
@@ -146,7 +152,7 @@ public class GoogleMapsService {
                 destCoords,
                 roadResult.isLiveRoadApiUsed(),
                 roadResult.isSuccess(),
-                roadResult.isSuccess() ? null : (roadResult.getErrorMessage() != null ? roadResult.getErrorMessage() : "Unable to calculate route between " + origin + " and " + destination),
+                roadResult.isSuccess() ? null : (roadResult.getErrorMessage() != null ? roadResult.getErrorMessage() : "Unable to calculate route between coordinates"),
                 roadResult.getGeometryCoordinates(),
                 roadResult.getVerifiedProvider()
         );
