@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Journeys — VoyageCraft</title>
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
+    <title>My Journeys — VoyageCraft AI</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -19,15 +21,17 @@
         })();
     </script>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top" aria-label="Main Navigation">
         <div class="container">
-            <a class="navbar-brand" th:href="@{/}">
-                <i class="bi bi-compass-fill"></i> VoyageCraft
+            <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/}">
+                <i class="bi bi-compass-fill fs-4 text-primary"></i>
+                <span class="fw-bold tracking-tight">VoyageCraft</span>
             </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navContent"
+                    aria-controls="navContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navContent">
@@ -36,7 +40,7 @@
                         <a class="nav-link" th:href="@{/}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" th:href="@{/dashboard}">My Journeys</a>
+                        <a class="nav-link active fw-semibold" th:href="@{/dashboard}" aria-current="page">My Journeys</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/create-trip}">Plan a Trip</a>
@@ -47,7 +51,7 @@
                     <div class="dropdown me-1">
                         <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
                             <i class="bi bi-circle-half theme-icon-active"></i>
-                            <span class="d-none d-md-inline theme-name-active">Auto</span>
+                            <span class="d-none d-md-inline theme-name-active ms-1">Auto</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
                             <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
@@ -55,40 +59,54 @@
                             <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
                         </ul>
                     </div>
-                    <span class="text-dark small fw-semibold">
-                        <i class="bi bi-person-circle text-success me-1"></i>
+                    <span class="user-pill d-inline-flex align-items-center gap-1 px-2 py-1 rounded-pill bg-light border small text-dark fw-semibold">
+                        <i class="bi bi-person-circle text-primary"></i>
                         <span th:text="${user.name}">Traveler</span>
                     </span>
                     <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-sand btn-sm px-3">Logout</button>
+                        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">Logout</button>
                     </form>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Dashboard Content -->
-    <main class="container py-4 flex-grow-1">
+    <!-- Feedback Toast Notification Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+        <div id="actionToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" id="actionToastBody">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <span id="actionToastMessage">Operation completed successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
 
-        <!-- Wanderlust Travel Lover Hero Banner (Requirement 6 & 7) -->
-        <div class="wanderlust-hero-banner">
+    <!-- Dashboard Content -->
+    <main class="container py-4 flex-grow-1" id="main-content">
+
+        <!-- Wanderlust Travel Lover Hero Banner -->
+        <div class="wanderlust-hero-banner mb-4">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <span class="wanderlust-badge mb-2">
+                    <span class="wanderlust-badge mb-2 d-inline-flex align-items-center gap-1">
                         <i class="bi bi-compass-fill text-warning"></i> Explorer Passport
                     </span>
                     <h2 class="fw-bold mb-2">
                         Welcome back, <span th:text="${user.name}">Traveler</span>! 🌿
                     </h2>
                     <p class="text-white-50 mb-3" style="max-width: 620px;">
-                        <em>"Every journey, thoughtfully planned."</em> Track your highway mileage, review day-by-day itineraries, and coordinate with your crew.
+                        <em>"Every journey, thoughtfully planned."</em> Track verified highway mileage, manage day-by-day itineraries, and coordinate route schedules with your travel companions.
                     </p>
                     <div class="d-flex flex-wrap gap-2">
-                        <a th:href="@{/create-trip}" class="btn btn-sand px-4 fw-semibold">
-                            <i class="bi bi-plus-lg me-1"></i> Plan a New Trip
+                        <a th:href="@{/create-trip}" class="btn btn-sand px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> Create New Trip
                         </a>
                         <a th:href="@{/create-trip?prompt=4+day+trip+from+guntakal,+calicut,+munar,+kodaikenal}" class="btn btn-outline-light rounded-pill px-3 fw-semibold">
-                            <i class="bi bi-stars text-warning me-1"></i> Try AI Planner
+                            <i class="bi bi-stars text-warning me-1"></i> Try AI Prompt Planner
                         </a>
                     </div>
                 </div>
@@ -96,10 +114,10 @@
                     <div class="p-3 rounded-4 bg-white bg-opacity-10 text-white border border-white border-opacity-25" style="backdrop-filter: blur(8px); max-width: 280px;">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-shield-check text-warning fs-5"></i>
-                            <span class="fw-bold small">Real-World Route Engine</span>
+                            <span class="fw-bold small">Verified Route Engine</span>
                         </div>
                         <p class="small text-white-50 mb-0">
-                            Verified road mileage, smart order optimization, and editable daily itineraries.
+                            Road distance calculations, smart TSP route optimization, and reliable vector image fallbacks.
                         </p>
                     </div>
                 </div>
@@ -115,7 +133,7 @@
                     </div>
                     <div>
                         <div class="metric-value" th:text="${totalTripsCount}">0</div>
-                        <div class="metric-label">Saved Trips</div>
+                        <div class="metric-label">Total Saved Trips</div>
                     </div>
                 </div>
             </div>
@@ -127,7 +145,7 @@
                     </div>
                     <div>
                         <div class="metric-value" th:text="${totalDistanceKm + ' km'}">0 km</div>
-                        <div class="metric-label">Road Distance</div>
+                        <div class="metric-label">Total Road Mileage</div>
                     </div>
                 </div>
             </div>
@@ -139,7 +157,7 @@
                     </div>
                     <div>
                         <div class="metric-value" th:text="${totalDestinationsCount}">0</div>
-                        <div class="metric-label">Destinations</div>
+                        <div class="metric-label">Destinations Pinned</div>
                     </div>
                 </div>
             </div>
@@ -151,64 +169,177 @@
                     </div>
                     <div>
                         <div class="metric-value" th:text="${totalVisitedCount + '/' + totalSightseeingCount}">0/0</div>
-                        <div class="metric-label">Places Visited</div>
+                        <div class="metric-label">Places Explored</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Saved Trips List Section (Requirement 6: Clean cards for saved and upcoming trips) -->
-        <div class="card card-modern p-4">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4">
+        <!-- Main Trips Management Section -->
+        <div class="card card-modern p-4 mb-4">
+
+            <!-- Category Tabs Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-bottom pb-3 mb-3">
                 <div>
-                    <h5 class="fw-bold mb-0">
-                        <i class="bi bi-journal-text text-success me-2"></i> Your Travel Itineraries
-                    </h5>
-                    <p class="text-muted small mb-0">Access maps, daily timeline schedules, and collaborator suggestions.</p>
+                    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-map-fill text-primary"></i>
+                        <span>Your Travel Itineraries</span>
+                    </h4>
+                    <p class="text-muted small mb-0">Browse your trips by travel phase, search by destination, or sort by departure dates.</p>
                 </div>
                 <div>
-                    <span class="badge-sage" th:text="${trips.size() + ' Journeys'}">0 Journeys</span>
+                    <a th:href="@{/create-trip}" class="btn btn-forest btn-sm px-3 fw-semibold shadow-sm">
+                        <i class="bi bi-plus-circle me-1"></i> New Trip
+                    </a>
                 </div>
             </div>
 
-            <!-- Empty State (Requirement 6: Empty state with a clear "Plan your first trip" action) -->
-            <div th:if="${trips.empty}" class="text-center py-5">
-                <div class="metric-icon forest mx-auto mb-3" style="width: 64px; height: 64px; font-size: 2rem;">
+            <!-- Accessible Category Navigation Tabs (Upcoming, Ongoing, Completed, All) -->
+            <ul class="nav nav-pills nav-pills-custom gap-2 mb-4" id="tripCategoryTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-all" data-category="ALL" type="button" role="tab" aria-selected="true">
+                        <i class="bi bi-grid-fill me-1"></i> All Trips
+                        <span class="badge rounded-pill bg-white text-dark ms-1" id="count-all" th:text="${trips.size()}">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-upcoming" data-category="UPCOMING" type="button" role="tab" aria-selected="false">
+                        <i class="bi bi-calendar-check me-1"></i> Upcoming Trips
+                        <span class="badge rounded-pill bg-white text-dark ms-1" id="count-upcoming">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-ongoing" data-category="ONGOING" type="button" role="tab" aria-selected="false">
+                        <i class="bi bi-play-circle-fill me-1 text-warning"></i> Ongoing Trips
+                        <span class="badge rounded-pill bg-white text-dark ms-1" id="count-ongoing">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-completed" data-category="COMPLETED" type="button" role="tab" aria-selected="false">
+                        <i class="bi bi-check2-all me-1"></i> Completed Trips
+                        <span class="badge rounded-pill bg-white text-dark ms-1" id="count-completed">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Filter & Search Toolbar -->
+            <div class="row g-2 align-items-center mb-4 p-3 rounded-3 bg-light border">
+                <div class="col-md-7 col-lg-8">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="search" id="tripSearchInput" class="form-control form-control-sm border-start-0"
+                               placeholder="Search trips by name, starting city, or destination stops..."
+                               aria-label="Search trip itineraries">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="clearSearchBtn" title="Clear search" style="display: none;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-5 col-lg-4 d-flex align-items-center gap-2">
+                    <label for="tripSortSelect" class="form-label small text-muted mb-0 text-nowrap fw-semibold">
+                        <i class="bi bi-sort-down me-1"></i> Sort:
+                    </label>
+                    <select id="tripSortSelect" class="form-select form-select-sm" aria-label="Sort trips by">
+                        <option value="departure-asc" selected>Departure Date (Earliest First)</option>
+                        <option value="departure-desc">Departure Date (Latest First)</option>
+                        <option value="name-asc">Trip Name (A – Z)</option>
+                        <option value="distance-desc">Road Mileage (Longest First)</option>
+                        <option value="id-desc">Recently Created</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Live Filter Summary & Status Announcement -->
+            <div class="d-flex justify-content-between align-items-center small text-muted mb-3" aria-live="polite">
+                <span id="resultsCountNotice">Loading journeys...</span>
+                <span id="activeFilterBadge" class="badge bg-secondary-subtle text-secondary" style="display: none;"></span>
+            </div>
+
+            <!-- Global Empty State: No Trips in Database -->
+            <div th:if="${trips.empty}" class="text-center py-5" id="globalEmptyState">
+                <div class="metric-icon forest mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2.25rem;">
                     <i class="bi bi-compass"></i>
                 </div>
-                <h5 class="fw-bold">No journeys planned yet</h5>
+                <h4 class="fw-bold mb-2">No journeys planned yet</h4>
                 <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
-                    Tell us where you want to go or type a trip idea in plain words to create your first customized itinerary.
+                    Tell us where you want to go or type a trip idea in plain words to create your first customized route itinerary.
                 </p>
-                <a th:href="@{/create-trip}" class="btn btn-forest px-4">
-                    <i class="bi bi-plus-lg me-1"></i> Plan your first trip
-                </a>
+                <div class="d-flex justify-content-center gap-2">
+                    <a th:href="@{/create-trip}" class="btn btn-forest px-4 rounded-pill shadow-sm">
+                        <i class="bi bi-plus-lg me-1"></i> Plan your first trip
+                    </a>
+                </div>
             </div>
 
-            <!-- Trip Cards Deck (Requirement 6: Destination photographs, dates, trip status, quick actions) -->
-            <div th:unless="${trips.empty}" class="row g-4">
-                <div class="col-md-6 col-xl-4" th:each="trip : ${trips}">
-                    <div class="card card-modern h-100 overflow-hidden d-flex flex-column justify-content-between">
-                        <!-- Scenic Card Header Image -->
-                        <div style="height: 140px; position: relative; overflow: hidden; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-                            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" 
-                                 alt="Travel Route" onerror="this.onerror=null; this.src='/images/hero-travel.svg';" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.65;">
-                            <div class="position-absolute top-0 start-0 w-100 h-100 p-3 d-flex flex-column justify-content-between">
+            <!-- Category / Search Specific Empty States -->
+            <div id="emptyCategoryState" class="text-center py-5 d-none">
+                <div class="metric-icon sand mx-auto mb-3" style="width: 64px; height: 64px; font-size: 2rem;">
+                    <i class="bi bi-funnel"></i>
+                </div>
+                <h5 class="fw-bold mb-2" id="emptyCategoryTitle">No trips in this section</h5>
+                <p class="text-muted small mb-3" id="emptyCategoryMessage" style="max-width: 460px; margin: 0 auto;">
+                    There are no itineraries matching your current category filter.
+                </p>
+                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="resetDashboardFilters()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Show All Trips
+                </button>
+            </div>
+
+            <!-- Trip Cards Deck Container -->
+            <div th:unless="${trips.empty}" class="row g-4" id="tripsGrid">
+                <div class="col-md-6 col-xl-4 trip-card-wrapper" th:each="trip : ${trips}"
+                     th:data-trip-id="${trip.id}"
+                     th:data-status="${trip.status != null ? trip.status : 'UPCOMING'}"
+                     th:data-name="${trip.tripName}"
+                     th:data-start="${trip.startLocation}"
+                     th:data-destinations="${trip.destinationsSummary}"
+                     th:data-start-date="${trip.startDate}"
+                     th:data-end-date="${trip.endDate}"
+                     th:data-distance="${trip.totalDistanceKm}">
+
+                    <div class="card card-modern trip-card h-100 overflow-hidden d-flex flex-column justify-content-between shadow-sm">
+
+                        <!-- Scenic Destination Header Image with Badges -->
+                        <div class="position-relative overflow-hidden" style="height: 160px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                            <img th:src="${trip.coverImageUrl != null ? trip.coverImageUrl : '/images/placeholder-travel.svg'}"
+                                 th:alt="${trip.tripName + ' cover photo'}"
+                                 loading="lazy"
+                                 width="400"
+                                 height="160"
+                                 class="trip-cover-img"
+                                 onerror="handleImageFallback(this)"
+                                 style="width: 100%; height: 100%; object-fit: cover; opacity: 0.88; transition: transform 0.3s ease;">
+
+                            <!-- Top Gradient Overlay for readability -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 p-3 d-flex flex-column justify-content-between" style="background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.7) 100%);">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge bg-white text-dark rounded-pill shadow-sm small fw-semibold">
-                                        <i class="bi bi-calendar-event me-1 text-success"></i>
-                                        <span th:text="${trip.startDate + ' to ' + trip.endDate}"></span>
+                                        <i class="bi bi-calendar-event me-1 text-primary"></i>
+                                        <span th:text="${trip.startDate != null ? (trip.startDate + ' to ' + trip.endDate) : 'Dates pending'}"></span>
+                                        <span class="text-muted ms-1" th:if="${trip.totalDays != null}" th:text="'(' + ${trip.totalDays} + 'd)'"></span>
                                     </span>
-                                    <span class="badge bg-dark text-white rounded-pill shadow-sm small">
+                                    <span class="badge bg-dark bg-opacity-75 text-white rounded-pill shadow-sm small">
                                         <i class="bi bi-car-front me-1" th:if="${trip.transportMode == 'CAR'}"></i>
                                         <i class="bi bi-bicycle me-1" th:if="${trip.transportMode == 'BIKE'}"></i>
                                         <i class="bi bi-bus-front me-1" th:if="${trip.transportMode == 'PUBLIC_TRANSPORT'}"></i>
-                                        <span th:text="${trip.transportMode}"></span>
+                                        <i class="bi bi-person-walking me-1" th:if="${trip.transportMode == 'WALKING'}"></i>
+                                        <span th:text="${trip.transportMode != null ? trip.transportMode : 'CAR'}"></span>
                                     </span>
                                 </div>
-                                <div>
-                                    <span class="badge bg-success text-white rounded-pill px-2 py-1 small">
-                                        <i class="bi bi-check2 me-1"></i> Active Route
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <!-- Dynamic Category Status Badge -->
+                                    <span class="badge rounded-pill px-2.5 py-1 small fw-semibold shadow-sm"
+                                          th:classappend="${trip.status == 'COMPLETED' ? 'bg-secondary text-white' : (trip.status == 'ONGOING' ? 'bg-success text-white' : 'bg-primary text-white')}">
+                                        <i class="bi me-1"
+                                           th:classappend="${trip.status == 'COMPLETED' ? 'bi-check2-all' : (trip.status == 'ONGOING' ? 'bi-play-circle-fill' : 'bi-calendar-check')}"></i>
+                                        <span th:text="${trip.statusLabel != null ? trip.statusLabel : 'Upcoming'}">Upcoming</span>
+                                    </span>
+
+                                    <span th:if="${trip.destinationsCount != null and trip.destinationsCount > 0}" class="badge bg-light bg-opacity-90 text-dark rounded-pill small">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                        <span th:text="${trip.destinationsCount + ' stops'}"></span>
                                     </span>
                                 </div>
                             </div>
@@ -217,40 +348,43 @@
                         <!-- Card Body -->
                         <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
                             <div>
-                                <h5 class="fw-bold mb-2">
-                                    <a th:href="@{'/trip/' + ${trip.id}}" class="text-decoration-none text-dark" th:text="${trip.tripName}"></a>
+                                <h5 class="fw-bold mb-1">
+                                    <a th:href="@{'/trip/' + ${trip.id}}" class="text-decoration-none text-dark trip-title-link" th:text="${trip.tripName}">Trip Title</a>
                                 </h5>
 
-                                <p class="text-muted small mb-3">
-                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                                    From <strong class="text-dark" th:text="${trip.startLocation}"></strong>
-                                    &bull; <span th:text="${trip.destinationsCount + ' stops'}"></span>
+                                <p class="text-muted small mb-3 text-truncate-2">
+                                    <i class="bi bi-geo-alt text-danger me-1"></i>
+                                    From <strong class="text-dark" th:text="${trip.startLocation}">Origin</strong>
+                                    <span th:if="${trip.destinationsSummary != null and !trip.destinationsSummary.empty}">
+                                        &bull; via <span class="text-secondary" th:text="${trip.destinationsSummary}">Stops</span>
+                                    </span>
                                 </p>
 
-                                <!-- Highway Metrics -->
+                                <!-- Highway Metrics Grid -->
                                 <div class="p-2 rounded-3 d-flex justify-content-between small text-muted mb-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
                                     <div>
-                                        <span>Road Mileage:</span><br>
-                                        <strong class="text-dark" th:text="${trip.totalDistanceKm + ' km'}"></strong>
+                                        <span class="d-block" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Road Mileage</span>
+                                        <strong class="text-dark" th:text="${trip.totalDistanceKm + ' km'}">0 km</strong>
                                     </div>
                                     <div>
-                                        <span>Driving Time:</span><br>
-                                        <strong class="text-dark" th:text="${trip.formattedTotalTravelTime}"></strong>
+                                        <span class="d-block" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Driving Time</span>
+                                        <strong class="text-dark" th:text="${trip.formattedTotalTravelTime != null ? trip.formattedTotalTravelTime : '0m'}">0h</strong>
                                     </div>
                                     <div>
-                                        <span>Budget:</span><br>
-                                        <strong class="text-dark" th:text="${trip.budgetRange != null ? trip.budgetRange : 'Standard'}"></strong>
+                                        <span class="d-block" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Budget</span>
+                                        <strong class="text-dark" th:text="${trip.budgetRange != null ? trip.budgetRange : 'Standard'}">Standard</strong>
                                     </div>
                                 </div>
 
-                                <!-- Visited Progress -->
+                                <!-- Places Explored Progress Bar -->
                                 <div class="mb-2">
                                     <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
-                                        <span>Places Explored</span>
-                                        <strong class="text-success" th:text="${trip.completionPercentage + '%'}">0%</strong>
+                                        <span style="font-size: 0.76rem;">Places Explored</span>
+                                        <strong class="text-primary small" th:text="${trip.completionPercentage + '%'}">0%</strong>
                                     </div>
-                                    <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar bg-success" role="progressbar" 
+                                    <div class="progress" style="height: 6px;" role="progressbar"
+                                         th:aria-valuenow="${trip.completionPercentage}" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="progress-bar bg-primary"
                                              th:style="'width: ' + ${trip.completionPercentage} + '%;'"></div>
                                     </div>
                                 </div>
@@ -258,11 +392,16 @@
 
                             <!-- Card Quick Actions -->
                             <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-3">
-                                <a th:href="@{'/trip/' + ${trip.id}}" class="btn btn-outline-forest btn-sm">
+                                <a th:href="@{'/trip/' + ${trip.id}}" class="btn btn-outline-forest btn-sm rounded-pill px-3">
                                     Open Workspace <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
-                                <button type="button" class="btn btn-sand btn-sm text-danger" 
-                                        title="Delete Trip" th:data-trip-id="${trip.id}" onclick="deleteTripItem(this.dataset.tripId)">
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-circle p-1"
+                                        style="width: 32px; height: 32px;"
+                                        th:aria-label="'Delete ' + ${trip.tripName}"
+                                        title="Delete Trip"
+                                        th:data-trip-id="${trip.id}"
+                                        th:data-trip-name="${trip.tripName}"
+                                        onclick="openDeleteConfirmation(this.dataset.tripId, this.dataset.tripName)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -270,32 +409,410 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Client-side Accessible Pagination Controls -->
+            <div id="paginationNav" class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 pt-4 border-top mt-4" style="display: none;">
+                <span class="small text-muted" id="paginationSummary">Showing page 1 of 1</span>
+                <nav aria-label="Trip pagination">
+                    <ul class="pagination pagination-sm mb-0 gap-1" id="paginationList">
+                        <!-- Populated by dashboard.js -->
+                    </ul>
+                </nav>
+            </div>
+
         </div>
 
     </main>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content card-modern border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="deleteConfirmModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Delete Itinerary?
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p class="mb-2">Are you sure you want to permanently delete <strong id="deleteTargetTripName" class="text-dark">this trip</strong>?</p>
+                    <p class="text-muted small mb-0">This will remove all customized destination waypoints, daily schedules, hotel bookings, and version history for this trip. This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger btn-sm rounded-pill px-4" id="btnConfirmDelete">
+                        <span id="btnDeleteText"><i class="bi bi-trash me-1"></i> Delete Trip</span>
+                        <span id="btnDeleteSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="py-4 text-center">
+    <footer class="py-4 text-center border-top mt-auto bg-white" role="contentinfo">
         <div class="container">
-            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
+            <p class="mb-0 text-muted small">VoyageCraft AI &bull; Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/app.js}"></script>
+
+    <!-- Dashboard Filter, Category Switching & Interactive Logic -->
     <script>
-        async function deleteTripItem(tripId) {
-            if (!confirm("Are you sure you want to delete this trip itinerary?")) return;
-            try {
-                const res = await fetch('/api/trips/' + tripId, { method: 'DELETE' });
-                if (!res.ok) throw new Error("Could not delete");
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert("Failed to delete trip.");
+        (function() {
+            // State
+            let currentCategory = 'ALL';
+            let searchQuery = '';
+            let currentSort = 'departure-asc';
+            let currentPage = 1;
+            const itemsPerPage = 6;
+            let tripToDeleteId = null;
+
+            // DOM elements
+            const cards = Array.from(document.querySelectorAll('.trip-card-wrapper'));
+            const searchInput = document.getElementById('tripSearchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            const sortSelect = document.getElementById('tripSortSelect');
+            const resultsNotice = document.getElementById('resultsCountNotice');
+            const activeFilterBadge = document.getElementById('activeFilterBadge');
+            const emptyState = document.getElementById('emptyCategoryState');
+            const emptyTitle = document.getElementById('emptyCategoryTitle');
+            const emptyMessage = document.getElementById('emptyCategoryMessage');
+            const paginationNav = document.getElementById('paginationNav');
+            const paginationList = document.getElementById('paginationList');
+            const paginationSummary = document.getElementById('paginationSummary');
+            const deleteModalEl = document.getElementById('deleteConfirmModal');
+            let deleteModalInstance = null;
+
+            // Initialize category counts
+            function computeCategoryCounts() {
+                let upcoming = 0;
+                let ongoing = 0;
+                let completed = 0;
+
+                cards.forEach(card => {
+                    const status = (card.dataset.status || '').toUpperCase();
+                    if (status === 'UPCOMING') upcoming++;
+                    else if (status === 'ONGOING') ongoing++;
+                    else if (status === 'COMPLETED') completed++;
+                });
+
+                const countUpcomingEl = document.getElementById('count-upcoming');
+                const countOngoingEl = document.getElementById('count-ongoing');
+                const countCompletedEl = document.getElementById('count-completed');
+
+                if (countUpcomingEl) countUpcomingEl.textContent = upcoming;
+                if (countOngoingEl) countOngoingEl.textContent = ongoing;
+                if (countCompletedEl) countCompletedEl.textContent = completed;
             }
-        }
+
+            // Filter, Sort, and Paginate
+            function renderDashboard() {
+                // 1. Filter
+                let filtered = cards.filter(card => {
+                    const status = (card.dataset.status || '').toUpperCase();
+                    const name = (card.dataset.name || '').toLowerCase();
+                    const start = (card.dataset.start || '').toLowerCase();
+                    const dests = (card.dataset.destinations || '').toLowerCase();
+
+                    // Category filter
+                    if (currentCategory !== 'ALL' && status !== currentCategory) {
+                        return false;
+                    }
+
+                    // Search query filter
+                    if (searchQuery) {
+                        const q = searchQuery.toLowerCase();
+                        if (!name.includes(q) && !start.includes(q) && !dests.includes(q)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+                // 2. Sort
+                filtered.sort((a, b) => {
+                    if (currentSort === 'departure-asc') {
+                        const dateA = a.dataset.startDate || '9999-12-31';
+                        const dateB = b.dataset.startDate || '9999-12-31';
+                        return dateA.localeCompare(dateB);
+                    } else if (currentSort === 'departure-desc') {
+                        const dateA = a.dataset.startDate || '';
+                        const dateB = b.dataset.startDate || '';
+                        return dateB.localeCompare(dateA);
+                    } else if (currentSort === 'name-asc') {
+                        const nameA = (a.dataset.name || '').toLowerCase();
+                        const nameB = (b.dataset.name || '').toLowerCase();
+                        return nameA.localeCompare(nameB);
+                    } else if (currentSort === 'distance-desc') {
+                        const distA = parseFloat(a.dataset.distance) || 0;
+                        const distB = parseFloat(b.dataset.distance) || 0;
+                        return distB - distA;
+                    } else if (currentSort === 'id-desc') {
+                        const idA = parseInt(a.dataset.tripId) || 0;
+                        const idB = parseInt(b.dataset.tripId) || 0;
+                        return idB - idA;
+                    }
+                    return 0;
+                });
+
+                // 3. Pagination
+                const totalFiltered = filtered.length;
+                const totalPages = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                const startIdx = (currentPage - 1) * itemsPerPage;
+                const endIdx = startIdx + itemsPerPage;
+                const pageItems = filtered.slice(startIdx, endIdx);
+
+                // Hide all cards first
+                cards.forEach(card => card.classList.add('d-none'));
+
+                // Show only current page items
+                pageItems.forEach(card => card.classList.remove('d-none'));
+
+                // Handle empty states
+                if (totalFiltered === 0) {
+                    if (emptyState) {
+                        emptyState.classList.remove('d-none');
+                        if (searchQuery) {
+                            emptyTitle.textContent = `No journeys match "${searchQuery}"`;
+                            emptyMessage.textContent = 'Try adjusting your search terms or clear the filter to see all your itineraries.';
+                        } else if (currentCategory === 'UPCOMING') {
+                            emptyTitle.textContent = 'No upcoming trips';
+                            emptyMessage.textContent = 'You have no future journeys scheduled. Ready to explore somewhere new?';
+                        } else if (currentCategory === 'ONGOING') {
+                            emptyTitle.textContent = 'No trips currently active';
+                            emptyMessage.textContent = 'None of your trips are currently in progress today. Check your upcoming trips to prepare.';
+                        } else if (currentCategory === 'COMPLETED') {
+                            emptyTitle.textContent = 'No completed journeys yet';
+                            emptyMessage.textContent = 'Trips whose travel dates have passed will automatically show up here as your travel log.';
+                        } else {
+                            emptyTitle.textContent = 'No matching journeys';
+                            emptyMessage.textContent = 'No travel itineraries match your selection.';
+                        }
+                    }
+                    if (resultsNotice) resultsNotice.textContent = '0 itineraries found';
+                } else {
+                    if (emptyState) emptyState.classList.add('d-none');
+                    if (resultsNotice) {
+                        const showingEnd = Math.min(endIdx, totalFiltered);
+                        resultsNotice.textContent = `Showing ${startIdx + 1}–${showingEnd} of ${totalFiltered} ${totalFiltered === 1 ? 'journey' : 'journeys'}`;
+                    }
+                }
+
+                // Render pagination buttons
+                renderPagination(totalPages, totalFiltered);
+            }
+
+            function renderPagination(totalPages, totalFiltered) {
+                if (!paginationNav || !paginationList) return;
+
+                if (totalFiltered <= itemsPerPage) {
+                    paginationNav.style.display = 'none';
+                    return;
+                }
+
+                paginationNav.style.display = 'flex';
+                if (paginationSummary) {
+                    paginationSummary.textContent = `Page ${currentPage} of ${totalPages} (${totalFiltered} total trips)`;
+                }
+
+                paginationList.innerHTML = '';
+
+                // Previous button
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `<button class="page-link rounded-pill px-3" aria-label="Previous page">&laquo; Prev</button>`;
+                prevLi.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderDashboard();
+                        document.getElementById('tripsGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+                paginationList.appendChild(prevLi);
+
+                // Numbered buttons
+                for (let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                    li.innerHTML = `<button class="page-link rounded-circle text-center" style="width: 32px; height: 32px; padding: 0; line-height: 32px;" aria-label="Page ${i}">${i}</button>`;
+                    li.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = i;
+                        renderDashboard();
+                        document.getElementById('tripsGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                    paginationList.appendChild(li);
+                }
+
+                // Next button
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `<button class="page-link rounded-pill px-3" aria-label="Next page">Next &raquo;</button>`;
+                nextLi.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderDashboard();
+                        document.getElementById('tripsGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+                paginationList.appendChild(nextLi);
+            }
+
+            // Tab click handling
+            document.querySelectorAll('#tripCategoryTabs .nav-link').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#tripCategoryTabs .nav-link').forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-selected', 'true');
+
+                    currentCategory = btn.dataset.category || 'ALL';
+                    currentPage = 1;
+                    renderDashboard();
+                });
+            });
+
+            // Search input handling with debounce
+            if (searchInput) {
+                let debounceTimeout = null;
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(() => {
+                        searchQuery = (searchInput.value || '').trim();
+                        if (clearSearchBtn) {
+                            clearSearchBtn.style.display = searchQuery ? 'inline-block' : 'none';
+                        }
+                        currentPage = 1;
+                        renderDashboard();
+                    }, 200);
+                });
+            }
+
+            // Clear search
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
+                    if (searchInput) searchInput.value = '';
+                    searchQuery = '';
+                    clearSearchBtn.style.display = 'none';
+                    currentPage = 1;
+                    renderDashboard();
+                });
+            }
+
+            // Sort handling
+            if (sortSelect) {
+                sortSelect.addEventListener('change', () => {
+                    currentSort = sortSelect.value;
+                    renderDashboard();
+                });
+            }
+
+            // Global reset function
+            window.resetDashboardFilters = function() {
+                if (searchInput) searchInput.value = '';
+                searchQuery = '';
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                currentCategory = 'ALL';
+                document.querySelectorAll('#tripCategoryTabs .nav-link').forEach(b => {
+                    if (b.dataset.category === 'ALL') {
+                        b.classList.add('active');
+                        b.setAttribute('aria-selected', 'true');
+                    } else {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    }
+                });
+                currentPage = 1;
+                renderDashboard();
+            };
+
+            // Modal Deletion Flow
+            window.openDeleteConfirmation = function(tripId, tripName) {
+                tripToDeleteId = tripId;
+                const nameEl = document.getElementById('deleteTargetTripName');
+                if (nameEl) nameEl.textContent = tripName ? `"${tripName}"` : 'this trip';
+
+                if (!deleteModalInstance && deleteModalEl) {
+                    deleteModalInstance = new bootstrap.Modal(deleteModalEl);
+                }
+                if (deleteModalInstance) {
+                    deleteModalInstance.show();
+                }
+            };
+
+            const confirmBtn = document.getElementById('btnConfirmDelete');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async () => {
+                    if (!tripToDeleteId) return;
+
+                    const textSpan = document.getElementById('btnDeleteText');
+                    const spinnerSpan = document.getElementById('btnDeleteSpinner');
+
+                    if (textSpan) textSpan.classList.add('d-none');
+                    if (spinnerSpan) spinnerSpan.classList.remove('d-none');
+                    confirmBtn.disabled = true;
+
+                    try {
+                        const res = await fetch('/api/trips/' + tripToDeleteId, {
+                            method: 'DELETE'
+                        });
+
+                        if (!res.ok) {
+                            const errJson = await res.json().catch(() => ({}));
+                            throw new Error(errJson.message || 'Failed to delete trip.');
+                        }
+
+                        if (deleteModalInstance) deleteModalInstance.hide();
+                        showDashboardToast('Trip deleted successfully.', 'success');
+
+                        // Remove card from DOM and update state smoothly
+                        const cardToRemove = document.querySelector(`.trip-card-wrapper[data-trip-id="${tripToDeleteId}"]`);
+                        if (cardToRemove) {
+                            const idx = cards.indexOf(cardToRemove);
+                            if (idx !== -1) cards.splice(idx, 1);
+                            cardToRemove.remove();
+                        }
+
+                        computeCategoryCounts();
+                        renderDashboard();
+                    } catch (err) {
+                        console.error('Delete error:', err);
+                        showDashboardToast(err.message || 'Could not delete trip.', 'danger');
+                    } finally {
+                        if (textSpan) textSpan.classList.remove('d-none');
+                        if (spinnerSpan) spinnerSpan.classList.add('d-none');
+                        confirmBtn.disabled = false;
+                        tripToDeleteId = null;
+                    }
+                });
+            }
+
+            function showDashboardToast(msg, type = 'success') {
+                const toastEl = document.getElementById('actionToast');
+                const toastBody = document.getElementById('actionToastMessage');
+                if (!toastEl || !toastBody) return;
+
+                toastBody.textContent = msg;
+                toastEl.className = `toast align-items-center text-white border-0 ${type === 'success' ? 'bg-success' : 'bg-danger'}`;
+                const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+                toast.show();
+            }
+
+            // Initialize on load
+            computeCategoryCounts();
+            renderDashboard();
+        })();
     </script>
 </body>
 </html>

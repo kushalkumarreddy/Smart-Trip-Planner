@@ -80,6 +80,9 @@ public class WebController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
         User user = resolveCurrentUser(userDetails);
         List<TripResponseDto> trips = tripService.getUserTrips(user);
 
@@ -105,6 +108,9 @@ public class WebController {
 
     @GetMapping("/create-trip")
     public String createTripPage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
         User user = resolveCurrentUser(userDetails);
         model.addAttribute("user", user);
         model.addAttribute("googleMapsApiKey", googleMapsService.getApiKey());
@@ -114,6 +120,9 @@ public class WebController {
 
     @GetMapping("/trip/{id}")
     public String tripDetailsPage(@PathVariable("id") Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
         User user = resolveCurrentUser(userDetails);
         TripResponseDto trip = tripService.getTripDtoById(id, user);
 
@@ -128,6 +137,6 @@ public class WebController {
         if (userDetails != null) {
             return userService.getUserByEmail(userDetails.getUsername());
         }
-        return userService.getOrCreateDemoUser();
+        throw new org.springframework.security.access.AccessDeniedException("Authentication required to access this resource.");
     }
 }

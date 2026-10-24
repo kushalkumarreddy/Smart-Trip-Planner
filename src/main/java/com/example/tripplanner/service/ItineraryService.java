@@ -407,6 +407,15 @@ public class ItineraryService {
             dayBreakMinutes += 60;
 
             // Compute Day Metrics & Feasibility Warnings
+            items.sort((a, b) -> {
+                int cmp = TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime());
+                if (cmp != 0) return cmp;
+                int typeCmp = Integer.compare(TimeUtils.getActivityTypeOrder(a.getActivityType()), TimeUtils.getActivityTypeOrder(b.getActivityType()));
+                if (typeCmp != 0) return typeCmp;
+                long idA = a.getId() != null ? a.getId() : 0L;
+                long idB = b.getId() != null ? b.getId() : 0L;
+                return Long.compare(idA, idB);
+            });
             dayDto.setItems(items);
             dayDto.setTotalDistanceKm(Math.round(dayDistance * 10.0) / 10.0);
             dayDto.setTravelTimeMinutes(dayTravelMinutes);
@@ -616,6 +625,15 @@ public class ItineraryService {
         items.add(eveningItem);
         dayBreakMinutes += 60;
 
+        items.sort((a, b) -> {
+            int cmp = TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime());
+            if (cmp != 0) return cmp;
+            int typeCmp = Integer.compare(TimeUtils.getActivityTypeOrder(a.getActivityType()), TimeUtils.getActivityTypeOrder(b.getActivityType()));
+            if (typeCmp != 0) return typeCmp;
+            long idA = a.getId() != null ? a.getId() : 0L;
+            long idB = b.getId() != null ? b.getId() : 0L;
+            return Long.compare(idA, idB);
+        });
         dayDto.setItems(items);
         dayDto.setTotalDistanceKm(Math.round(dayDistance * 10.0) / 10.0);
         dayDto.setTravelTimeMinutes(dayTravelMinutes);

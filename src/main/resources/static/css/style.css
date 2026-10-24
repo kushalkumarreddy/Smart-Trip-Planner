@@ -1713,6 +1713,53 @@ footer {
     color: #64748b;
 }
 
+/* Collapsible Smart Stops Dropbox */
+.smart-stops-dropbox-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+}
+
+.smart-stops-dropbox-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(46, 125, 50, 0.3);
+}
+
+.smart-stops-dropbox-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.smart-stops-dropbox-header:hover {
+    background-color: var(--warm-sand-light);
+}
+
+[data-theme="dark"] .smart-stops-dropbox-header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.smart-stops-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--sage-green-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .smart-stops-icon-box {
+    background: rgba(46, 125, 50, 0.2);
+}
+
+.transition-transform {
+    transition: transform 0.25s ease;
+}
+
 /* Version History Timeline */
 .version-timeline {
     position: relative;
@@ -1813,6 +1860,313 @@ footer {
     background: #13223f;
     border-color: #0284c7;
 }
+
+/* =========================================================
+   Interactive Itinerary & Map Synchronization Styles
+   ========================================================= */
+.route-node {
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.route-node.active-marker-highlight {
+    outline: 2.5px solid #0284c7;
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25) !important;
+    background-color: #f0f9ff !important;
+    transform: translateY(-2px);
+}
+
+.timeline-item.active-marker-highlight .timeline-content {
+    border-color: #0284c7;
+    background: #f0f9ff;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.18);
+}
+
+.draggable-destination-node {
+    cursor: grab;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.draggable-destination-node:active {
+    cursor: grabbing;
+}
+
+.draggable-destination-node.dragging {
+    opacity: 0.45;
+    transform: scale(0.96);
+    border: 2px dashed #0284c7 !important;
+}
+
+.draggable-destination-node.drag-over {
+    border-left: 4px solid #0284c7 !important;
+    background-color: #e0f2fe !important;
+    transform: translateX(4px);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #94a3b8;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.drag-handle:hover {
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.1);
+}
+
+.map-floating-controls {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.map-floating-btn {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dark-text);
+    box-shadow: var(--shadow-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.map-floating-btn:hover {
+    background: var(--warm-sand-light);
+    color: var(--forest-green);
+    border-color: var(--forest-green);
+}
+
+.map-route-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    color: var(--dark-text);
+}
+
+[data-theme="dark"] .map-floating-btn {
+    background: #111d38;
+    border-color: var(--border-color);
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .map-floating-btn:hover {
+    background: #172647;
+    color: #38bdf8;
+    border-color: #38bdf8;
+}
+
+[data-theme="dark"] .map-route-badge {
+    background: rgba(17, 29, 56, 0.92);
+    border-color: var(--border-color);
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .route-node.active-marker-highlight {
+    background-color: #172647 !important;
+    outline-color: #38bdf8;
+}
+
+[data-theme="dark"] .timeline-item.active-marker-highlight .timeline-content {
+    background: #172647;
+    border-color: #38bdf8;
+}
+
+/* Accessible focus visible styling */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2.5px solid #0284c7 !important;
+    outline-offset: 2px !important;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* =========================================================
+   Responsive Design Breakpoints (360px, 390px, 768px, 1024px, 1440px)
+   ========================================================= */
+
+/* Mobile Base: 360px - 480px */
+@media (max-width: 480px) {
+    body {
+        font-size: 0.92rem;
+        overflow-x: hidden;
+    }
+
+    .container, .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .navbar-custom {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.15rem;
+    }
+
+    .navbar-custom .btn {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.78rem;
+    }
+
+    .wanderlust-hero-banner {
+        padding: 1.5rem 1rem;
+        border-radius: 14px;
+        margin-bottom: 1.25rem;
+    }
+
+    .wanderlust-hero-banner h1, .wanderlust-hero-banner h2 {
+        font-size: 1.45rem;
+    }
+
+    .trip-card-image {
+        height: 160px;
+    }
+
+    .metric-card {
+        padding: 0.75rem 0.85rem;
+    }
+
+    .metric-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    .metric-value {
+        font-size: 1.1rem;
+    }
+
+    .metric-label {
+        font-size: 0.72rem;
+    }
+
+    .map-container {
+        height: 340px !important;
+    }
+
+    .timeline-item {
+        padding-left: 28px;
+    }
+
+    .timeline-dot {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+
+    .timeline-content {
+        padding: 0.85rem 1rem;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+
+    .modal-content {
+        border-radius: 14px;
+    }
+
+    .modal-body, .modal-header, .modal-footer {
+        padding: 1rem 1.15rem;
+    }
+
+    .draggable-destination-node {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .destination-node-name {
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.5rem;
+    }
+}
+
+/* Tablet: 481px - 768px */
+@media (min-width: 481px) and (max-width: 768px) {
+    .map-container {
+        height: 420px !important;
+    }
+
+    .trip-card-image {
+        height: 180px;
+    }
+
+    .draggable-destination-node {
+        max-width: calc(50% - 0.5rem);
+    }
+}
+
+/* Laptop: 769px - 1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .map-container {
+        height: 480px;
+    }
+
+    .card-modern {
+        padding: 1.25rem;
+    }
+}
+
+/* Desktop & Wide: 1025px and above */
+@media (min-width: 1025px) {
+    .map-container {
+        height: 540px;
+    }
+
+    .map-column-sticky {
+        position: sticky;
+        top: 85px;
+        z-index: 1020;
+    }
+}
+
+
 
 
 

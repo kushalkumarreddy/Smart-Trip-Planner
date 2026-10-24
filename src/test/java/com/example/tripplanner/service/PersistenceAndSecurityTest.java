@@ -183,4 +183,44 @@ class PersistenceAndSecurityTest {
         assertThat(afterRemove).isNotNull();
         verify(destinationRepository).delete(d1);
     }
+
+    @Test
+    @DisplayName("Visiting toggles strictly require authenticated user; null user throws AccessDeniedException")
+    void testToggleVisitedUnauthenticatedAccessDenied() {
+        Place place = new Place();
+        place.setId(500L);
+        Destination dest = new Destination("Jaipur", 0);
+        dest.setId(200L);
+        dest.setTrip(trip);
+        place.setDestination(dest);
+
+        // When null user attempts to toggle visited status, it must throw AccessDeniedException
+        assertThatThrownBy(() -> tripService.togglePlaceVisited(500L, null))
+                .isInstanceOf(AccessDeniedException.class);
+
+        assertThatThrownBy(() -> tripService.toggleDestinationVisited(200L, true, null))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("Trip status correctly calculates UPCOMING, ONGOING, and COMPLETED according to travel dates")
+    void testTripStatusCalculations() {
+        LocalDate today = LocalDate.now();
+
+        // 1. Future trip -> UPCOMING
+        String futureStatus = tripService.calculateTripStatus(today.plusDays(5), today.plusDays(10));
+        assertThat(futureStatus).isEqualTo("UPCOMING");
+
+        // 2. Current trip -> ONGOING
+        String currentStatus = tripService.calculateTripStatus(today.minusDays(2), today.plusDays(3));
+        assertThat(currentStatus).isEqualTo("ONGOING");
+
+        // 3. Past trip -> COMPLETED
+        String pastStatus = tripService.calculateTripStatus(today.minusDays(15), today.minusDays(5));
+        assertThat(pastStatus).isEqualTo("COMPLETED");
+
+        // 4. Null dates handled gracefully -> UPCOMING
+        String nullStatus = tripService.calculateTripStatus(null, null);
+        assertThat(nullStatus).isEqualTo("UPCOMING");
+    }
 }

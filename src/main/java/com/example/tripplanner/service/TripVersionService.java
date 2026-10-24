@@ -608,6 +608,17 @@ public class TripVersionService {
 
         // Itineraries
         List<ItineraryItem> items = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
+        items.sort((a, b) -> {
+            int dayCmp = Integer.compare(a.getDayNumber() != null ? a.getDayNumber() : 1, b.getDayNumber() != null ? b.getDayNumber() : 1);
+            if (dayCmp != 0) return dayCmp;
+            int cmp = TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime());
+            if (cmp != 0) return cmp;
+            int typeCmp = Integer.compare(TimeUtils.getActivityTypeOrder(a.getActivityType()), TimeUtils.getActivityTypeOrder(b.getActivityType()));
+            if (typeCmp != 0) return typeCmp;
+            long idA = a.getId() != null ? a.getId() : 0L;
+            long idB = b.getId() != null ? b.getId() : 0L;
+            return Long.compare(idA, idB);
+        });
         for (ItineraryItem it : items) {
             TripSnapshotDto.ItinerarySnapshotDto iDto = new TripSnapshotDto.ItinerarySnapshotDto();
             iDto.setDayNumber(it.getDayNumber());

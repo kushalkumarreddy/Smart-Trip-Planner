@@ -10,6 +10,50 @@ let mapPolyline = null;
 let isGoogleMapsActive = false;
 
 // =========================================================
+// 0. Security & CSRF Token Interceptor
+// Ensures all state-changing requests pass Spring Security CSRF verification
+// =========================================================
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="_csrf"]');
+    if (metaToken && metaToken.content) return metaToken.content;
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
+function getCsrfHeaderName() {
+    const metaHeader = document.querySelector('meta[name="_csrf_header"]');
+    if (metaHeader && metaHeader.content) return metaHeader.content;
+    return 'X-XSRF-TOKEN';
+}
+
+(function initCsrfFetchInterceptor() {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        options = options || {};
+        const method = (options.method || 'GET').toUpperCase();
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            options.headers = options.headers || {};
+            const token = getCsrfToken();
+            const headerName = getCsrfHeaderName();
+            if (token) {
+                if (options.headers instanceof Headers) {
+                    if (!options.headers.has(headerName) && !options.headers.has('X-XSRF-TOKEN') && !options.headers.has('X-CSRF-TOKEN')) {
+                        options.headers.set(headerName, token);
+                    }
+                } else if (Array.isArray(options.headers)) {
+                    options.headers.push([headerName, token]);
+                } else {
+                    if (!options.headers[headerName] && !options.headers['X-XSRF-TOKEN'] && !options.headers['X-CSRF-TOKEN']) {
+                        options.headers[headerName] = token;
+                    }
+                }
+            }
+        }
+        return originalFetch(url, options);
+    };
+})();
+
+// =========================================================
 // 1. Google Maps-Style Custom Place Autocomplete Engine
 // =========================================================
 

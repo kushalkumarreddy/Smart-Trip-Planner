@@ -1,0 +1,64 @@
+# =========================================================
+# VoyageCraft - Local Containerized Development Stack
+# Spring Boot 3.3.4 (Java 21) + MySQL 8.0
+# =========================================================
+
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: voyagecraft-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: trip_planner
+      MYSQL_USER: voyagecraft
+      MYSQL_PASSWORD: voyagecraft_password
+      MYSQL_ROOT_PASSWORD: root_secure_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secure_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - voyagecraft-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voyagecraft-app
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      PORT: 8080
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: trip_planner
+      DB_USERNAME: voyagecraft
+      DB_PASSWORD: voyagecraft_password
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      GOOGLE_MAPS_ENABLED: "true"
+      SMARTSTOPS_OVERPASS_ENABLED: "false"
+    networks:
+      - voyagecraft-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  voyagecraft-network:
+    driver: bridge

@@ -12,6 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -36,25 +39,52 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, DaoAuthenticationProvider authenticationProvider) throws Exception {
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        requestHandler.setCsrfRequestAttributeName(null);
+
         http
                 .authenticationProvider(authenticationProvider)
                 .csrf(csrf -> csrf
-                        // Disable CSRF for REST APIs so fetch/AJAX calls from frontend execute without token friction
-                        .ignoringRequestMatchers("/api/**")
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers(
+                                "/api/places/autocomplete",
+                                "/api/places/reverse-geocode",
+                                "/api/places/photo",
+                                "/api/trips/preview-optimize",
+                                "/api/trips/preview-round-trip"
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
                                 "/login",
                                 "/register",
-                                "/create-trip",
-                                "/trip/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/api/**",
-                                "/error"
+                                "/favicon.ico",
+                                "/error",
+                                "/api/destinations/featured",
+                                "/api/destinations/featured/**",
+                                "/api/destinations/categories",
+                                "/api/places/autocomplete",
+                                "/api/places/reverse-geocode",
+                                "/api/places/photo",
+                                "/api/trips/preview-optimize",
+                                "/api/trips/preview-round-trip",
+                                "/api/trips/share/**",
+                                "/api/config/maps"
                         ).permitAll()
+                        .requestMatchers(
+                                "/dashboard",
+                                "/create-trip",
+                                "/trip/**",
+                                "/api/trips/**",
+                                "/api/destinations/**",
+                                "/api/places/**",
+                                "/api/config/**"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

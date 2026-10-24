@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${trip.tripName + ' — VoyageCraft'}">Trip Details — VoyageCraft</title>
+    <!-- CSRF Protection Tokens for Spring Security AJAX requests -->
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}"/>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -266,132 +269,164 @@
             </div>
         </div>
 
-        <!-- SMART STOPS ALONG THE HIGHWAY ROUTE -->
-        <div class="card card-modern p-4 mb-4 border-0 shadow-sm" id="smartStopsSection" style="background: var(--bg-card); border-radius: 16px;">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 border-bottom mb-3">
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-success-subtle text-success fw-semibold px-2 py-1 rounded-pill small">
-                            <i class="bi bi-radar me-1"></i> Highway Corridor Engine
-                        </span>
-                        <span class="badge bg-light text-muted border small" id="smartStopsProviderBadge">Real Route Geometry</span>
+        <!-- SMART STOPS ALONG THE HIGHWAY ROUTE (COLLAPSIBLE DROPBOX) -->
+        <div class="card card-modern mb-4 border-0 shadow-sm smart-stops-dropbox-card" id="smartStopsSection">
+            <!-- DROPBOX HEADER (Always visible, Click to expand/collapse) -->
+            <div class="smart-stops-dropbox-header p-3 p-md-4 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" 
+                 id="smartStopsDropboxToggle" 
+                 role="button" 
+                 tabindex="0"
+                 aria-expanded="false" 
+                 aria-controls="smartStopsCollapseContent"
+                 onclick="toggleSmartStopsDropbox(event)"
+                 onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleSmartStopsDropbox(event); }">
+                
+                <div class="d-flex align-items-center gap-3">
+                    <div class="smart-stops-icon-box">
+                        <i class="bi bi-signpost-split fs-4 text-success"></i>
                     </div>
-                    <h5 class="fw-bold mb-0 text-dark">
-                        <i class="bi bi-signpost-split text-success me-2"></i>Smart Stops Along the Route
-                    </h5>
-                    <p class="text-muted small mb-0 mt-1">
-                        Find verified fuel stations, dining, restrooms, EV chargers, viewpoints &amp; stays directly along your driving route corridor.
-                    </p>
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <h5 class="fw-bold mb-0 text-dark">Smart Stops Along the Route</h5>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill small" id="smartStopsHeaderCountBadge">
+                                <i class="bi bi-radar me-1"></i><span id="smartStopsBadgeNumber">0</span> Stops
+                            </span>
+                            <span class="badge bg-light text-muted border small d-none d-md-inline" id="smartStopsProviderBadge">Real Route Geometry</span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Find verified fuel, dining, EV chargers, restrooms &amp; viewpoints along your driving corridor.
+                        </p>
+                    </div>
                 </div>
 
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <!-- Max Detour Preference -->
-                    <div class="d-flex align-items-center gap-1">
-                        <label for="smartStopDetourSelect" class="small fw-semibold text-muted text-nowrap"><i class="bi bi-clock me-1"></i>Max Detour:</label>
-                        <select id="smartStopDetourSelect" class="form-select form-select-sm" style="width: auto;" onchange="loadSmartStopsAlongRoute()">
-                            <option value="" selected>Any detour</option>
-                            <option value="5">Up to 5 mins</option>
-                            <option value="10">Up to 10 mins</option>
-                            <option value="20">Up to 20 mins</option>
-                        </select>
-                    </div>
-
-                    <!-- Show/Hide Stops on Map Toggle -->
-                    <button type="button" id="btnToggleStopsMap" class="btn btn-outline-forest btn-sm" onclick="toggleSmartStopsOnMap()">
-                        <i class="bi bi-map me-1"></i> <span id="toggleStopsMapText">Hide Stops on Map</span>
-                    </button>
-
-                    <!-- Refresh Route Stops -->
-                    <button type="button" class="btn btn-sand btn-sm" onclick="loadSmartStopsAlongRoute(true)" title="Refresh corridor search">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <button type="button" class="btn btn-outline-forest btn-sm px-3 py-2 rounded-pill d-flex align-items-center gap-2" id="smartStopsActionBtn" onclick="event.stopPropagation(); toggleSmartStopsDropbox(event);">
+                        <span id="smartStopsToggleText" class="fw-semibold">Show All Stops</span>
+                        <i id="smartStopsChevron" class="bi bi-chevron-down fs-6 transition-transform"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Category Filter Pills & Search Input -->
-            <div class="row g-2 align-items-center mb-3">
-                <div class="col-12 col-xl-8">
-                    <div class="d-flex flex-wrap gap-1" id="smartStopCategoryPills">
-                        <button type="button" class="btn btn-sm btn-category-pill active" data-category="ALL" onclick="filterSmartStopsCategory('ALL', this)">
-                            <i class="bi bi-grid-fill me-1"></i> All Stops
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="FUEL" onclick="filterSmartStopsCategory('FUEL', this)">
-                            <i class="bi bi-fuel-pump me-1"></i> Fuel
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="RESTAURANT" onclick="filterSmartStopsCategory('RESTAURANT', this)">
-                            <i class="bi bi-cup-hot me-1"></i> Food &amp; Cafes
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="REST_STOP" onclick="filterSmartStopsCategory('REST_STOP', this)">
-                            <i class="bi bi-shield-shaded me-1"></i> Restrooms &amp; Plazas
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="EV_CHARGING" onclick="filterSmartStopsCategory('EV_CHARGING', this)">
-                            <i class="bi bi-lightning-charge me-1"></i> EV Chargers
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="VIEWPOINT" onclick="filterSmartStopsCategory('VIEWPOINT', this)">
-                            <i class="bi bi-camera me-1"></i> Viewpoints
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="ATTRACTION" onclick="filterSmartStopsCategory('ATTRACTION', this)">
-                            <i class="bi bi-star me-1"></i> Attractions
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="PARKING" onclick="filterSmartStopsCategory('PARKING', this)">
-                            <i class="bi bi-p-square me-1"></i> Parking
-                        </button>
-                        <button type="button" class="btn btn-sm btn-category-pill" data-category="HOTEL" onclick="filterSmartStopsCategory('HOTEL', this)">
-                            <i class="bi bi-building me-1"></i> Hotels
-                        </button>
-                    </div>
-                </div>
-
-                <div class="col-12 col-xl-4">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" id="smartStopSearchInput" class="form-control border-start-0" placeholder="Search stop by name or chain..." oninput="debounceSmartStopSearch()">
-                        <button class="btn btn-outline-secondary" type="button" onclick="clearSmartStopSearch()" title="Clear filter"><i class="bi bi-x-lg"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Filter Status Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-3 text-muted small" id="smartStopsStatusBar">
-                <div>
-                    Found <strong id="smartStopsCountText" class="text-dark">0</strong> stops near your driving route corridor
-                    <span id="smartStopsCorridorNote" class="text-muted ms-1">(within 25 km corridor)</span>
-                </div>
-                <div id="smartStopsDetourInfo" class="text-success fw-semibold"></div>
-            </div>
-
-            <!-- Loading State -->
-            <div id="smartStopsLoading" class="text-center py-5" style="display: none;">
-                <div class="spinner-border text-success mb-2" role="status"></div>
-                <div class="fw-semibold text-dark">Scanning route geometry for highway stops...</div>
-                <div class="text-muted small">Querying highway corridor coordinates and road detour durations</div>
-            </div>
-
-            <!-- Error State -->
-            <div id="smartStopsError" class="alert alert-warning py-3 px-4 rounded-3" style="display: none;">
-                <div class="d-flex align-items-center justify-content-between">
+            <!-- DROPBOX CONTENT (Hidden by default, expands on click to show all) -->
+            <div id="smartStopsCollapseContent" class="smart-stops-dropbox-content px-4 pb-4 pt-1" style="display: none; border-top: 1px solid var(--border-color);">
+                
+                <!-- Controls bar (Max Detour, Map Toggle, Refresh) -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 py-3 border-bottom mb-3">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
-                        <div>
-                            <strong id="smartStopsErrorTitle">Could not fetch stops along route.</strong>
-                            <div id="smartStopsErrorMsg" class="small text-muted"></div>
+                        <span class="badge bg-success-subtle text-success fw-semibold px-2 py-1 rounded-pill small">
+                            <i class="bi bi-radar me-1"></i> Highway Corridor Engine (25 km)
+                        </span>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <!-- Max Detour Preference -->
+                        <div class="d-flex align-items-center gap-1">
+                            <label for="smartStopDetourSelect" class="small fw-semibold text-muted text-nowrap"><i class="bi bi-clock me-1"></i>Max Detour:</label>
+                            <select id="smartStopDetourSelect" class="form-select form-select-sm" style="width: auto;" onchange="loadSmartStopsAlongRoute()">
+                                <option value="" selected>Any detour</option>
+                                <option value="5">Up to 5 mins</option>
+                                <option value="10">Up to 10 mins</option>
+                                <option value="20">Up to 20 mins</option>
+                            </select>
+                        </div>
+
+                        <!-- Show/Hide Stops on Map Toggle -->
+                        <button type="button" id="btnToggleStopsMap" class="btn btn-outline-forest btn-sm" onclick="toggleSmartStopsOnMap()">
+                            <i class="bi bi-map me-1"></i> <span id="toggleStopsMapText">Hide Stops on Map</span>
+                        </button>
+
+                        <!-- Refresh Route Stops -->
+                        <button type="button" class="btn btn-sand btn-sm" onclick="loadSmartStopsAlongRoute(true)" title="Refresh corridor search">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Filter Pills & Search Input -->
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-12 col-xl-8">
+                        <div class="d-flex flex-wrap gap-1" id="smartStopCategoryPills">
+                            <button type="button" class="btn btn-sm btn-category-pill active" data-category="ALL" onclick="filterSmartStopsCategory('ALL', this)">
+                                <i class="bi bi-grid-fill me-1"></i> All Stops
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="FUEL" onclick="filterSmartStopsCategory('FUEL', this)">
+                                <i class="bi bi-fuel-pump me-1"></i> Fuel
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="RESTAURANT" onclick="filterSmartStopsCategory('RESTAURANT', this)">
+                                <i class="bi bi-cup-hot me-1"></i> Food &amp; Cafes
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="REST_STOP" onclick="filterSmartStopsCategory('REST_STOP', this)">
+                                <i class="bi bi-shield-shaded me-1"></i> Restrooms &amp; Plazas
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="EV_CHARGING" onclick="filterSmartStopsCategory('EV_CHARGING', this)">
+                                <i class="bi bi-lightning-charge me-1"></i> EV Chargers
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="VIEWPOINT" onclick="filterSmartStopsCategory('VIEWPOINT', this)">
+                                <i class="bi bi-camera me-1"></i> Viewpoints
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="ATTRACTION" onclick="filterSmartStopsCategory('ATTRACTION', this)">
+                                <i class="bi bi-star me-1"></i> Attractions
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="PARKING" onclick="filterSmartStopsCategory('PARKING', this)">
+                                <i class="bi bi-p-square me-1"></i> Parking
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="HOTEL" onclick="filterSmartStopsCategory('HOTEL', this)">
+                                <i class="bi bi-building me-1"></i> Hotels
+                            </button>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline-dark btn-sm" onclick="loadSmartStopsAlongRoute(true)">Retry Search</button>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="smartStopSearchInput" class="form-control border-start-0" placeholder="Search stop by name or chain..." oninput="debounceSmartStopSearch()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="clearSmartStopSearch()" title="Clear filter"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Empty State -->
-            <div id="smartStopsEmpty" class="text-center py-5 border rounded-3 bg-light" style="display: none;">
-                <i class="bi bi-geo-alt text-muted fs-2 mb-2 d-block"></i>
-                <h6 class="fw-bold text-dark mb-1">No stops match your current filters along this route corridor</h6>
-                <p class="text-muted small mb-3">Try adjusting your category filter, increasing the max detour limit, or clearing your keyword search.</p>
-                <button type="button" class="btn btn-outline-forest btn-sm" onclick="resetSmartStopsFilters()">Reset All Filters</button>
-            </div>
+                <!-- Active Filter Status Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-3 text-muted small" id="smartStopsStatusBar">
+                    <div>
+                        Found <strong id="smartStopsCountText" class="text-dark">0</strong> stops near your driving route corridor
+                        <span id="smartStopsCorridorNote" class="text-muted ms-1">(within 25 km corridor)</span>
+                    </div>
+                    <div id="smartStopsDetourInfo" class="text-success fw-semibold"></div>
+                </div>
 
-            <!-- Stops Cards Grid -->
-            <div class="row g-3" id="smartStopsGrid">
-                <!-- Populated dynamically by JavaScript -->
+                <!-- Loading State -->
+                <div id="smartStopsLoading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-success mb-2" role="status"></div>
+                    <div class="fw-semibold text-dark">Scanning route geometry for highway stops...</div>
+                    <div class="text-muted small">Querying highway corridor coordinates and road detour durations</div>
+                </div>
+
+                <!-- Error State -->
+                <div id="smartStopsError" class="alert alert-warning py-3 px-4 rounded-3" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                            <div>
+                                <strong id="smartStopsErrorTitle">Could not fetch stops along route.</strong>
+                                <div id="smartStopsErrorMsg" class="small text-muted"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-dark btn-sm" onclick="loadSmartStopsAlongRoute(true)">Retry Search</button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="smartStopsEmpty" class="text-center py-5 border rounded-3 bg-light" style="display: none;">
+                    <i class="bi bi-geo-alt text-muted fs-2 mb-2 d-block"></i>
+                    <h6 class="fw-bold text-dark mb-1">No stops match your current filters along this route corridor</h6>
+                    <p class="text-muted small mb-3">Try adjusting your category filter, increasing the max detour limit, or clearing your keyword search.</p>
+                    <button type="button" class="btn btn-outline-forest btn-sm" onclick="resetSmartStopsFilters()">Reset All Filters</button>
+                </div>
+
+                <!-- Stops Cards Grid -->
+                <div class="row g-3" id="smartStopsGrid">
+                    <!-- Populated dynamically by JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -468,16 +503,19 @@
             </div>
         </div>
 
-        <!-- Ordered Destinations & Overnight Stays (Requirement 3 & 10) -->
+        <!-- Ordered Destinations & Overnight Stays (Requirement 3, 4 & 10) -->
         <div class="card card-modern p-4 mb-4">
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
                 <div>
                     <h5 class="fw-bold mb-0">
                         <i class="bi bi-signpost-2 text-success me-2"></i>Route Sequence &amp; Stays
                     </h5>
-                    <span class="text-muted small">Verified highway sequence, overnight stays, and interactive stop controls</span>
+                    <span class="text-muted small">Interactive highway sequence &bull; Drag or use arrow keys to reorder &bull; Click to highlight on map</span>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" id="btnQuickUndoReorder" class="btn btn-outline-secondary btn-sm" onclick="undoLastReorder()" style="display: none;" title="Undo the most recent destination reorder">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Undo Reorder
+                    </button>
                     <button type="button" class="btn btn-outline-forest btn-sm" onclick="openRouteAlternativesModal()">
                         <i class="bi bi-shuffle me-1"></i> Compare Route Strategies
                     </button>
@@ -486,26 +524,44 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Accessible live feedback for screen readers -->
+            <div id="reorderLiveAnnouncer" class="visually-hidden" aria-live="polite" role="status"></div>
             
-            <div class="d-flex flex-wrap gap-2 align-items-center p-3 rounded-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
-                <div class="route-node">
-                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                    <strong th:text="${trip.startLocation}">Origin</strong>
+            <div id="destinationNodesContainer" class="d-flex flex-wrap gap-2 align-items-center p-3 rounded-3" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
+                <div class="route-node border p-2 rounded-3 bg-white shadow-sm d-flex align-items-center gap-2" title="Origin Starting Point">
+                    <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                    <div>
+                        <span class="badge bg-primary rounded-pill mb-1" style="font-size: 0.68rem;">Origin</span>
+                        <div class="fw-bold text-dark small" th:text="${trip.startLocation}">Origin</div>
+                    </div>
                 </div>
 
                 <th:block th:each="dest, iterStat : ${trip.destinations}">
-                    <span class="route-arrow text-muted">→</span>
-                    <div class="route-node border p-2 rounded-3 bg-white shadow-sm d-flex align-items-center gap-2">
+                    <span class="route-arrow text-muted" aria-hidden="true">→</span>
+                    <div class="route-node draggable-destination-node border p-2 rounded-3 bg-white shadow-sm d-flex align-items-center gap-2"
+                         draggable="true"
+                         th:data-dest-id="${dest.id}"
+                         th:data-dest-index="${iterStat.index}"
+                         th:data-dest-name="${dest.name}"
+                         th:title="${'Stop ' + iterStat.count + ': ' + dest.name + ' (Click to view on map, drag to reorder)'}"
+                         onclick="focusDestinationOnMap(this.dataset.destId)">
+                        
+                        <!-- Drag Handle -->
+                        <i class="bi bi-grip-vertical drag-handle" title="Drag to reorder" aria-hidden="true"></i>
+
+                        <!-- Stop Number Badge -->
                         <span class="badge bg-success rounded-circle" style="width: 22px; height: 22px; font-size: 11px; padding: 3px;" th:text="${iterStat.count}"></span>
+                        
                         <div>
                             <div class="d-flex align-items-center justify-content-between gap-2">
-                                <span class="fw-semibold text-dark" th:text="${dest.name}">Destination</span>
+                                <span class="fw-semibold text-dark destination-node-name" th:text="${dest.name}">Destination</span>
                                 <!-- Delete stop button (min 1 destination required) -->
                                 <button th:if="${trip.destinations.size() > 1}" type="button" class="btn btn-link btn-sm p-0 text-muted" 
-                                        style="font-size: 0.85rem;" title="Remove stop"
+                                        style="font-size: 0.85rem;" th:aria-label="${'Remove ' + dest.name + ' from itinerary'}" title="Remove stop"
                                         th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}" th:data-dest-name="${dest.name}"
-                                        onclick="removeDestinationStop(this.dataset.tripId, this.dataset.destId, this.dataset.destName)">
-                                    <i class="bi bi-x-circle text-danger"></i>
+                                        onclick="event.stopPropagation(); removeDestinationStop(this.dataset.tripId, this.dataset.destId, this.dataset.destName)">
+                                    <i class="bi bi-x-circle text-danger" aria-hidden="true"></i>
                                 </button>
                             </div>
 
@@ -524,7 +580,7 @@
                                         th:data-dest-name="${dest.name}"
                                         th:data-days="${dest.stayDurationDays != null ? dest.stayDurationDays : 1}"
                                         th:data-nights="${dest.stayDurationNights != null ? dest.stayDurationNights : 0}"
-                                        onclick="openEditDurationModal(this)">
+                                        onclick="event.stopPropagation(); openEditDurationModal(this)">
                                     <i class="bi bi-calendar-event me-1"></i>Edit Days
                                 </button>
                             </div>
@@ -537,23 +593,25 @@
                                 <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
                                         title="Select accommodation on map"
                                         th:data-dest-id="${dest.id}"
-                                        onclick="openAccommodationModal(this.dataset.destId)">
+                                        onclick="event.stopPropagation(); openAccommodationModal(this.dataset.destId)">
                                     <i class="bi bi-geo-alt me-1"></i><span th:text="${dest.hotelName != null ? 'Edit Stay' : 'Pin Stay on Map'}">Stay</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Touch-friendly stop reordering -->
-                        <div class="d-flex flex-column gap-1 ms-1">
+                        <!-- Keyboard-accessible and Touch-friendly stop reordering -->
+                        <div class="d-flex flex-column gap-1 ms-1" onclick="event.stopPropagation()">
                             <button type="button" class="btn btn-light btn-sm p-0 text-secondary" style="width: 22px; height: 22px; font-size: 10px;" 
-                                    title="Move Earlier" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
+                                    th:aria-label="${'Move ' + dest.name + ' earlier in route'}"
+                                    title="Move Earlier in Route" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
                                     onclick="moveDestinationInTrip(this.dataset.tripId, this.dataset.destId, -1)">
-                                <i class="bi bi-chevron-left"></i>
+                                <i class="bi bi-chevron-left" aria-hidden="true"></i>
                             </button>
                             <button type="button" class="btn btn-light btn-sm p-0 text-secondary" style="width: 22px; height: 22px; font-size: 10px;" 
-                                    title="Move Later" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
+                                    th:aria-label="${'Move ' + dest.name + ' later in route'}"
+                                    title="Move Later in Route" th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}"
                                     onclick="moveDestinationInTrip(this.dataset.tripId, this.dataset.destId, 1)">
-                                <i class="bi bi-chevron-right"></i>
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -768,6 +826,23 @@
                     <!-- Map Canvas Container -->
                     <div style="position: relative;">
                         <div id="mapContainer" class="map-container" style="height: 540px; border-radius: 14px;"></div>
+                        <!-- Floating Map Controls (Fit Route, Zoom) -->
+                        <div class="map-floating-controls">
+                            <button type="button" class="map-floating-btn" onclick="fitRouteBounds()" title="Fit entire route into view" aria-label="Fit entire route into view">
+                                <i class="bi bi-arrows-fullscreen"></i> Fit Route
+                            </button>
+                            <button type="button" class="map-floating-btn" onclick="zoomInMap()" title="Zoom In" aria-label="Zoom In">
+                                <i class="bi bi-zoom-in"></i>
+                            </button>
+                            <button type="button" class="map-floating-btn" onclick="zoomOutMap()" title="Zoom Out" aria-label="Zoom Out">
+                                <i class="bi bi-zoom-out"></i>
+                            </button>
+                        </div>
+                        <!-- Floating Route Distance/Status Badge -->
+                        <div class="map-route-badge">
+                            <i class="bi bi-shield-check text-success me-1"></i>
+                            <span th:text="${trip.totalDistanceKm + ' km • ' + trip.formattedTotalTravelTime}">0 km</span>
+                        </div>
                         <!-- Route Legend Overlay -->
                         <div id="mapRouteLegend" class="map-route-legend" style="display: none;">
                             <div class="legend-item">
@@ -1456,9 +1531,16 @@
                 shareInput.value = window.location.origin + '/trip/' + tripData.id + (tripData.shareCode ? ('?invite=' + tripData.shareCode) : '');
             }
             initTripWorkspaceMap(tripData);
+            initDestinationDragAndDrop();
+            initQuickUndoCheck();
             loadVersionHistoryCount();
             loadSmartStopsAlongRoute();
         });
+
+        // Global marker registry for bidirectional map-timeline synchronization
+        window._tripMarkersByDestId = {};
+        window._tripDestinationMarkers = [];
+        window._routeBoundsGroup = null;
 
         // Initialize Workspace Map with Real Route Highway Polyline
         function initTripWorkspaceMap(trip) {
@@ -1474,7 +1556,7 @@
             const originLng = trip.startLng || 77.5946;
 
             const map = L.map("mapContainer", {
-                zoomControl: true,
+                zoomControl: false, // Using accessible custom floating controls
                 scrollWheelZoom: true
             }).setView([originLat, originLng], 9);
             window._currentLeafletMap = map;
@@ -1485,6 +1567,9 @@
             }).addTo(map);
 
             const boundsGroup = L.featureGroup();
+            window._routeBoundsGroup = boundsGroup;
+            window._tripMarkersByDestId = {};
+            window._tripDestinationMarkers = [];
 
             // Custom Origin Icon
             const originIcon = L.divIcon({
@@ -1500,7 +1585,7 @@
                 .bindPopup(`<strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}`);
             boundsGroup.addLayer(originMarker);
 
-            // Add Destination markers
+            // Add Destination markers with bidirectional click sync
             const stopCoords = [ [originLat, originLng] ];
 
             if (trip.destinations && trip.destinations.length > 0) {
@@ -1511,17 +1596,17 @@
 
                     const stopIcon = L.divIcon({
                         className: 'custom-map-marker',
-                        html: `<div style="background: #0369a1; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(3,105,161,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
+                        html: `<div class="marker-stop-pin" style="background: #0369a1; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(3,105,161,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
                         iconSize: [32, 32],
                         iconAnchor: [16, 16],
                         popupAnchor: [0, -18]
                     });
 
                     const popupContent = `
-                        <div style="min-width: 160px;">
+                        <div style="min-width: 170px;">
                             <div class="fw-bold fs-6 text-dark">${escapeHtml(d.name)}</div>
                             <div class="text-muted small mb-1">Stop ${idx + 1} of ${trip.destinations.length}</div>
-                            ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay selected</div>'}
+                            ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay pinned</div>'}
                             ${d.distanceFromPrevious ? `<div class="small text-muted mt-1">🛣️ ${d.distanceFromPrevious} km from prev stop</div>` : ''}
                         </div>
                     `;
@@ -1530,6 +1615,14 @@
                         .addTo(map)
                         .bindPopup(popupContent);
                     boundsGroup.addLayer(stopMarker);
+
+                    window._tripMarkersByDestId[d.id] = stopMarker;
+                    window._tripDestinationMarkers.push({ id: d.id, marker: stopMarker, name: d.name, lat: dLat, lng: dLng, index: idx });
+
+                    // Marker click -> synchronize and highlight timeline item & sequence node
+                    stopMarker.on('click', () => {
+                        highlightDestinationItem(d.id);
+                    });
                 });
             }
 
@@ -1570,6 +1663,66 @@
             setTimeout(() => {
                 map.invalidateSize();
             }, 300);
+        }
+
+        // Highlight destination in sequence bar and timeline smoothly
+        function highlightDestinationItem(destId) {
+            if (!destId) return;
+            const numId = Number(destId);
+
+            // 1. Sequence node in route bar
+            document.querySelectorAll("#destinationNodesContainer .draggable-destination-node").forEach(node => {
+                if (Number(node.dataset.destId) === numId) {
+                    node.classList.add("active-marker-highlight");
+                    node.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } else {
+                    node.classList.remove("active-marker-highlight");
+                }
+            });
+
+            // 2. Timeline activities for this destination
+            const targetDest = tripData.destinations ? tripData.destinations.find(d => d.id === numId) : null;
+            if (targetDest) {
+                document.querySelectorAll(".timeline-item").forEach(item => {
+                    const titleEl = item.querySelector(".place-title");
+                    const locEl = item.querySelector(".bi-geo-alt") ? item.querySelector(".bi-geo-alt").parentElement : null;
+                    const textContent = ((titleEl ? titleEl.textContent : "") + " " + (locEl ? locEl.textContent : "")).toLowerCase();
+                    if (textContent.includes(targetDest.name.toLowerCase())) {
+                        item.classList.add("active-marker-highlight");
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        item.classList.remove("active-marker-highlight");
+                    }
+                });
+            }
+        }
+
+        // Pan map and open popup when destination node is clicked
+        function focusDestinationOnMap(destId) {
+            if (!destId) return;
+            const numId = Number(destId);
+            highlightDestinationItem(numId);
+
+            const marker = window._tripMarkersByDestId ? window._tripMarkersByDestId[numId] : null;
+            if (marker && window._currentLeafletMap) {
+                window._currentLeafletMap.setView(marker.getLatLng(), 14, { animate: true });
+                marker.openPopup();
+            }
+        }
+
+        // Map Control Helpers
+        function fitRouteBounds() {
+            if (window._currentLeafletMap && window._routeBoundsGroup && window._routeBoundsGroup.getLayers().length > 0) {
+                window._currentLeafletMap.fitBounds(window._routeBoundsGroup.getBounds(), { padding: [45, 45], maxZoom: 14 });
+            }
+        }
+
+        function zoomInMap() {
+            if (window._currentLeafletMap) window._currentLeafletMap.zoomIn();
+        }
+
+        function zoomOutMap() {
+            if (window._currentLeafletMap) window._currentLeafletMap.zoomOut();
         }
 
         // =========================================================
@@ -1846,19 +1999,146 @@
             }
         }
 
-        // Move Destination stop up/down (Requirement 3 & 8)
+        // Live Screen Reader Announcer
+        function announceReorder(message) {
+            const announcer = document.getElementById("reorderLiveAnnouncer");
+            if (announcer) announcer.textContent = message;
+        }
+
+        // Initialize Quick Undo state if a prior reorder occurred in this session
+        function initQuickUndoCheck() {
+            if (!tripData || !tripData.id) return;
+            const backup = sessionStorage.getItem("voyagecraft_undo_order_" + tripData.id);
+            const btn = document.getElementById("btnQuickUndoReorder");
+            if (btn && backup) {
+                btn.style.display = "inline-flex";
+            }
+        }
+
+        // HTML5 Drag-and-Drop Handler for Itinerary Sequence Reordering
+        function initDestinationDragAndDrop() {
+            const container = document.getElementById("destinationNodesContainer");
+            if (!container) return;
+
+            let draggedNode = null;
+
+            container.querySelectorAll(".draggable-destination-node").forEach(node => {
+                node.addEventListener("dragstart", function(e) {
+                    draggedNode = this;
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", this.dataset.destId);
+                    this.classList.add("dragging");
+                });
+
+                node.addEventListener("dragend", function() {
+                    draggedNode = null;
+                    this.classList.remove("dragging");
+                    container.querySelectorAll(".draggable-destination-node").forEach(n => n.classList.remove("drag-over"));
+                });
+
+                node.addEventListener("dragover", function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                });
+
+                node.addEventListener("dragenter", function() {
+                    if (this !== draggedNode) {
+                        this.classList.add("drag-over");
+                    }
+                });
+
+                node.addEventListener("dragleave", function() {
+                    this.classList.remove("drag-over");
+                });
+
+                node.addEventListener("drop", async function(e) {
+                    e.preventDefault();
+                    this.classList.remove("drag-over");
+                    if (!draggedNode || draggedNode === this) return;
+
+                    const fromId = Number(draggedNode.dataset.destId);
+                    const toId = Number(this.dataset.destId);
+
+                    const dests = tripData.destinations ? [...tripData.destinations] : [];
+                    const fromIndex = dests.findIndex(d => d.id === fromId);
+                    const toIndex = dests.findIndex(d => d.id === toId);
+
+                    if (fromIndex === -1 || toIndex === -1) return;
+
+                    // Preserve current state for instant undo
+                    sessionStorage.setItem("voyagecraft_undo_order_" + tripData.id, JSON.stringify(dests.map(d => d.id)));
+
+                    const [movedItem] = dests.splice(fromIndex, 1);
+                    dests.splice(toIndex, 0, movedItem);
+
+                    announceReorder(`Moved ${movedItem.name} to stop ${toIndex + 1} of ${dests.length}`);
+
+                    const orderedIds = dests.map(d => d.id);
+                    try {
+                        const updateRes = await fetch(`/api/trips/${tripData.id}/reorder`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ orderedDestinationIds: orderedIds })
+                        });
+
+                        if (!updateRes.ok) {
+                            const errJson = await updateRes.json().catch(() => ({}));
+                            throw new Error(errJson.message || "Failed to save reordered destinations");
+                        }
+                        window.location.reload();
+                    } catch (err) {
+                        console.error("Drag-and-drop reorder error:", err);
+                        alert("Could not reorder destination: " + err.message);
+                    }
+                });
+            });
+        }
+
+        // Safe Undo Reorder: Restores the itinerary order prior to the latest modification
+        async function undoLastReorder() {
+            if (!tripData || !tripData.id) return;
+            const backup = sessionStorage.getItem("voyagecraft_undo_order_" + tripData.id);
+            if (!backup) {
+                openVersionHistoryModal();
+                return;
+            }
+
+            try {
+                const orderedIds = JSON.parse(backup);
+                sessionStorage.removeItem("voyagecraft_undo_order_" + tripData.id);
+                const updateRes = await fetch(`/api/trips/${tripData.id}/reorder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderedDestinationIds: orderedIds })
+                });
+
+                if (!updateRes.ok) throw new Error("Failed to undo reorder");
+                window.location.reload();
+            } catch (err) {
+                console.error("Undo reorder error:", err);
+                alert("Failed to undo reorder: " + err.message);
+            }
+        }
+
+        // Accessible Keyboard & Touch-friendly Stop Reordering (Move earlier / later)
         async function moveDestinationInTrip(tripId, destinationId, direction) {
             try {
                 const dests = tripData.destinations ? [...tripData.destinations] : [];
-                const currentIndex = dests.findIndex(d => d.id === destinationId);
+                const numId = Number(destinationId);
+                const currentIndex = dests.findIndex(d => d.id === numId || d.id == destinationId);
                 if (currentIndex === -1) return;
 
                 const targetIndex = currentIndex + direction;
                 if (targetIndex < 0 || targetIndex >= dests.length) return;
 
+                // Save current order for instant undo
+                sessionStorage.setItem("voyagecraft_undo_order_" + tripId, JSON.stringify(dests.map(d => d.id)));
+
                 const temp = dests[currentIndex];
                 dests[currentIndex] = dests[targetIndex];
                 dests[targetIndex] = temp;
+
+                announceReorder(`Moved ${temp.name} to stop ${targetIndex + 1} of ${dests.length}`);
 
                 const orderedIds = dests.map(d => d.id);
                 const updateRes = await fetch(`/api/trips/${tripId}/reorder`, {
@@ -1867,11 +2147,14 @@
                     body: JSON.stringify({ orderedDestinationIds: orderedIds })
                 });
 
-                if (!updateRes.ok) throw new Error("Failed to reorder stops");
+                if (!updateRes.ok) {
+                    const errJson = await updateRes.json().catch(() => ({}));
+                    throw new Error(errJson.message || "Failed to reorder stops");
+                }
                 window.location.reload();
             } catch (err) {
                 console.error(err);
-                alert("Could not reorder destination stop.");
+                alert("Could not reorder destination stop: " + err.message);
             }
         }
 
@@ -2440,6 +2723,54 @@
             return CATEGORY_META[cat] || { name: cat || 'Stop', icon: 'bi-geo-alt', color: '#0284c7', bg: '#e0f2fe' };
         }
 
+        function toggleSmartStopsDropbox(event) {
+            if (event && event.target && event.target.closest('a, input, select')) {
+                return;
+            }
+            const content = document.getElementById("smartStopsCollapseContent");
+            const header = document.getElementById("smartStopsDropboxToggle");
+            const chevron = document.getElementById("smartStopsChevron");
+            const toggleText = document.getElementById("smartStopsToggleText");
+            const actionBtn = document.getElementById("smartStopsActionBtn");
+
+            if (!content) return;
+
+            const isCurrentlyHidden = (content.style.display === "none" || content.style.display === "");
+
+            if (isCurrentlyHidden) {
+                // EXPAND
+                content.style.display = "block";
+                if (chevron) {
+                    chevron.classList.remove("bi-chevron-down");
+                    chevron.classList.add("bi-chevron-up");
+                }
+                if (toggleText) toggleText.textContent = "Hide Stops";
+                if (header) header.setAttribute("aria-expanded", "true");
+                if (actionBtn) {
+                    actionBtn.classList.remove("btn-outline-forest");
+                    actionBtn.classList.add("btn-forest");
+                }
+
+                // If stops not yet loaded, trigger load
+                if (!currentSmartStopsList || currentSmartStopsList.length === 0) {
+                    loadSmartStopsAlongRoute();
+                }
+            } else {
+                // COLLAPSE
+                content.style.display = "none";
+                if (chevron) {
+                    chevron.classList.remove("bi-chevron-up");
+                    chevron.classList.add("bi-chevron-down");
+                }
+                if (toggleText) toggleText.textContent = "Show All Stops";
+                if (header) header.setAttribute("aria-expanded", "false");
+                if (actionBtn) {
+                    actionBtn.classList.remove("btn-forest");
+                    actionBtn.classList.add("btn-outline-forest");
+                }
+            }
+        }
+
         async function loadSmartStopsAlongRoute(forceRefresh = false) {
             const loading = document.getElementById("smartStopsLoading");
             const grid = document.getElementById("smartStopsGrid");
@@ -2447,6 +2778,7 @@
             const errorMsg = document.getElementById("smartStopsErrorMsg");
             const emptyBox = document.getElementById("smartStopsEmpty");
             const countText = document.getElementById("smartStopsCountText");
+            const badgeNumber = document.getElementById("smartStopsBadgeNumber");
             const detourSelect = document.getElementById("smartStopDetourSelect");
             const searchInput = document.getElementById("smartStopSearchInput");
             const detourInfo = document.getElementById("smartStopsDetourInfo");
@@ -2482,6 +2814,7 @@
                 currentSmartStopsList = stops || [];
 
                 if (countText) countText.textContent = currentSmartStopsList.length;
+                if (badgeNumber) badgeNumber.textContent = currentSmartStopsList.length;
                 if (detourInfo) {
                     detourInfo.textContent = maxDetour ? `Filtered: ≤ ${maxDetour} min detour` : `Showing all detours`;
                 }

@@ -38,6 +38,13 @@ public class TripResponseDto {
     private String feasibilityStatus = "Optimal"; // Optimal, Busy, Difficult
     private List<String> warnings = new ArrayList<>();
 
+    // Category Status & Visual Imagery
+    private String status = "UPCOMING"; // UPCOMING, ONGOING, COMPLETED
+    private String statusLabel = "Upcoming";
+    private String statusBadgeClass = "badge-upcoming";
+    private String coverImageUrl = "/images/placeholder-travel.svg";
+    private String destinationsSummary = "";
+
     // Collaboration & Sharing
     private String shareCode;
     private List<TripCollaboratorDto> collaborators = new ArrayList<>();
@@ -322,5 +329,45 @@ public class TripResponseDto {
 
     public void setPreferredInterests(String preferredInterests) {
         this.preferredInterests = preferredInterests;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatusLabel() {
+        return statusLabel;
+    }
+
+    public void setStatusLabel(String statusLabel) {
+        this.statusLabel = statusLabel;
+    }
+
+    public String getStatusBadgeClass() {
+        return statusBadgeClass;
+    }
+
+    public void setStatusBadgeClass(String statusBadgeClass) {
+        this.statusBadgeClass = statusBadgeClass;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    public String getDestinationsSummary() {
+        return destinationsSummary;
+    }
+
+    public void setDestinationsSummary(String destinationsSummary) {
+        this.destinationsSummary = destinationsSummary;
     }
 }

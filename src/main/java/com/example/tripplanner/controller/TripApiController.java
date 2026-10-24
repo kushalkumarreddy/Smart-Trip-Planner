@@ -592,10 +592,10 @@ public class TripApiController {
     }
 
     private User resolveCurrentUser(UserDetails userDetails) {
-        if (userDetails != null) {
-            return userService.getUserByEmail(userDetails.getUsername());
+        if (userDetails == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to access trip data.");
         }
-        return userService.getOrCreateDemoUser();
+        return userService.getUserByEmail(userDetails.getUsername());
     }
 }
 

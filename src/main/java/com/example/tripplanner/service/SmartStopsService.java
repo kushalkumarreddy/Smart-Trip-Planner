@@ -41,6 +41,9 @@ public class SmartStopsService {
             .connectTimeout(Duration.ofSeconds(4))
             .build();
 
+    @org.springframework.beans.factory.annotation.Value("${smartstops.overpass.enabled:false}")
+    private boolean overpassEnabled = false;
+
     // Cache key: tripId:routeSignature:category:maxMinutes:maxKm:query
     private final Map<String, List<PlaceAlongRouteDto>> searchCache = new ConcurrentHashMap<>();
 
@@ -119,8 +122,8 @@ public class SmartStopsService {
         // 3b. Query Google Places API if live API is enabled
         if (googleMapsService.isLiveApiConfigured()) {
             searchGooglePlaces(sampledCorridorPoints, normalizedCategory, candidateMap);
-        } else {
-            // 3c. Try OSM Overpass API for live corridor discoveries
+        } else if (overpassEnabled) {
+            // 3c. Try OSM Overpass API for live corridor discoveries (only if explicitly enabled)
             searchOverpassCorridor(sampledCorridorPoints, normalizedCategory, candidateMap);
         }
 

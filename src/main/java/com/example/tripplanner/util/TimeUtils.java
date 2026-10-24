@@ -124,6 +124,32 @@ public class TimeUtils {
     }
 
     /**
+     * Chronologically compares two itinerary time strings (e.g. "8:00 AM", "01:00 PM", "14:30").
+     */
+    public static int compareItineraryTimes(String t1, String t2) {
+        LocalTime lt1 = parseTime(t1);
+        LocalTime lt2 = parseTime(t2);
+        return lt1.compareTo(lt2);
+    }
+
+    /**
+     * Resolves activity priority order when times are identical.
+     * Departure (0) -> Arrival (1) -> Sightseeing (2) -> Meal (3) -> Rest (4) -> Hotel (5) -> Other (6)
+     */
+    public static int getActivityTypeOrder(String activityType) {
+        if (activityType == null) return 6;
+        return switch (activityType.toUpperCase().trim()) {
+            case "DEPARTURE" -> 0;
+            case "ARRIVAL" -> 1;
+            case "SIGHTSEEING" -> 2;
+            case "MEAL" -> 3;
+            case "REST" -> 4;
+            case "HOTEL" -> 5;
+            default -> 6;
+        };
+    }
+
+    /**
      * Rounds a LocalTime to the nearest clock interval (default 15 minutes).
      * Examples (15-min interval):
      * 17:57 -> 18:00 (6:00 PM)

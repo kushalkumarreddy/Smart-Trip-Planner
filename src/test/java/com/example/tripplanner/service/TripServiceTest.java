@@ -262,4 +262,71 @@ class TripServiceTest {
         assertThat(candidate.getDetourDistanceKm()).isLessThanOrEqualTo(25.0);
         assertThat(candidate.getFormattedDetour()).contains("km");
     }
+
+    @Test
+    @DisplayName("Itinerary order fix: Day items are sorted strictly in chronological order regardless of string sort")
+    void testItineraryItemsAreChronologicallyOrdered() {
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(destinationRepository.findByTripOrderBySequenceOrderAsc(trip)).thenReturn(Collections.singletonList(dest1));
+        when(routeService.calculateCompleteRoute(anyString(), anyList(), anyString()))
+                .thenReturn(new RouteSummaryDto());
+
+        // Create items in scrambled/lexicographical order (1:00 PM before 8:00 AM)
+        ItineraryItem itemLunch = new ItineraryItem();
+        itemLunch.setId(1L);
+        itemLunch.setDayNumber(1);
+        itemLunch.setStartTime("1:00 PM");
+        itemLunch.setEndTime("2:00 PM");
+        itemLunch.setActivity("Lunch at Gufha");
+        itemLunch.setActivityType("MEAL");
+
+        ItineraryItem itemDepart = new ItineraryItem();
+        itemDepart.setId(2L);
+        itemDepart.setDayNumber(1);
+        itemDepart.setStartTime("8:00 AM");
+        itemDepart.setEndTime("8:00 AM");
+        itemDepart.setActivity("Depart Bengaluru");
+        itemDepart.setActivityType("DEPARTURE");
+
+        ItineraryItem itemSightseeing = new ItineraryItem();
+        itemSightseeing.setId(3L);
+        itemSightseeing.setDayNumber(1);
+        itemSightseeing.setStartTime("10:30 AM");
+        itemSightseeing.setEndTime("12:00 PM");
+        itemSightseeing.setActivity("Visit Mysore Palace");
+        itemSightseeing.setActivityType("SIGHTSEEING");
+
+        ItineraryItem itemHotel = new ItineraryItem();
+        itemHotel.setId(4L);
+        itemHotel.setDayNumber(1);
+        itemHotel.setStartTime("8:00 PM");
+        itemHotel.setEndTime("9:00 PM");
+        itemHotel.setActivity("Relax at Hotel");
+        itemHotel.setActivityType("HOTEL");
+
+        // Return scrambled list
+        when(itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(10L))
+                .thenReturn(Arrays.asList(itemLunch, itemDepart, itemSightseeing, itemHotel));
+
+        TripResponseDto response = tripService.getTripDtoById(10L, owner);
+
+        assertThat(response.getDayItineraries()).isNotEmpty();
+        DayItineraryDto day1 = response.getDayItineraries().get(0);
+        List<ItineraryItemDto> items = day1.getItems();
+        assertThat(items).hasSize(4);
+
+        // Strict chronological order verification
+        assertThat(items.get(0).getActivityType()).isEqualTo("DEPARTURE");
+        assertThat(items.get(0).getStartTime()).contains("8:00 AM");
+
+        assertThat(items.get(1).getActivityType()).isEqualTo("SIGHTSEEING");
+        assertThat(items.get(1).getStartTime()).contains("10:30 AM");
+
+        assertThat(items.get(2).getActivityType()).isEqualTo("MEAL");
+        assertThat(items.get(2).getStartTime()).contains("1:00 PM");
+
+        assertThat(items.get(3).getActivityType()).isEqualTo("HOTEL");
+        assertThat(items.get(3).getStartTime()).contains("8:00 PM");
+    }
 }
+

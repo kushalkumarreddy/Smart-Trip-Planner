@@ -383,6 +383,15 @@ public class TripService {
             dto.setVisitedPlacesCount(visitedSpots);
             dto.setCompletionPercentage(totalSpots > 0 ? (int) Math.round(((double) visitedSpots / totalSpots) * 100.0) : 0);
 
+            String status = calculateTripStatus(t.getStartDate(), t.getEndDate());
+            dto.setStatus(status);
+            dto.setStatusLabel(resolveStatusLabel(status));
+            dto.setStatusBadgeClass(resolveStatusBadgeClass(status));
+            dto.setCoverImageUrl(resolveTripCoverImage(t, dests));
+
+            List<String> destNames = dests.stream().map(Destination::getName).filter(Objects::nonNull).collect(Collectors.toList());
+            dto.setDestinationsSummary(String.join(", ", destNames));
+
             results.add(dto);
         }
         return results;
@@ -1687,17 +1696,18 @@ public class TripService {
 
     @Transactional
     public Map<String, Object> togglePlaceVisited(Long placeId, boolean visited) {
-        return togglePlaceVisited(placeId, visited, null);
+        throw new org.springframework.security.access.AccessDeniedException("Authentication required to update place visited status.");
     }
 
     @Transactional
     public Map<String, Object> togglePlaceVisited(Long placeId, boolean visited, User user) {
+        if (user == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to update place visited status.");
+        }
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Place not found with ID: " + placeId));
         Trip trip = place.getDestination().getTrip();
-        if (user != null) {
-            checkTripAccess(trip, user, "EDITOR");
-        }
+        checkTripAccess(trip, user, "EDITOR");
         place.setVisited(visited);
         placeRepository.save(place);
 
@@ -1708,6 +1718,9 @@ public class TripService {
 
     @Transactional
     public Map<String, Object> togglePlaceVisited(Long placeId, User user) {
+        if (user == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to update place visited status.");
+        }
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Place not found with ID: " + placeId));
         boolean newStatus = !Boolean.TRUE.equals(place.getVisited());
@@ -1716,17 +1729,18 @@ public class TripService {
 
     @Transactional
     public Map<String, Object> toggleDestinationVisited(Long destinationId, boolean visited) {
-        return toggleDestinationVisited(destinationId, visited, null);
+        throw new org.springframework.security.access.AccessDeniedException("Authentication required to update destination visited status.");
     }
 
     @Transactional
     public Map<String, Object> toggleDestinationVisited(Long destinationId, boolean visited, User user) {
+        if (user == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to update destination visited status.");
+        }
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Destination not found with ID: " + destinationId));
         Trip trip = destination.getTrip();
-        if (user != null) {
-            checkTripAccess(trip, user, "EDITOR");
-        }
+        checkTripAccess(trip, user, "EDITOR");
         destination.setVisited(visited);
         destinationRepository.save(destination);
 
@@ -1768,6 +1782,16 @@ public class TripService {
         for (Map.Entry<Integer, List<ItineraryItem>> entry : byDay.entrySet()) {
             int dayNumber = entry.getKey();
             List<ItineraryItem> dayItems = entry.getValue();
+            // Chronologically sort dayItems strictly by parsed time, activity type priority, and id
+            dayItems.sort((a, b) -> {
+                int cmp = TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime());
+                if (cmp != 0) return cmp;
+                int typeCmp = Integer.compare(TimeUtils.getActivityTypeOrder(a.getActivityType()), TimeUtils.getActivityTypeOrder(b.getActivityType()));
+                if (typeCmp != 0) return typeCmp;
+                long idA = a.getId() != null ? a.getId() : 0L;
+                long idB = b.getId() != null ? b.getId() : 0L;
+                return Long.compare(idA, idB);
+            });
             LocalDate dayDate = startDate.plusDays(dayNumber - 1);
 
             Destination d = itineraryService.findDestinationForDay(destinations, dayNumber);
@@ -1856,6 +1880,7 @@ public class TripService {
             dayDtos.add(dayDto);
         }
 
+        dayDtos.sort(Comparator.comparingInt(DayItineraryDto::getDayNumber));
         return dayDtos;
     }
 
@@ -1912,8 +1937,18 @@ public class TripService {
         int totalSightseeing = 0;
         int visitedSightseeing = 0;
 
-        List<Destination> destinations = orderedDestinations != null ? orderedDestinations
-                : (trip.getDestinations() != null ? trip.getDestinations() : Collections.emptyList());
+        List<Destination> destinations = new ArrayList<>(orderedDestinations != null ? orderedDestinations
+                : (trip.getDestinations() != null ? trip.getDestinations() : Collections.emptyList()));
+        destinations.sort(Comparator.comparingInt(d -> d.getSequenceOrder() != null ? d.getSequenceOrder() : 0));
+
+        String status = calculateTripStatus(trip.getStartDate(), trip.getEndDate());
+        dto.setStatus(status);
+        dto.setStatusLabel(resolveStatusLabel(status));
+        dto.setStatusBadgeClass(resolveStatusBadgeClass(status));
+        dto.setCoverImageUrl(resolveTripCoverImage(trip, destinations));
+        List<String> destNames = destinations.stream().map(Destination::getName).filter(Objects::nonNull).collect(Collectors.toList());
+        dto.setDestinationsSummary(String.join(", ", destNames));
+
         for (Destination d : destinations) {
             DestinationDto dDto = new DestinationDto(d.getId(), d.getName(), d.getSequenceOrder());
             dDto.setTripId(trip.getId());
@@ -1991,6 +2026,22 @@ public class TripService {
         dto.setCompletionPercentage(totalSightseeing > 0 ? (int) Math.round(((double) visitedSightseeing / totalSightseeing) * 100.0) : 0);
 
         dto.setRouteSummary(routeSummary);
+        if (dayItineraries != null) {
+            dayItineraries.sort(Comparator.comparingInt(DayItineraryDto::getDayNumber));
+            for (DayItineraryDto dayDto : dayItineraries) {
+                if (dayDto.getItems() != null) {
+                    dayDto.getItems().sort((a, b) -> {
+                        int cmp = TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime());
+                        if (cmp != 0) return cmp;
+                        int typeCmp = Integer.compare(TimeUtils.getActivityTypeOrder(a.getActivityType()), TimeUtils.getActivityTypeOrder(b.getActivityType()));
+                        if (typeCmp != 0) return typeCmp;
+                        long idA = a.getId() != null ? a.getId() : 0L;
+                        long idB = b.getId() != null ? b.getId() : 0L;
+                        return Long.compare(idA, idB);
+                    });
+                }
+            }
+        }
         dto.setDayItineraries(dayItineraries);
 
         // Fetch Curated Recommendations for primary stop
@@ -2039,6 +2090,76 @@ public class TripService {
 
         dto.setWarnings(warnings);
         return dto;
+    }
+
+    public String calculateTripStatus(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+        if (startDate == null && endDate == null) {
+            return "UPCOMING";
+        }
+        if (endDate != null && today.isAfter(endDate)) {
+            return "COMPLETED";
+        }
+        if (startDate != null && today.isBefore(startDate)) {
+            return "UPCOMING";
+        }
+        return "ONGOING";
+    }
+
+    public String resolveStatusLabel(String status) {
+        if ("COMPLETED".equalsIgnoreCase(status)) return "Completed";
+        if ("ONGOING".equalsIgnoreCase(status)) return "In Progress";
+        return "Upcoming";
+    }
+
+    public String resolveStatusBadgeClass(String status) {
+        if ("COMPLETED".equalsIgnoreCase(status)) return "badge-completed";
+        if ("ONGOING".equalsIgnoreCase(status)) return "badge-ongoing";
+        return "badge-upcoming";
+    }
+
+    public String resolveTripCoverImage(Trip trip, List<Destination> destinations) {
+        if (destinations != null && !destinations.isEmpty()) {
+            for (Destination d : destinations) {
+                if (d.getName() != null) {
+                    var featuredOpt = recommendationService.getFeaturedDestinationById("ind_" + d.getName().toLowerCase().replaceAll("\\s+", "_"));
+                    if (featuredOpt.isPresent() && featuredOpt.get().getImageUrl() != null) {
+                        return featuredOpt.get().getImageUrl();
+                    }
+                    for (var featured : recommendationService.getFeaturedDestinations(null, null)) {
+                        if (featured.getName().equalsIgnoreCase(d.getName()) ||
+                                d.getName().toLowerCase().contains(featured.getName().toLowerCase()) ||
+                                featured.getName().toLowerCase().contains(d.getName().toLowerCase())) {
+                            if (featured.getImageUrl() != null) {
+                                return featured.getImageUrl();
+                            }
+                        }
+                    }
+                    if (d.getPlaces() != null) {
+                        for (Place p : d.getPlaces()) {
+                            if (p.getPhotoUrl() != null && !p.getPhotoUrl().isEmpty()) {
+                                return p.getPhotoUrl();
+                            }
+                        }
+                    }
+                }
+            }
+            String firstDest = destinations.get(0).getName().toLowerCase();
+            if (firstDest.contains("beach") || firstDest.contains("goa") || firstDest.contains("gokarna") || firstDest.contains("varkala")) {
+                return "/images/fallback-beach.svg";
+            }
+            if (firstDest.contains("temple") || firstDest.contains("tirupati") || firstDest.contains("varanasi") || firstDest.contains("amritsar")) {
+                return "/images/fallback-temple.svg";
+            }
+            if (firstDest.contains("waterfall") || firstDest.contains("jog") || firstDest.contains("dudhsagar")) {
+                return "/images/fallback-waterfall.svg";
+            }
+            if (firstDest.contains("fort") || firstDest.contains("palace") || firstDest.contains("heritage") || firstDest.contains("hampi") || firstDest.contains("jaipur") || firstDest.contains("agra")) {
+                return "/images/fallback-heritage.svg";
+            }
+            return "/images/fallback-nature.svg";
+        }
+        return "/images/placeholder-travel.svg";
     }
 
     private TripSuggestionDto mapToSuggestionDto(TripSuggestion s) {

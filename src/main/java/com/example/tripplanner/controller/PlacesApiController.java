@@ -1,6 +1,7 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.service.TripService;
+import com.example.tripplanner.service.UserService;
 import com.example.tripplanner.util.GeoUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,28 +17,42 @@ public class PlacesApiController {
     private final TripService tripService;
     private final com.example.tripplanner.service.GoogleMapsService googleMapsService;
 
+    private final UserService userService;
+
     public PlacesApiController(TripService tripService,
-                               com.example.tripplanner.service.GoogleMapsService googleMapsService) {
+                               com.example.tripplanner.service.GoogleMapsService googleMapsService,
+                               UserService userService) {
         this.tripService = tripService;
         this.googleMapsService = googleMapsService;
+        this.userService = userService;
     }
 
     @PutMapping("/{id}/visited")
     public ResponseEntity<Map<String, Object>> toggleVisited(@PathVariable("id") Long id,
-                                                            @RequestBody Map<String, Boolean> body) {
-        boolean visited = body.getOrDefault("visited", true);
-        Map<String, Object> progress = tripService.togglePlaceVisited(id, visited, null);
+                                                            @RequestBody Map<String, Boolean> body,
+                                                            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to update place status.");
+        }
+        com.example.tripplanner.entity.User user = userService.getUserByEmail(userDetails.getUsername());
+        boolean visited = body != null && Boolean.TRUE.equals(body.get("visited"));
+        Map<String, Object> progress = tripService.togglePlaceVisited(id, visited, user);
         return ResponseEntity.ok(progress);
     }
 
     @PostMapping("/{id}/toggle-visited")
     public ResponseEntity<Map<String, Object>> toggleVisitedPost(@PathVariable("id") Long id,
-                                                                 @RequestBody(required = false) Map<String, Boolean> body) {
+                                                                 @RequestBody(required = false) Map<String, Boolean> body,
+                                                                 @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to update place status.");
+        }
+        com.example.tripplanner.entity.User user = userService.getUserByEmail(userDetails.getUsername());
         Map<String, Object> progress;
         if (body != null && body.containsKey("visited")) {
-            progress = tripService.togglePlaceVisited(id, body.get("visited"), null);
+            progress = tripService.togglePlaceVisited(id, body.get("visited"), user);
         } else {
-            progress = tripService.togglePlaceVisited(id, (com.example.tripplanner.entity.User) null);
+            progress = tripService.togglePlaceVisited(id, user);
         }
         return ResponseEntity.ok(progress);
     }
