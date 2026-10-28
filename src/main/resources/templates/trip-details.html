@@ -48,8 +48,11 @@
                 <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm">
                     <i class="bi bi-plus-lg me-1"></i> New Trip
                 </a>
-                <a th:href="@{/dashboard}" class="btn btn-sand btn-sm">
+                <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-sand btn-sm">
                     <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+                <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-sand btn-sm">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
                 </a>
             </div>
         </div>
@@ -58,13 +61,35 @@
     <!-- Main Workspace Container -->
     <main class="container-fluid px-lg-4 py-4 flex-grow-1">
 
+        <!-- Guest Notification Banner (Requirement 3) -->
+        <div th:if="${trip.isGuest}" class="alert alert-warning border-0 shadow-sm d-flex flex-column flex-md-row align-items-md-center justify-content-between p-3 mb-4 rounded-3" role="alert">
+            <div class="d-flex align-items-center gap-3 mb-2 mb-md-0">
+                <i class="bi bi-info-circle-fill fs-3 text-warning"></i>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">Temporary Guest Journey</h6>
+                    <div class="small text-muted">You are exploring VoyageCraft as a guest. Your itinerary, route, and stops are active for this browser session. Sign in to save this trip permanently across all your devices.</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <button type="button" class="btn btn-forest btn-sm fw-semibold px-3" onclick="promptSaveGuestTrip()">
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Save Trip to Account
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="discardGuestTrip()">
+                    <i class="bi bi-trash me-1"></i> Discard
+                </button>
+            </div>
+        </div>
+
         <!-- Trip Overview Header Card (Requirement 3: Trip name & save status at the top) -->
         <div class="card card-modern p-4 mb-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                        <span class="badge-forest">
+                        <span class="badge-forest" th:if="${!trip.isGuest}">
                             <i class="bi bi-check2-circle me-1"></i> Saved &bull; Live Itinerary
+                        </span>
+                        <span class="badge bg-warning text-dark fw-bold" th:if="${trip.isGuest}">
+                            <i class="bi bi-clock-history me-1"></i> Guest Journey &bull; Browser Session
                         </span>
                         <span class="badge-sand">
                             <i class="bi bi-calendar3 me-1"></i> 
@@ -77,11 +102,15 @@
                             <i class="bi bi-person-walking me-1" th:if="${trip.transportMode == 'WALKING'}"></i>
                             <span th:text="${trip.transportMode}"></span>
                         </span>
+                        <span class="badge bg-light text-dark border">
+                            <i class="bi bi-clock me-1 text-forest"></i> Start: <strong th:text="${trip.dailyStartTime != null ? trip.dailyStartTime : '08:00 AM'}"></strong>
+                        </span>
                     </div>
 
                     <h2 class="fw-bold mb-1" th:text="${trip.tripName}">Trip Itinerary</h2>
                     <p class="text-muted mb-0 small">
                         Starting from <strong class="text-dark" th:text="${trip.startLocation}"></strong> &bull; 
+                        Start Time: <strong class="text-dark" th:text="${trip.dailyStartTime != null ? trip.dailyStartTime : '08:00 AM'}"></strong> &bull; 
                         Pace: <strong class="text-dark" th:text="${trip.travelStyle}"></strong> &bull; 
                         Travelers: <strong class="text-dark" th:text="${trip.travelersCount}"></strong>
                     </p>
@@ -373,6 +402,12 @@
                             <button type="button" class="btn btn-sm btn-category-pill" data-category="HOTEL" onclick="filterSmartStopsCategory('HOTEL', this)">
                                 <i class="bi bi-building me-1"></i> Hotels
                             </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="HOSPITAL" onclick="filterSmartStopsCategory('HOSPITAL', this)">
+                                <i class="bi bi-hospital me-1"></i> Hospitals
+                            </button>
+                            <button type="button" class="btn btn-sm btn-category-pill" data-category="PHARMACY" onclick="filterSmartStopsCategory('PHARMACY', this)">
+                                <i class="bi bi-capsule me-1"></i> Pharmacies
+                            </button>
                         </div>
                     </div>
 
@@ -426,6 +461,38 @@
                 <!-- Stops Cards Grid -->
                 <div class="row g-3" id="smartStopsGrid">
                     <!-- Populated dynamically by JavaScript -->
+                </div>
+            </div>
+        <!-- PUBLIC TRANSPORTATION SCHEDULE & TIMETABLE NOTICE (Requirement 8) -->
+        <div th:if="${trip.transportMode == 'PUBLIC_TRANSPORT'}" class="card card-modern p-4 mb-4 border-info">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-1">
+                    <i class="bi bi-bus-front-fill me-1"></i> Public Transit Timetable
+                </span>
+                <span class="text-muted small">Verified Public Transport Network Data</span>
+            </div>
+            <div class="p-3 bg-light rounded-3">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
+                    <div>
+                        <strong class="text-dark">Intercity Transit Timetables &amp; Schedules:</strong>
+                        <p class="text-muted small mb-2">
+                            Live schedules, bus/train transfers, and direct booking links are integrated with official transit providers. Road driving directions are never misrepresented as public transport.
+                        </p>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <a th:if="${trip.destinations != null and !trip.destinations.isEmpty()}"
+                               th:href="'https://www.google.com/maps/dir/?api=1&origin=' + ${trip.startLocation} + '&destination=' + ${trip.destinations[0].name} + '&travelmode=transit'"
+                               target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-google me-1"></i> Live Google Transit Timetable
+                            </a>
+                            <a href="https://www.irctc.co.in/nget/train-search" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-train-front me-1"></i> IRCTC Indian Railways Search
+                            </a>
+                            <a href="https://www.redbus.in" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-bus-front me-1"></i> Bus Timetable &amp; Seats (RedBus)
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -675,7 +742,7 @@
                     </div>
 
                     <!-- Daily Summary Stats -->
-                    <div class="p-2 mb-3 rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
+                    <div class="p-2 mb-3 rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted daily-summary-stats" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
                         <div>
                             <span>Travel Time:</span><br>
                             <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.travelTimeMinutes)}"></strong>
@@ -706,7 +773,16 @@
 
                     <!-- Timeline Items -->
                     <div class="timeline-container">
-                        <div th:each="item : ${day.items}" class="timeline-item">
+                        <div th:each="item, itemStat : ${day.items}" class="timeline-item"
+                             th:id="${'timeline-item-' + (item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index))}"
+                             th:data-item-id="${item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index)}"
+                             th:data-day="${day.dayNumber}"
+                             th:data-lat="${item.latitude}"
+                             th:data-lng="${item.longitude}"
+                             th:data-activity="${item.activity}"
+                             onclick="focusActivityOnMap(this)"
+                             title="Click to view on interactive map"
+                             style="cursor: pointer;">
                             
                             <div class="timeline-dot" 
                                  th:classappend="${(item.visited != null and item.visited) ? 'visited' : (item.activityType == 'MEAL' ? 'meal' : (item.activityType == 'HOTEL' ? 'hotel' : ''))}">
@@ -719,10 +795,10 @@
                             </div>
 
                             <div class="timeline-content" th:classappend="${(item.visited != null and item.visited) ? 'is-visited' : ''}">
-                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <div class="d-flex flex-wrap align-items-center gap-1">
-                                        <span class="badge-sand" 
-                                              th:text="${item.startTime + ' - ' + item.endTime}"></span>
+                                <div class="d-flex justify-content-between align-items-start mb-1 timeline-header-row">
+                                    <div class="d-flex flex-wrap align-items-center gap-1 timeline-title-wrap">
+                                        <span class="badge-sand timeline-time-badge" 
+                                              th:text="${(itemStat.first or itemStat.last or item.endTime == null or item.endTime == '' or item.startTime == item.endTime) ? item.startTime : (item.startTime + ' - ' + item.endTime)}"></span>
                                         <!-- Locked Badge -->
                                         <span th:if="${item.locked != null and item.locked}" class="badge bg-warning text-dark py-1 px-2" style="font-size: 0.7rem;" title="Locked from regeneration">
                                             <i class="bi bi-lock-fill me-1"></i>Locked
@@ -731,7 +807,7 @@
                                     </div>
 
                                     <!-- Item Action Controls (Lock, Move, Edit, Delete, Visited Switch) -->
-                                    <div class="d-flex align-items-center gap-1">
+                                    <div class="d-flex align-items-center gap-1 timeline-item-actions">
                                         <!-- Visited Switch -->
                                         <div th:if="${item.placeId != null}" class="form-check form-switch me-1 mb-0">
                                             <input class="form-check-input visited-toggle" type="checkbox" role="switch"
@@ -811,6 +887,14 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- AI Itinerary Caption (Requirement: made with the help of AI) -->
+                <div class="text-center py-3 my-2 ai-itinerary-caption">
+                    <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-stars" style="color: var(--forest-green);"></i>
+                        <span class="small fw-semibold">Made with the help of AI &bull; VoyageCraft Smart Itinerary</span>
+                    </span>
+                </div>
             </div>
 
             <!-- Right Panel: Interactive Google Map / Leaflet Map (Requirement 3 & Responsive) -->
@@ -820,7 +904,19 @@
                         <h6 class="fw-bold mb-0">
                             <i class="bi bi-map-fill text-success me-2"></i> Interactive Route Map
                         </h6>
-                        <span class="badge-sage small">Highway Polyline</span>
+                        <span class="badge-sage small">Road Network Engine</span>
+                    </div>
+
+                    <!-- Multi-Day Itinerary Map Selector (Requirement 5) -->
+                    <div class="map-day-selector-bar mb-2" id="mapDaySelectorContainer">
+                        <button type="button" class="btn btn-sm btn-forest map-day-filter-btn active" data-day="all" onclick="selectMapDay('all', this)">
+                            <i class="bi bi-globe me-1"></i>All Days
+                        </button>
+                        <th:block th:each="day : ${trip.dayItineraries}">
+                            <button type="button" class="btn btn-sm btn-outline-forest map-day-filter-btn" th:data-day="${day.dayNumber}" onclick="selectMapDay(this.dataset.day, this)">
+                                Day <span th:text="${day.dayNumber}"></span>
+                            </button>
+                        </th:block>
                     </div>
 
                     <!-- Map Canvas Container -->
@@ -1502,12 +1598,49 @@
                 </div>
             </div>
         </div>
+    <!-- 9. Guest Save / Authentication Modal (Requirement 3) -->
+    <div class="modal fade" id="guestSaveAuthModal" tabindex="-1" aria-labelledby="guestSaveAuthModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold" id="guestSaveAuthModalLabel">
+                        <i class="bi bi-cloud-arrow-up-fill text-forest me-2"></i>Save Journey to Your Account
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-compass text-forest" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Preserve Your Itinerary</h5>
+                    <p class="text-muted small mb-4">
+                        You have crafted a great road trip! Create a free account or sign in to permanently save your schedule, access it on mobile, and collaborate with your travel crew.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="/login?redirect=/trip/guest&autoSave=true" class="btn btn-forest py-2 fw-semibold" onclick="sessionStorage.setItem('voyagecraft_autosave_guest', 'true')">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In &amp; Save Journey
+                        </a>
+                        <a href="/register?redirect=/trip/guest&autoSave=true" class="btn btn-outline-forest py-2 fw-semibold" onclick="sessionStorage.setItem('voyagecraft_autosave_guest', 'true')">
+                            <i class="bi bi-person-plus me-1"></i> Register New Account
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer border-top px-4 py-2 justify-content-center">
+                    <button type="button" class="btn btn-link text-muted btn-sm text-decoration-none" data-bs-dismiss="modal">
+                        Continue Planning as Guest
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
     <footer class="py-4 text-center">
         <div class="container">
-            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
+            <p class="mb-1 text-muted small">
+                <i class="bi bi-stars text-warning me-1"></i> Made with the help of AI &bull; VoyageCraft Smart Travel Planner
+            </p>
+            <p class="mb-0 text-muted extra-small" style="font-size: 0.78rem;">Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
@@ -1520,6 +1653,7 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const tripData = /*[[${trip}]]*/ {};
+        const isUserLoggedIn = /*[[${isLoggedIn}]]*/ false;
         /*]]>*/
     </script>
 
@@ -1530,6 +1664,29 @@
             if (shareInput && tripData && tripData.id) {
                 shareInput.value = window.location.origin + '/trip/' + tripData.id + (tripData.shareCode ? ('?invite=' + tripData.shareCode) : '');
             }
+
+            // Auto-save guest trip if redirected from login/register with autoSave
+            if (tripData && tripData.isGuest && isUserLoggedIn && sessionStorage.getItem('voyagecraft_autosave_guest') === 'true') {
+                sessionStorage.removeItem('voyagecraft_autosave_guest');
+                promptSaveGuestTrip();
+            }
+
+            // Rehydrate guest trip if session timed out on /trip/guest
+            if (tripData && tripData.isGuest && (!tripData.destinations || tripData.destinations.length === 0)) {
+                try {
+                    const cachedPayload = localStorage.getItem('voyagecraft_guest_payload');
+                    if (cachedPayload) {
+                        fetch('/api/trips/guest/sync', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: cachedPayload
+                        }).then(r => {
+                            if (r.ok) window.location.reload();
+                        });
+                    }
+                } catch(e){}
+            }
+
             initTripWorkspaceMap(tripData);
             initDestinationDragAndDrop();
             initQuickUndoCheck();
@@ -1537,13 +1694,94 @@
             loadSmartStopsAlongRoute();
         });
 
+        // Guest Trip Save & Discard Handlers (Requirement 3)
+        async function promptSaveGuestTrip() {
+            if (isUserLoggedIn) {
+                try {
+                    const rawPayload = localStorage.getItem('voyagecraft_guest_payload');
+                    let payload = null;
+                    if (rawPayload) {
+                        try { payload = JSON.parse(rawPayload); } catch(e){}
+                    }
+                    if (!payload && tripData) {
+                        const destNames = (tripData.destinations || []).map(d => d.name);
+                        payload = {
+                            tripName: tripData.tripName,
+                            startLocation: tripData.startLocation,
+                            destinationNames: destNames,
+                            startDate: tripData.startDate,
+                            endDate: tripData.endDate,
+                            dailyStartTime: tripData.dailyStartTime || "08:00",
+                            dailyEndTime: tripData.dailyEndTime || "20:00",
+                            transportMode: tripData.transportMode || "CAR",
+                            travelStyle: tripData.travelStyle || "BALANCED",
+                            travelersCount: tripData.travelersCount || 2,
+                            budgetRange: tripData.budgetRange || "Moderate"
+                        };
+                    }
+
+                    const res = await fetch('/api/trips/save-guest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.message || "Failed to save trip to account");
+                    }
+
+                    const saved = await res.json();
+                    localStorage.removeItem('voyagecraft_guest_trip');
+                    localStorage.removeItem('voyagecraft_guest_payload');
+                    alert("Trip successfully saved to your account!");
+                    window.location.href = '/trip/' + saved.id;
+                } catch(err) {
+                    console.error("Save guest trip error:", err);
+                    alert("Could not save trip: " + err.message);
+                }
+            } else {
+                const modalEl = document.getElementById("guestSaveAuthModal");
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                } else {
+                    sessionStorage.setItem('voyagecraft_autosave_guest', 'true');
+                    window.location.href = '/login?redirect=/trip/guest&autoSave=true';
+                }
+            }
+        }
+
+        function discardGuestTrip() {
+            if (confirm("Discard this temporary guest journey? This cannot be undone.")) {
+                localStorage.removeItem('voyagecraft_guest_trip');
+                localStorage.removeItem('voyagecraft_guest_payload');
+                window.location.href = '/create-trip';
+            }
+        }
+
         // Global marker registry for bidirectional map-timeline synchronization
         window._tripMarkersByDestId = {};
+        window._tripMarkersByItemId = {};
         window._tripDestinationMarkers = [];
         window._routeBoundsGroup = null;
+        window._activeMapDay = 'all';
 
-        // Initialize Workspace Map with Real Route Highway Polyline
-        function initTripWorkspaceMap(trip) {
+        function selectMapDay(day, btn) {
+            window._activeMapDay = String(day);
+            document.querySelectorAll(".map-day-filter-btn").forEach(b => {
+                b.classList.remove("active", "btn-forest");
+                b.classList.add("btn-outline-forest");
+            });
+            if (btn) {
+                btn.classList.add("active", "btn-forest");
+                btn.classList.remove("btn-outline-forest");
+            }
+            initTripWorkspaceMap(tripData, String(day));
+        }
+
+        // Initialize Workspace Map with Real Route Highway Polyline & Daily Itinerary Sync
+        function initTripWorkspaceMap(trip, selectedDay = 'all') {
             const mapElement = document.getElementById("mapContainer");
             if (!mapElement || !trip) return;
 
@@ -1569,100 +1807,245 @@
             const boundsGroup = L.featureGroup();
             window._routeBoundsGroup = boundsGroup;
             window._tripMarkersByDestId = {};
+            window._tripMarkersByItemId = {};
             window._tripDestinationMarkers = [];
 
-            // Custom Origin Icon
-            const originIcon = L.divIcon({
-                className: 'custom-map-marker',
-                html: `<div style="background: #0284c7; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(2,132,199,0.35); border: 2.5px solid #ffffff;"><i class="bi bi-geo-alt-fill"></i></div>`,
-                iconSize: [34, 34],
-                iconAnchor: [17, 17],
-                popupAnchor: [0, -20]
-            });
-
-            const originMarker = L.marker([originLat, originLng], { icon: originIcon })
-                .addTo(map)
-                .bindPopup(`<strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}`);
-            boundsGroup.addLayer(originMarker);
-
-            // Add Destination markers with bidirectional click sync
-            const stopCoords = [ [originLat, originLng] ];
-
-            if (trip.destinations && trip.destinations.length > 0) {
-                trip.destinations.forEach((d, idx) => {
-                    const dLat = d.latitude || (originLat + (idx + 1) * 0.08);
-                    const dLng = d.longitude || (originLng + (idx + 1) * 0.08);
-                    stopCoords.push([dLat, dLng]);
-
-                    const stopIcon = L.divIcon({
-                        className: 'custom-map-marker',
-                        html: `<div class="marker-stop-pin" style="background: #0369a1; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(3,105,161,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16],
-                        popupAnchor: [0, -18]
-                    });
-
-                    const popupContent = `
-                        <div style="min-width: 170px;">
-                            <div class="fw-bold fs-6 text-dark">${escapeHtml(d.name)}</div>
-                            <div class="text-muted small mb-1">Stop ${idx + 1} of ${trip.destinations.length}</div>
-                            ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay pinned</div>'}
-                            ${d.distanceFromPrevious ? `<div class="small text-muted mt-1">🛣️ ${d.distanceFromPrevious} km from prev stop</div>` : ''}
-                        </div>
-                    `;
-
-                    const stopMarker = L.marker([dLat, dLng], { icon: stopIcon })
-                        .addTo(map)
-                        .bindPopup(popupContent);
-                    boundsGroup.addLayer(stopMarker);
-
-                    window._tripMarkersByDestId[d.id] = stopMarker;
-                    window._tripDestinationMarkers.push({ id: d.id, marker: stopMarker, name: d.name, lat: dLat, lng: dLng, index: idx });
-
-                    // Marker click -> synchronize and highlight timeline item & sequence node
-                    stopMarker.on('click', () => {
-                        highlightDestinationItem(d.id);
-                    });
+            if (selectedDay === 'all') {
+                // ==========================================
+                // OVERVIEW ROUTE (ALL DAYS)
+                // ==========================================
+                // Custom Origin Icon
+                const originIcon = L.divIcon({
+                    className: 'custom-map-marker',
+                    html: `<div style="background: #0284c7; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(2,132,199,0.35); border: 2.5px solid #ffffff;"><i class="bi bi-geo-alt-fill"></i></div>`,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17],
+                    popupAnchor: [0, -20]
                 });
-            }
 
-            // Draw Real Highway Route Geometry Polyline
-            let routePoints = [];
-            if (trip.routeSummary && trip.routeSummary.fullRouteGeometry && trip.routeSummary.fullRouteGeometry.length > 1) {
-                routePoints = trip.routeSummary.fullRouteGeometry.map(pt => [pt[0], pt[1]]);
+                const originMarker = L.marker([originLat, originLng], { icon: originIcon })
+                    .addTo(map)
+                    .bindPopup(`<strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}`);
+                boundsGroup.addLayer(originMarker);
+
+                // Add Destination markers
+                const stopCoords = [ [originLat, originLng] ];
+
+                if (trip.destinations && trip.destinations.length > 0) {
+                    trip.destinations.forEach((d, idx) => {
+                        const dLat = d.latitude || (originLat + (idx + 1) * 0.08);
+                        const dLng = d.longitude || (originLng + (idx + 1) * 0.08);
+                        stopCoords.push([dLat, dLng]);
+
+                        const stopIcon = L.divIcon({
+                            className: 'custom-map-marker',
+                            html: `<div class="marker-stop-pin" style="background: #0369a1; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 3px 8px rgba(3,105,161,0.3); border: 2.5px solid #ffffff;">${idx + 1}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16],
+                            popupAnchor: [0, -18]
+                        });
+
+                        const popupContent = `
+                            <div style="min-width: 170px;">
+                                <div class="fw-bold fs-6 text-dark">${escapeHtml(d.name)}</div>
+                                <div class="text-muted small mb-1">Stop ${idx + 1} of ${trip.destinations.length}</div>
+                                ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay pinned</div>'}
+                                ${d.distanceFromPrevious ? `<div class="small text-muted mt-1">🛣️ ${d.distanceFromPrevious} km from prev stop</div>` : ''}
+                            </div>
+                        `;
+
+                        const stopMarker = L.marker([dLat, dLng], { icon: stopIcon })
+                            .addTo(map)
+                            .bindPopup(popupContent);
+                        boundsGroup.addLayer(stopMarker);
+
+                        window._tripMarkersByDestId[d.id] = stopMarker;
+                        window._tripDestinationMarkers.push({ id: d.id, marker: stopMarker, name: d.name, lat: dLat, lng: dLng, index: idx });
+
+                        stopMarker.on('click', () => {
+                            highlightDestinationItem(d.id);
+                        });
+                    });
+                }
+
+                // Draw Real Highway Route Polyline
+                let routePoints = [];
+                if (trip.routeSummary && trip.routeSummary.fullRouteGeometry && trip.routeSummary.fullRouteGeometry.length > 1) {
+                    routePoints = trip.routeSummary.fullRouteGeometry.map(pt => [pt[0], pt[1]]);
+                } else {
+                    routePoints = stopCoords;
+                }
+
+                if (routePoints.length > 1) {
+                    L.polyline(routePoints, {
+                        color: '#0284c7',
+                        weight: 6,
+                        opacity: 0.35,
+                        lineCap: 'round',
+                        lineJoin: 'round'
+                    }).addTo(map);
+
+                    const routeLine = L.polyline(routePoints, {
+                        color: '#0ea5e9',
+                        weight: 4,
+                        opacity: 0.95,
+                        smoothFactor: 1.0,
+                        dashArray: (trip.transportMode === 'WALKING') ? '6, 8' : null
+                    }).addTo(map);
+                    boundsGroup.addLayer(routeLine);
+                }
             } else {
-                routePoints = stopCoords;
-            }
+                // ==========================================
+                // SPECIFIC DAY ITINERARY ROUTE & ACTIVITIES
+                // ==========================================
+                const targetDayNum = parseInt(selectedDay, 10);
+                const dayPlan = trip.dayItineraries ? trip.dayItineraries.find(d => d.dayNumber === targetDayNum) : null;
+                const dayPoints = [];
 
-            if (routePoints.length > 1) {
-                // Route outer casing
-                L.polyline(routePoints, {
-                    color: '#0284c7',
-                    weight: 6,
-                    opacity: 0.35,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                }).addTo(map);
+                if (dayPlan && dayPlan.items && dayPlan.items.length > 0) {
+                    dayPlan.items.forEach((item, idx) => {
+                        let iLat = item.latitude;
+                        let iLng = item.longitude;
 
-                // Main vibrant road line
-                const routeLine = L.polyline(routePoints, {
-                    color: '#0ea5e9',
-                    weight: 4,
-                    opacity: 0.95,
-                    smoothFactor: 1.0,
-                    dashArray: (trip.transportMode === 'WALKING') ? '6, 8' : null
-                }).addTo(map);
-                boundsGroup.addLayer(routeLine);
+                        // Fallback coordinates if missing
+                        if (!iLat || !iLng || isNaN(iLat) || isNaN(iLng)) {
+                            iLat = originLat + (idx * 0.005);
+                            iLng = originLng + (idx * 0.005);
+                        }
+
+                        dayPoints.push([iLat, iLng]);
+
+                        // Distinct marker category styling
+                        let pinClass = 'marker-sightseeing';
+                        let iconHtml = '<i class="bi bi-geo-alt-fill"></i>';
+                        const aType = (item.activityType || '').toUpperCase();
+                        const aCat = (item.category || '').toLowerCase();
+
+                        if (aType === 'DEPARTURE' || aType === 'ARRIVAL') {
+                            pinClass = 'marker-departure';
+                            iconHtml = '<i class="bi bi-compass"></i>';
+                        } else if (aType === 'MEAL' || aCat.includes('dining') || aCat.includes('restaurant')) {
+                            pinClass = 'marker-meal';
+                            iconHtml = '<i class="bi bi-cup-hot-fill"></i>';
+                        } else if (aType === 'REST' || aCat.includes('cafe')) {
+                            pinClass = 'marker-rest';
+                            iconHtml = '<i class="bi bi-cup-straw"></i>';
+                        } else if (aType === 'HOTEL' || aCat.includes('hotel')) {
+                            pinClass = 'marker-hotel';
+                            iconHtml = '<i class="bi bi-building"></i>';
+                        }
+
+                        const itemKey = String(item.id != null ? item.id : (targetDayNum + '-' + idx));
+
+                        const actIcon = L.divIcon({
+                            className: 'custom-map-marker',
+                            html: `<div class="activity-map-pin ${pinClass}">${idx + 1}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16],
+                            popupAnchor: [0, -18]
+                        });
+
+                        const popupHtml = `
+                            <div style="min-width: 200px;">
+                                <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
+                                    <span class="badge bg-secondary text-white small" style="font-size: 0.65rem;">Day ${targetDayNum} • #${idx + 1}</span>
+                                    <span class="badge bg-light text-dark border small" style="font-size: 0.65rem;">${escapeHtml(item.category || item.activityType || 'Activity')}</span>
+                                </div>
+                                <div class="fw-bold text-dark fs-6">${escapeHtml(item.activity)}</div>
+                                <div class="small text-muted mb-1"><i class="bi bi-clock me-1 text-primary"></i>${item.startTime} - ${item.endTime}</div>
+                                <div class="small text-muted mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>${escapeHtml(item.location || '')}</div>
+                                ${item.notes ? `<div class="small text-muted border-top pt-1 mb-2 fst-italic">${escapeHtml(item.notes)}</div>` : ''}
+                                <button type="button" class="btn btn-forest btn-sm w-100 py-1" onclick="highlightTimelineActivity('${itemKey}')">
+                                    <i class="bi bi-list-task me-1"></i>View in Timeline
+                                </button>
+                            </div>
+                        `;
+
+                        const marker = L.marker([iLat, iLng], { icon: actIcon })
+                            .addTo(map)
+                            .bindPopup(popupHtml);
+                        boundsGroup.addLayer(marker);
+
+                        window._tripMarkersByItemId[itemKey] = marker;
+
+                        marker.on('click', () => {
+                            highlightTimelineActivity(itemKey);
+                        });
+                    });
+
+                    // Draw connecting daily itinerary polyline
+                    if (dayPoints.length > 1) {
+                        L.polyline(dayPoints, {
+                            color: '#059669',
+                            weight: 5,
+                            opacity: 0.4,
+                            lineCap: 'round',
+                            lineJoin: 'round'
+                        }).addTo(map);
+
+                        const dayRouteLine = L.polyline(dayPoints, {
+                            color: '#10b981',
+                            weight: 3.5,
+                            opacity: 0.95,
+                            smoothFactor: 1.0,
+                            dashArray: '4, 6'
+                        }).addTo(map);
+                        boundsGroup.addLayer(dayRouteLine);
+                    }
+                }
             }
 
             if (boundsGroup.getLayers().length > 0) {
-                map.fitBounds(boundsGroup.getBounds(), { padding: [45, 45], maxZoom: 14 });
+                map.fitBounds(boundsGroup.getBounds(), { padding: [45, 45], maxZoom: 15 });
             }
 
             // Ensure tile sizing is refreshed
             setTimeout(() => {
                 map.invalidateSize();
             }, 300);
+        }
+
+        // Bidirectional Timeline Activity Click -> Centers Map & Opens Marker Popup
+        function focusActivityOnMap(element) {
+            if (!element) return;
+            const day = element.dataset.day;
+            const itemId = String(element.dataset.itemId);
+            const lat = parseFloat(element.dataset.lat);
+            const lng = parseFloat(element.dataset.lng);
+
+            if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+            // Switch map to that day if needed
+            if (window._activeMapDay !== String(day)) {
+                const dayBtn = document.querySelector(`.map-day-filter-btn[data-day="${day}"]`);
+                selectMapDay(String(day), dayBtn);
+            }
+
+            // Center map on marker and open popup
+            setTimeout(() => {
+                const marker = window._tripMarkersByItemId ? window._tripMarkersByItemId[itemId] : null;
+                if (marker && window._currentLeafletMap) {
+                    window._currentLeafletMap.setView([lat, lng], 15, { animate: true });
+                    marker.openPopup();
+                } else if (window._currentLeafletMap) {
+                    window._currentLeafletMap.setView([lat, lng], 15, { animate: true });
+                }
+            }, 100);
+
+            // Highlight timeline card
+            document.querySelectorAll(".timeline-item").forEach(item => item.classList.remove("active-marker-highlight"));
+            element.classList.add("active-marker-highlight");
+        }
+
+        // Highlight timeline item from map marker click
+        function highlightTimelineActivity(itemId) {
+            if (!itemId) return;
+            const targetEl = document.getElementById("timeline-item-" + itemId);
+            if (targetEl) {
+                document.querySelectorAll(".timeline-item").forEach(item => item.classList.remove("active-marker-highlight"));
+                targetEl.classList.add("active-marker-highlight");
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         // Highlight destination in sequence bar and timeline smoothly
@@ -1959,12 +2342,20 @@
         // Single Day Regeneration (Requirement 4: Regenerate-one-day action)
         async function regenerateSingleDay(tripId, dayNumber, preference) {
             try {
-                const res = await fetch(`/api/trips/${tripId}/regenerate-day/${dayNumber}`, {
+                const endpoint = (tripData && tripData.isGuest)
+                    ? `/api/trips/guest/regenerate-day/${dayNumber}`
+                    : `/api/trips/${tripId}/regenerate-day/${dayNumber}`;
+
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ preference: preference })
                 });
                 if (!res.ok) throw new Error("Day regeneration failed");
+                const updated = await res.json();
+                if (tripData && tripData.isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
                 window.location.reload();
             } catch (err) {
                 console.error(err);
@@ -2074,8 +2465,10 @@
                     announceReorder(`Moved ${movedItem.name} to stop ${toIndex + 1} of ${dests.length}`);
 
                     const orderedIds = dests.map(d => d.id);
+                    const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                    const endpoint = isGuest ? '/api/trips/guest/reorder' : `/api/trips/${tripData.id}/reorder`;
                     try {
-                        const updateRes = await fetch(`/api/trips/${tripData.id}/reorder`, {
+                        const updateRes = await fetch(endpoint, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ orderedDestinationIds: orderedIds })
@@ -2084,6 +2477,10 @@
                         if (!updateRes.ok) {
                             const errJson = await updateRes.json().catch(() => ({}));
                             throw new Error(errJson.message || "Failed to save reordered destinations");
+                        }
+                        const updated = await updateRes.json();
+                        if (isGuest) {
+                            try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
                         }
                         window.location.reload();
                     } catch (err) {
@@ -2141,7 +2538,9 @@
                 announceReorder(`Moved ${temp.name} to stop ${targetIndex + 1} of ${dests.length}`);
 
                 const orderedIds = dests.map(d => d.id);
-                const updateRes = await fetch(`/api/trips/${tripId}/reorder`, {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const endpoint = isGuest ? '/api/trips/guest/reorder' : `/api/trips/${tripId}/reorder`;
+                const updateRes = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ orderedDestinationIds: orderedIds })
@@ -2150,6 +2549,10 @@
                 if (!updateRes.ok) {
                     const errJson = await updateRes.json().catch(() => ({}));
                     throw new Error(errJson.message || "Failed to reorder stops");
+                }
+                const updated = await updateRes.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
                 }
                 window.location.reload();
             } catch (err) {
@@ -2453,13 +2856,32 @@
             }
         }
 
+        function convertTo24Hour(timeStr) {
+            if (!timeStr) return "08:00";
+            const s = timeStr.trim();
+            if (/^\d{1,2}:\d{2}$/.test(s)) {
+                const parts = s.split(':');
+                return parts[0].padStart(2, '0') + ':' + parts[1];
+            }
+            const match = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                const min = match[2];
+                const ampm = match[3].toUpperCase();
+                if (ampm === 'PM' && hour < 12) hour += 12;
+                if (ampm === 'AM' && hour === 12) hour = 0;
+                return String(hour).padStart(2, '0') + ':' + min;
+            }
+            return "08:00";
+        }
+
         function openEditActivityModal(btn) {
             const d = btn.dataset;
             document.getElementById("editItemId").value = d.itemId;
             document.getElementById("editActivityTitle").value = d.activity || "";
             document.getElementById("editActivityLocation").value = d.location || "";
-            document.getElementById("editActivityStart").value = d.start || "09:00";
-            document.getElementById("editActivityEnd").value = d.end || "10:30";
+            document.getElementById("editActivityStart").value = convertTo24Hour(d.start);
+            document.getElementById("editActivityEnd").value = convertTo24Hour(d.end);
             document.getElementById("editActivityNotes").value = d.notes || "";
             document.getElementById("editActivityLocked").checked = (d.locked === "true" || d.locked === true);
 
@@ -2716,7 +3138,9 @@
             'VIEWPOINT': { name: 'Scenic Viewpoint', icon: 'bi-camera-fill', color: '#7c3aed', bg: '#ede9fe' },
             'ATTRACTION': { name: 'Attraction', icon: 'bi-star-fill', color: '#d97706', bg: '#fef3c7' },
             'PARKING': { name: 'Parking Area', icon: 'bi-p-square-fill', color: '#475569', bg: '#f1f5f9' },
-            'HOTEL': { name: 'Hotel / Stay', icon: 'bi-building', color: '#2563eb', bg: '#dbeafe' }
+            'HOTEL': { name: 'Hotel / Stay', icon: 'bi-building', color: '#2563eb', bg: '#dbeafe' },
+            'HOSPITAL': { name: 'Hospital & Clinic', icon: 'bi-hospital', color: '#dc2626', bg: '#fee2e2' },
+            'PHARMACY': { name: 'Pharmacy & Medical', icon: 'bi-capsule', color: '#059669', bg: '#d1fae5' }
         };
 
         function getCategoryMeta(cat) {
@@ -2784,7 +3208,8 @@
             const detourInfo = document.getElementById("smartStopsDetourInfo");
             const providerBadge = document.getElementById("smartStopsProviderBadge");
 
-            if (!grid || !tripData || !tripData.id) return;
+            if (!grid || !tripData) return;
+            const isGuest = Boolean(tripData.isGuest || !tripData.id || tripData.id === 0);
 
             const category = currentSmartStopsCategory;
             const maxDetour = detourSelect ? detourSelect.value : '';
@@ -2796,7 +3221,9 @@
                 if (errorBox) errorBox.style.display = "none";
                 if (emptyBox) emptyBox.style.display = "none";
 
-                let url = `/api/trips/${tripData.id}/places-along-route?category=${encodeURIComponent(category)}`;
+                let url = isGuest
+                    ? `/api/trips/guest/places-along-route?category=${encodeURIComponent(category)}`
+                    : `/api/trips/${tripData.id}/places-along-route?category=${encodeURIComponent(category)}`;
                 if (maxDetour) {
                     url += `&maxDetourMinutes=${encodeURIComponent(maxDetour)}`;
                 }
@@ -3105,7 +3532,7 @@
         }
 
         async function executeAddSmartStop() {
-            if (!selectedStopForAdd || !tripData || !tripData.id) return;
+            if (!selectedStopForAdd || !tripData || (!tripData.id && !tripData.isGuest)) return;
 
             const btn = document.getElementById("btnConfirmAddSmartStop");
             const select = document.getElementById("addStopPositionSelect");
@@ -3137,7 +3564,11 @@
                     btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Inserting stop...`;
                 }
 
-                const res = await fetch(`/api/trips/${tripData.id}/add-place-along-route`, {
+                const endpoint = tripData.isGuest 
+                    ? `/api/trips/guest/add-place-along-route`
+                    : `/api/trips/${tripData.id}/add-place-along-route`;
+
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -3146,6 +3577,11 @@
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.message || "Could not add stop to route");
+                }
+
+                if (tripData.isGuest) {
+                    const updated = await res.json();
+                    localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated));
                 }
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById("addSmartStopModal"));

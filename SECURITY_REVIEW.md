@@ -105,15 +105,26 @@ Through this remediation, all identified vulnerabilities have been eliminated. M
   - Created `.dockerignore` preventing secrets, local databases, and temporary build files from entering container images.
   - Created `.env.example` with sanitized placeholders.
 
+### SEC-07: Guest Trip Planning & Multi-Tenant Boundary Isolation (Resolved)
+- **Design Requirement**: Unauthenticated visitors must be allowed to plan itineraries, calculate routes, search smart stops, and customize schedules without being forced to login.
+- **Risk**: Opening endpoints could accidentally allow unauthenticated guests to read or overwrite persisted user trips by tampering with database IDs.
+- **Remediation**:
+  - Guest planning operates purely on transient, in-memory/session-scoped DTOs (`id: 0`).
+  - Guest endpoints (`/api/trips/guest-plan`, `/api/trips/guest/**`, `/trip/guest`) are explicitly separated from database entity endpoints (`/api/trips/{id}/**`).
+  - Guests cannot mutate or access any database records.
+  - Converting a guest trip into a permanent trip (`POST /api/trips/save-guest`) strictly enforces `@AuthenticationPrincipal UserDetails`.
+
 ---
 
 ## 4. Authorization & Permission Matrix
 
-| Operation | Anonymous | Authenticated (Non-Crew) | Collaborator (VIEWER) | Collaborator (EDITOR) | Owner |
+| Operation | Anonymous / Guest | Authenticated (Non-Crew) | Collaborator (VIEWER) | Collaborator (EDITOR) | Owner |
 |---|---|---|---|---|---|
 | View Public Catalog / Autocomplete | ALLOW | ALLOW | ALLOW | ALLOW | ALLOW |
+| Plan & Recalculate Guest Trip (`/create-trip`, `/api/trips/guest/**`) | ALLOW (Session Only) | ALLOW | ALLOW | ALLOW | ALLOW |
+| Save Guest Trip to Account (`POST /api/trips/save-guest`) | 401 Prompt Login | ALLOW (Saved to Self) | N/A | N/A | ALLOW |
 | View Dashboard (`/dashboard`) | REDIRECT `/login` | ALLOW (Own Trips) | ALLOW (Own Trips) | ALLOW (Own Trips) | ALLOW |
-| Create Trip (`POST /api/trips`) | 401 / 403 | ALLOW | ALLOW | ALLOW | ALLOW |
+| Create Trip (`POST /api/trips`) | REDIRECT `/login` | ALLOW | ALLOW | ALLOW | ALLOW |
 | View Trip Details (`GET /trip/{id}`) | REDIRECT `/login` | 403 Forbidden | ALLOW | ALLOW | ALLOW |
 | Reorder Destinations (`POST /api/trips/{id}/reorder`) | 403 Forbidden | 403 Forbidden | 403 Forbidden | ALLOW | ALLOW |
 | Toggle Place / Destination Visited | 403 Forbidden | 403 Forbidden | 403 Forbidden | ALLOW | ALLOW |

@@ -298,16 +298,339 @@ public class RecommendationService {
         CURATED_PLACES_DB.put("kaziranga", kazirangaPlaces);
         CURATED_PLACES_DB.put("kaziranga national park", kazirangaPlaces);
 
-        // Alleppey
-        List<PlaceTemplate> alleppeyPlaces = new ArrayList<>();
-        alleppeyPlaces.add(new PlaceTemplate("Alleppey Backwaters Houseboat Cruise", "Nature", 4.8, 86000, 2.0, 180, 8,
-                "Serene network of interconnected canals, lagoons, and Vembanad Lake traversed on traditional Kettuvallam houseboats.", "07:00 AM - 06:00 PM", 9.4981, 76.3388));
-        alleppeyPlaces.add(new PlaceTemplate("Alappuzha Beach & Ancient Sea Pier", "Photography", 4.5, 42000, 3.5, 75, 12,
-                "Atmospheric sandy shoreline featuring a 150-year-old historic pier extending into the Arabian Sea and a striped lighthouse.", "Open 24 Hours", 9.4925, 76.3180));
-        alleppeyPlaces.add(new PlaceTemplate("Marari Beach", "Photography", 4.6, 29000, 14.0, 90, 25,
-                "Quiet pristine white sand beach framed by coconut palm groves and traditional fishing villages, ideal for relaxation.", "Open 24 Hours", 9.6010, 76.2970));
-        CURATED_PLACES_DB.put("alleppey", alleppeyPlaces);
-        CURATED_PLACES_DB.put("alappuzha", alleppeyPlaces);
+        // Guntakal additional places
+        guntakalPlaces.add(new PlaceTemplate("Chippagiri Sri Vijayadasara Gadde", "Historical", 4.5, 3100, 18.0, 75, 35,
+                "Spiritual meditation sanctuary of Haridasa saint Sri Vijayadasaru amidst granite hill rocks.", "07:00 AM - 06:00 PM", 15.2800, 77.2100));
+        guntakalPlaces.add(new PlaceTemplate("Uravakonda Historic Temple Complex", "Temples", 4.4, 4500, 24.0, 60, 30,
+                "Ancient stone temple featuring carved mandapams and historic temple tank.", "06:30 AM - 07:30 PM", 14.9450, 77.2600));
+        guntakalPlaces.add(new PlaceTemplate("Alur Ancient Fort Hillock", "Adventure", 4.3, 2800, 22.0, 90, 30,
+                "Panoramic granite hilltop offering trekking paths, historic rampart remains, and valley views.", "06:00 AM - 06:00 PM", 15.3050, 77.2400));
+        guntakalPlaces.add(new PlaceTemplate("Guntakal Heritage Rail Museum", "Museums", 4.4, 3900, 2.0, 60, 6,
+                "Exhibits on South Central Railway history, steam locomotive models, and colonial signaling systems.", "09:30 AM - 05:00 PM", 15.1700, 77.3700));
+
+        // Calicut additional places
+        calicutPlaces.add(new PlaceTemplate("Beypore Beach & Floating Bridge", "Adventure", 4.5, 16000, 11.5, 60, 25,
+                "Thrilling 100-meter floating bridge walkway rising and falling with sea waves along Beypore harbour.", "09:00 AM - 06:00 PM", 11.1620, 75.8050));
+        calicutPlaces.add(new PlaceTemplate("Sarovaram Bio Park", "Parks", 4.4, 11000, 3.2, 75, 10,
+                "Eco-friendly urban wetland park featuring mangrove forests, boardwalks, boating, and bird watching.", "09:00 AM - 07:30 PM", 11.2720, 75.7980));
+
+        // Munnar additional places
+        munnarPlaces.add(new PlaceTemplate("Kundala Lake & Arch Dam", "Nature", 4.6, 26000, 20.0, 90, 45,
+                "Asia's first arch dam surrounded by pine groves offering pedal boating and Kashmiri Shikara rides.", "09:00 AM - 05:00 PM", 10.1150, 77.1950));
+        munnarPlaces.add(new PlaceTemplate("Pothamedu Viewpoint", "Photography", 4.5, 22000, 4.5, 60, 15,
+                "Breathtaking panoramic overlook draped in tea, coffee, and cardamom plantations and misty valleys.", "Open 24 Hours", 10.0510, 77.0610));
+
+        // Kodaikanal additional places
+        kodaiPlaces.add(new PlaceTemplate("Bear Shola Falls", "Nature", 4.4, 18000, 2.5, 60, 10,
+                "Tiered forest waterfall nestled in dense woods where bears once drank, ideal for quiet nature walks.", "10:00 AM - 05:00 PM", 10.2420, 77.4780));
+        kodaiPlaces.add(new PlaceTemplate("Dolphin's Nose & Echo Rock", "Adventure", 4.6, 21000, 8.0, 120, 25,
+                "Protruding flat rock formation perched over a 6,600-foot chasm offering dramatic valley panoramas.", "06:00 AM - 05:30 PM", 10.2050, 77.5250));
+
+        // Kochi / Cochin
+        List<PlaceTemplate> kochiPlaces = new ArrayList<>();
+        kochiPlaces.add(new PlaceTemplate("Chinese Fishing Nets & Fort Kochi Beach", "Photography", 4.6, 42000, 1.2, 60, 5,
+                "Cantilevered 14th-century coastal fishing installations framing sunsets along Fort Kochi's historic promenade.", "Open 24 Hours", 9.9675, 76.2415));
+        kochiPlaces.add(new PlaceTemplate("Mattancherry Dutch Palace", "Historical", 4.5, 34000, 3.5, 75, 12,
+                "16th-century palace built by the Portuguese and renovated by the Dutch featuring Ramayana murals and royal artifacts.", "09:45 AM - 04:45 PM (Closed Fridays)", 9.9583, 76.2592));
+        kochiPlaces.add(new PlaceTemplate("Santa Cruz Cathedral Basilica", "Historical", 4.7, 28000, 1.5, 60, 6,
+                "One of India's grandest heritage basilicas dating to 1505 with magnificent Gothic spires and ceiling frescoes.", "07:00 AM - 06:30 PM", 9.9647, 76.2414));
+        kochiPlaces.add(new PlaceTemplate("Jew Town & Paradesi Synagogue", "Historical", 4.6, 26000, 3.8, 75, 14,
+                "Atmospheric 1568 synagogue adorned with Belgian crystal chandeliers and hand-painted blue Cantonese porcelain tiles.", "10:00 AM - 05:00 PM (Closed Saturdays)", 9.9575, 76.2600));
+        kochiPlaces.add(new PlaceTemplate("Hill Palace Museum Tripunithura", "Museums", 4.5, 31000, 14.0, 120, 35,
+                "Kerala's largest archaeological palace complex with 54 acres of royal botanical gardens, crown jewels, and heritage.", "09:30 AM - 04:30 PM (Closed Mondays)", 9.9535, 76.3639));
+        kochiPlaces.add(new PlaceTemplate("Marine Drive Kochi Promenade", "Photography", 4.5, 45000, 8.0, 60, 20,
+                "Scenic waterfront promenade facing Cochin backwaters and shipping channels with musical walkway and boating.", "Open 24 Hours", 9.9790, 76.2760));
+        CURATED_PLACES_DB.put("kochi", kochiPlaces);
+        CURATED_PLACES_DB.put("cochin", kochiPlaces);
+        CURATED_PLACES_DB.put("fort kochi", kochiPlaces);
+
+        // Pondicherry / Puducherry
+        List<PlaceTemplate> pondyPlaces = new ArrayList<>();
+        pondyPlaces.add(new PlaceTemplate("Promenade Beach & Rock Beach Walk", "Photography", 4.7, 56000, 1.0, 75, 5,
+                "1.5-km seaside promenade overlooking the Bay of Bengal with heritage statues, French cafes, and sea spray.", "Open 24 Hours", 11.9338, 79.8359));
+        pondyPlaces.add(new PlaceTemplate("Auroville Matrimandir & Visitors Centre", "Spiritual", 4.7, 48000, 12.0, 150, 30,
+                "Universal township focused on human unity featuring the iconic golden geodesic meditation dome and tranquil gardens.", "09:00 AM - 05:00 PM", 12.0069, 79.8106));
+        pondyPlaces.add(new PlaceTemplate("French Quarter (White Town) Heritage Walk", "Historical", 4.6, 38000, 0.8, 90, 4,
+                "Charming mustard-yellow colonial mansions, bougainvillea-draped archways, art galleries, and quaint bakeries.", "Open 24 Hours", 11.9320, 79.8330));
+        pondyPlaces.add(new PlaceTemplate("Sri Aurobindo Ashram", "Spiritual", 4.7, 41000, 1.2, 60, 6,
+                "Serene spiritual sanctuary founded in 1926 housing the flower-covered Samadhi shrine of Sri Aurobindo and The Mother.", "08:00 AM - 06:00 PM", 11.9372, 79.8344));
+        pondyPlaces.add(new PlaceTemplate("Paradise Beach & Chunnambar Boat House", "Beaches", 4.5, 34000, 9.5, 120, 25,
+                "Golden sand spit between the Chunnambar backwaters and sea, accessible via scenic mangrove ferry boat rides.", "09:00 AM - 05:30 PM", 11.8790, 79.8050));
+        pondyPlaces.add(new PlaceTemplate("Basilica of the Sacred Heart of Jesus", "Historical", 4.6, 22000, 1.8, 45, 8,
+                "Gothic revival Catholic basilica built in 1907 renowned for rare stained-glass panels depicting the life of Christ.", "07:00 AM - 06:30 PM", 11.9280, 79.8270));
+        CURATED_PLACES_DB.put("pondicherry", pondyPlaces);
+        CURATED_PLACES_DB.put("pondy", pondyPlaces);
+        CURATED_PLACES_DB.put("puducherry", pondyPlaces);
+
+        // Chikmagalur
+        List<PlaceTemplate> ckmPlaces = new ArrayList<>();
+        ckmPlaces.add(new PlaceTemplate("Mullayanagiri Peak", "Adventure", 4.8, 38000, 22.0, 150, 45,
+                "Highest summit in Karnataka (1,930 m) offering mist-wrapped ridge walks, temple at the top, and Western Ghats panoramas.", "06:00 AM - 06:00 PM", 13.3917, 75.7214));
+        ckmPlaces.add(new PlaceTemplate("Baba Budangiri (Datta Peeta)", "Historical", 4.6, 28000, 28.0, 120, 55,
+                "Sacred mountain range associated with Sufi saint Baba Budan who brought coffee to India, featuring mountain caves.", "08:00 AM - 05:30 PM", 13.4217, 75.7667));
+        ckmPlaces.add(new PlaceTemplate("Hebbe Waterfalls", "Waterfalls", 4.6, 24000, 36.0, 150, 70,
+                "Spectacular two-stage 168-meter cascade deep inside private coffee plantations reached by 4x4 forest jeeps.", "06:00 AM - 04:00 PM", 13.5410, 75.7220));
+        ckmPlaces.add(new PlaceTemplate("Hirekolale Lake Sunset Point", "Nature", 4.6, 18000, 10.0, 75, 20,
+                "Tranquil man-made reservoir surrounded by coffee hills mirroring Mullayanagiri peak in its calm evening waters.", "06:00 AM - 06:30 PM", 13.3620, 75.7350));
+        ckmPlaces.add(new PlaceTemplate("Coffee Yatra Museum", "Museums", 4.4, 14000, 3.5, 60, 10,
+                "Interactive thematic exhibition by Coffee Board of India displaying bean roasting, origin history, and brew labs.", "10:00 AM - 05:00 PM (Closed Weekends)", 13.3150, 75.7750));
+        ckmPlaces.add(new PlaceTemplate("Z Point & Kemmangundi Trail", "Adventure", 4.7, 19000, 55.0, 120, 90,
+                "Thrilling cliffside trail offering breathtaking vertical drops, lush green shola valleys, and mountain breezes.", "06:00 AM - 05:30 PM", 13.5480, 75.7530));
+        CURATED_PLACES_DB.put("chikmagalur", ckmPlaces);
+        CURATED_PLACES_DB.put("chikkamagaluru", ckmPlaces);
+
+        // Tirupati
+        List<PlaceTemplate> tirupatiPlaces = new ArrayList<>();
+        tirupatiPlaces.add(new PlaceTemplate("Sri Venkateswara Swamy Temple (Tirumala)", "Temples", 4.9, 240000, 22.0, 180, 50,
+                "World's most visited sacred hill shrine of Lord Balaji situated atop the sacred Seven Hills of Seshachalam.", "Open 24 Hours (Darshan Slots)", 13.6833, 79.3472));
+        tirupatiPlaces.add(new PlaceTemplate("Kapila Theertham Waterfalls & Temple", "Temples", 4.6, 32000, 4.0, 75, 12,
+                "Sacred pilgrimage cascade and Lord Shiva shrine at the foot of Tirumala hills where Sage Kapila meditated.", "06:00 AM - 08:00 PM", 13.6540, 79.4230));
+        tirupatiPlaces.add(new PlaceTemplate("Silathoranam Natural Geological Arch", "Nature", 4.5, 21000, 23.5, 60, 55,
+                "Extremely rare natural rock arch formation dating back 2.5 billion years to the Pre-Cambrian era atop Tirumala.", "06:00 AM - 06:30 PM", 13.6890, 79.3510));
+        tirupatiPlaces.add(new PlaceTemplate("Sri Govindaraja Swamy Temple", "Temples", 4.7, 45000, 1.5, 75, 6,
+                "Historic 12th-century Vaishnavite temple in Tirupati town with a towering 7-story gopuram consecrated by Saint Ramanuja.", "05:00 AM - 09:00 PM", 13.6290, 79.4180));
+        tirupatiPlaces.add(new PlaceTemplate("Sri Padmavathi Ammavari Temple (Tiruchanur)", "Temples", 4.8, 62000, 5.0, 90, 15,
+                "Revered temple of Goddess Padmavathi, consort of Lord Venkateswara, essential conclusion to Tirupati pilgrimage.", "05:30 AM - 09:00 PM", 13.6080, 79.4510));
+        tirupatiPlaces.add(new PlaceTemplate("Chandragiri Historic Fort & Palace", "Historical", 4.4, 23000, 15.0, 90, 30,
+                "11th-century Vijayanagara fortified capital featuring the Indo-Saracenic Raja Mahal and Rani Mahal sound-light show.", "09:00 AM - 05:30 PM (Closed Fridays)", 13.5850, 79.3170));
+        CURATED_PLACES_DB.put("tirupati", tirupatiPlaces);
+
+        // Madurai
+        List<PlaceTemplate> maduraiPlaces = new ArrayList<>();
+        maduraiPlaces.add(new PlaceTemplate("Meenakshi Amman Temple", "Temples", 4.9, 160000, 1.5, 150, 8,
+                "Architectural wonder dating to the Pandya era with 14 colorful gopurams, Thousand Pillar Hall, and Golden Lotus tank.", "05:00 AM - 12:30 PM, 04:00 PM - 10:00 PM", 9.9195, 78.1193));
+        maduraiPlaces.add(new PlaceTemplate("Thirumalai Nayakkar Mahal", "Historical", 4.6, 52000, 2.2, 75, 10,
+                "17th-century palace masterpiece blending Dravidian and Islamic architecture with gigantic 82-foot circular pillars.", "09:00 AM - 05:00 PM", 9.9150, 78.1240));
+        maduraiPlaces.add(new PlaceTemplate("Gandhi Memorial Museum", "Museums", 4.5, 26000, 4.0, 60, 15,
+                "Housed inside the 17th-century Rani Mangammal Palace, preserving the bloodstained garment worn by Mahatma Gandhi.", "10:00 AM - 05:30 PM", 9.9320, 78.1400));
+        maduraiPlaces.add(new PlaceTemplate("Alagar Koyil Vishnu Temple", "Temples", 4.7, 34000, 21.0, 90, 40,
+                "Ancient temple of Lord Kallazhagar nestled in the foothills of Alagar Hills known for intricate stone and wood carvings.", "06:00 AM - 07:30 PM", 10.0760, 78.2140));
+        maduraiPlaces.add(new PlaceTemplate("Vandiyur Mariamman Teppakulam", "Historical", 4.5, 29000, 4.5, 60, 15,
+                "Enormous 16-acre square temple tank with an island pavilion built in 1646, celebrated for the annual Float Festival.", "06:00 AM - 08:00 PM", 9.9070, 78.1530));
+        maduraiPlaces.add(new PlaceTemplate("Saint Mary's Cathedral Church", "Historical", 4.5, 14000, 2.5, 45, 10,
+                "One of Tamil Nadu's oldest Roman Catholic churches constructed in 1840 featuring Neo-Gothic bell towers and stained glass.", "07:00 AM - 06:00 PM", 9.9150, 78.1320));
+        CURATED_PLACES_DB.put("madurai", maduraiPlaces);
+
+        // Rameshwaram
+        List<PlaceTemplate> rameshPlaces = new ArrayList<>();
+        rameshPlaces.add(new PlaceTemplate("Ramanathaswamy Temple & 22 Theerthams", "Temples", 4.8, 92000, 1.2, 150, 6,
+                "Char Dham pilgrimage shrine featuring the world's longest pillared corridor (1,212 meters) and 22 sacred well baths.", "05:00 AM - 01:00 PM, 03:00 PM - 09:00 PM", 9.2881, 79.3174));
+        rameshPlaces.add(new PlaceTemplate("Dhanushkodi Ghost Town & Point", "Adventure", 4.7, 65000, 19.0, 120, 35,
+                "Surreal abandoned town destroyed in the 1964 cyclone where the Bay of Bengal meets the Indian Ocean at Ram Setu point.", "06:00 AM - 06:00 PM", 9.1760, 79.4180));
+        rameshPlaces.add(new PlaceTemplate("Agni Theertham Holy Beach", "Temples", 4.6, 38000, 1.5, 60, 6,
+                "Calm sacred sea waters in front of the eastern temple gate where pilgrims take purificatory baths before darshan.", "Open 24 Hours", 9.2890, 79.3210));
+        rameshPlaces.add(new PlaceTemplate("Dr. APJ Abdul Kalam National Memorial", "Museums", 4.8, 44000, 4.0, 75, 10,
+                "Inspiring national monument honoring India's Missile Man and former President, showcasing his life, rockets, and personal memorabilia.", "09:00 AM - 06:00 PM", 9.2810, 79.2840));
+        rameshPlaces.add(new PlaceTemplate("Pamban Cantilever Railway Bridge Viewpoint", "Photography", 4.8, 52000, 12.0, 60, 20,
+                "Engineering marvel opened in 1914 spanning the Palk Strait with a Scherzer rolling lift section for ships.", "Open 24 Hours", 9.2800, 79.1980));
+        rameshPlaces.add(new PlaceTemplate("Lakshmana Theertham & Temple", "Temples", 4.5, 18000, 2.0, 45, 8,
+                "Sacred temple dedicated to Lord Lakshmana featuring carved pillars and holy pond constructed in Dravidian style.", "06:00 AM - 07:00 PM", 9.2840, 79.3080));
+        CURATED_PLACES_DB.put("rameshwaram", rameshPlaces);
+        CURATED_PLACES_DB.put("rameswaram", rameshPlaces);
+
+        // Kanyakumari
+        List<PlaceTemplate> kanyaPlaces = new ArrayList<>();
+        kanyaPlaces.add(new PlaceTemplate("Vivekananda Rock Memorial", "Historical", 4.8, 98000, 1.5, 120, 8,
+                "Monumental rock shrine 500m off the mainland where Swami Vivekananda meditated in 1892, reached by ferry boat.", "08:00 AM - 04:00 PM", 8.0780, 77.5550));
+        kanyaPlaces.add(new PlaceTemplate("Thiruvalluvar Giant Stone Statue", "Historical", 4.7, 72000, 1.6, 60, 8,
+                "Imposing 133-foot stone sculpture honoring ancient Tamil poet-philosopher Thiruvalluvar standing on a rocky island.", "08:00 AM - 04:00 PM", 8.0770, 77.5560));
+        kanyaPlaces.add(new PlaceTemplate("Triveni Sangam Sunset & Sunrise Beach", "Photography", 4.7, 85000, 1.0, 75, 4,
+                "Southernmost tip of mainland India where the Arabian Sea, Bay of Bengal, and Indian Ocean merge, famed for simultaneous sunset and moonrise.", "Open 24 Hours", 8.0780, 77.5530));
+        kanyaPlaces.add(new PlaceTemplate("Padmanabhapuram Wooden Palace", "Historical", 4.7, 36000, 34.0, 120, 50,
+                "Magnificent 16th-century Travancore royal residence built entirely of rosewood and teak with carved ceilings and mica windows.", "09:00 AM - 04:30 PM (Closed Mondays)", 8.2510, 77.3270));
+        kanyaPlaces.add(new PlaceTemplate("Gandhi Memorial Mandapam", "Historical", 4.5, 31000, 0.8, 45, 3,
+                "Orissa-style pink pagoda monument built where Mahatma Gandhi's ashes were placed before immersion, designed so sunlight touches the spot on his birthday.", "07:00 AM - 07:00 PM", 8.0810, 77.5510));
+        kanyaPlaces.add(new PlaceTemplate("Vattakottai Coastal Fort", "Historical", 4.5, 24000, 7.0, 60, 15,
+                "18th-century granite circular coastal fortification built by the Dutch naval commander for Travancore with sea breezes.", "08:00 AM - 05:30 PM", 8.1250, 77.5680));
+        CURATED_PLACES_DB.put("kanyakumari", kanyaPlaces);
+
+        // Udaipur
+        List<PlaceTemplate> udaipurPlaces = new ArrayList<>();
+        udaipurPlaces.add(new PlaceTemplate("Udaipur City Palace Complex", "Historical", 4.8, 115000, 1.8, 150, 10,
+                "Rajasthan's largest royal palace complex on Lake Pichola with ornate marble balconies, mirror work, and royal courtyards.", "09:00 AM - 05:30 PM", 24.5764, 73.6835));
+        udaipurPlaces.add(new PlaceTemplate("Lake Pichola & Jag Mandir Island", "Photography", 4.7, 82000, 1.5, 90, 8,
+                "Scenic 14th-century freshwater lake offering sunset boat cruises passing the Lake Palace and royal garden island pavilions.", "09:00 AM - 06:00 PM", 24.5700, 73.6780));
+        udaipurPlaces.add(new PlaceTemplate("Saheliyon-ki-Bari Gardens", "Parks", 4.5, 48000, 4.0, 60, 15,
+                "Historic ornamental gardens built for royal maidens featuring marble elephants, lotus pools, and rain fountains.", "09:00 AM - 07:00 PM", 24.6020, 73.6870));
+        udaipurPlaces.add(new PlaceTemplate("Jagdish Temple", "Temples", 4.6, 36000, 1.6, 45, 6,
+                "Large 1651 Indo-Aryan temple dedicated to Lord Vishnu featuring finely carved stone pillars and painted ceilings.", "05:00 AM - 02:30 PM, 04:00 PM - 10:00 PM", 24.5790, 73.6840));
+        udaipurPlaces.add(new PlaceTemplate("Monsoon Palace (Sajjangarh Fort)", "Photography", 4.6, 41000, 9.5, 90, 25,
+                "Hilltop palace overlooking the Aravalli hills and lakes, built in 1884 to track monsoon clouds, spectacular at sunset.", "09:00 AM - 06:00 PM", 24.5900, 73.6380));
+        udaipurPlaces.add(new PlaceTemplate("Bagore Ki Haveli & Folk Dance", "Historical", 4.7, 34000, 1.7, 90, 8,
+                "18th-century waterfront haveli at Gangaur Ghat hosting evening Dharohar Rajasthani puppet and folk dance performances.", "09:30 AM - 05:30 PM, Show 07:00 PM", 24.5795, 73.6800));
+        CURATED_PLACES_DB.put("udaipur", udaipurPlaces);
+
+        // Jodhpur
+        List<PlaceTemplate> jodhpurPlaces = new ArrayList<>();
+        jodhpurPlaces.add(new PlaceTemplate("Mehrangarh Fort & Museum", "Historical", 4.9, 132000, 2.5, 150, 12,
+                "Towering 400-foot cliffside fortress guarding the Blue City, featuring Sheesh Mahal, Phool Mahal, and royal palanquins.", "09:00 AM - 05:00 PM", 26.2978, 73.0185));
+        jodhpurPlaces.add(new PlaceTemplate("Jaswant Thada White Marble Cenotaph", "Historical", 4.7, 48000, 2.0, 60, 8,
+                "Ornate 1899 white marble memorial to Maharaja Jaswant Singh II with carved gazebos, lakeside garden, and city panoramas.", "09:00 AM - 05:00 PM", 26.3030, 73.0230));
+        jodhpurPlaces.add(new PlaceTemplate("Umaid Bhawan Palace & Museum", "Historical", 4.6, 62000, 5.5, 90, 18,
+                "One of the world's largest private residences built in yellow sandstone featuring art deco halls and vintage car exhibits.", "09:00 AM - 05:00 PM", 26.2808, 73.0475));
+        jodhpurPlaces.add(new PlaceTemplate("Mandore Gardens & Royal Cenotaphs", "Parks", 4.5, 36000, 8.5, 75, 20,
+                "Historic former capital of Marwar with high-rock cenotaphs resembling Hindu temples, Hall of Heroes, and landscaped grounds.", "08:00 AM - 08:00 PM", 26.3570, 73.0410));
+        jodhpurPlaces.add(new PlaceTemplate("Ghanta Ghar Clock Tower & Sardar Market", "Photography", 4.5, 41000, 1.2, 60, 5,
+                "Vibrant blue city marketplace surrounded by century-old clock tower, textile shops, spices, and street food.", "10:00 AM - 09:00 PM", 26.2950, 73.0250));
+        jodhpurPlaces.add(new PlaceTemplate("Rao Jodha Desert Rock Park", "Nature", 4.6, 21000, 2.8, 90, 10,
+                "Ecological restoration park on volcanic rock beneath Mehrangarh Fort with walking trails showcasing native desert plants.", "07:00 AM - 06:30 PM", 26.3010, 73.0200));
+        CURATED_PLACES_DB.put("jodhpur", jodhpurPlaces);
+
+        // Shimla
+        List<PlaceTemplate> shimlaPlaces = new ArrayList<>();
+        shimlaPlaces.add(new PlaceTemplate("The Ridge & Neo-Gothic Christ Church", "Photography", 4.7, 85000, 1.0, 75, 4,
+                "Open cultural hub in the heart of Shimla with North India's second oldest church (1857) and snow-capped Himalayan vistas.", "Open 24 Hours", 31.1048, 77.1734));
+        shimlaPlaces.add(new PlaceTemplate("Mall Road & Scandal Point Walk", "Photography", 4.6, 92000, 0.8, 90, 3,
+                "Vibrant pedestrian boulevard lined with colonial-era timber buildings, cafes, wool shops, and mountain viewpoints.", "09:00 AM - 09:30 PM", 31.1030, 77.1710));
+        shimlaPlaces.add(new PlaceTemplate("Jakhoo Temple & Ropeway", "Temples", 4.6, 54000, 2.5, 90, 15,
+                "Highest summit in Shimla (2,455 m) home to an ancient Hanuman temple and an imposing 108-foot giant vermillion statue.", "07:00 AM - 08:00 PM", 31.1009, 77.1852));
+        shimlaPlaces.add(new PlaceTemplate("Viceregal Lodge (IIAS)", "Historical", 4.7, 38000, 4.5, 90, 18,
+                "Magnificent Jacobethan British summer capital residence featuring polished Burmese teak halls and manicured lawns.", "09:00 AM - 05:30 PM (Closed Mondays)", 31.1036, 77.1408));
+        shimlaPlaces.add(new PlaceTemplate("Kufri Himalayan Nature Park", "Adventure", 4.4, 46000, 15.0, 120, 40,
+                "Scenic mountain resort hub at 2,720 m famous for pony rides, snow sports, and sightings of Himalayan monals and leopards.", "09:00 AM - 06:00 PM", 31.0970, 77.2680));
+        shimlaPlaces.add(new PlaceTemplate("Tara Devi Hilltop Temple", "Temples", 4.6, 26000, 13.0, 75, 30,
+                "250-year-old wooden hill shrine offering serene pine woods and 360-degree panoramas of Shimla and mountain ranges.", "07:00 AM - 06:30 PM", 31.0620, 77.1350));
+        CURATED_PLACES_DB.put("shimla", shimlaPlaces);
+
+        // Hyderabad
+        List<PlaceTemplate> hydPlaces = new ArrayList<>();
+        hydPlaces.add(new PlaceTemplate("Charminar & Laad Bazaar", "Historical", 4.7, 128000, 3.5, 75, 15,
+                "Iconic 1591 monument with four 56-meter minarets surrounded by vibrant bangle markets and pearl bazaars.", "09:30 AM - 05:30 PM", 17.3616, 78.4747));
+        hydPlaces.add(new PlaceTemplate("Golconda Fort & Sound-Light Show", "Historical", 4.7, 95000, 11.0, 150, 30,
+                "Imposing medieval diamond-trading citadel famed for acoustic clapping engineering, Fateh Darwaza, and sunset views.", "09:00 AM - 05:30 PM", 17.3833, 78.4011));
+        hydPlaces.add(new PlaceTemplate("Salar Jung Museum", "Museums", 4.6, 72000, 3.8, 120, 15,
+                "One of the world's largest one-man art collections, featuring the Veiled Rebecca and 19th-century musical clock.", "10:00 AM - 05:00 PM (Closed Fridays)", 17.3713, 78.4804));
+        hydPlaces.add(new PlaceTemplate("Chowmahalla Palace", "Historical", 4.6, 48000, 4.0, 90, 18,
+                "Opulent 18th-century palace of the Nizams featuring the Grand Khilwat durbar hall, vintage Rolls Royces, and chandeliers.", "10:00 AM - 05:00 PM (Closed Fridays)", 17.3578, 78.4717));
+        hydPlaces.add(new PlaceTemplate("Qutb Shahi Tombs", "Historical", 4.5, 36000, 10.5, 75, 25,
+                "Magnificent domed mausoleums set in landscaped Ibrahim Bagh gardens blending Persian, Pashtun, and Hindu architecture.", "09:30 AM - 06:30 PM", 17.3917, 78.3980));
+        hydPlaces.add(new PlaceTemplate("Hussain Sagar & Giant Buddha Statue", "Photography", 4.6, 84000, 4.5, 75, 15,
+                "Heart-shaped lake featuring the world's tallest monolithic stone statue of Gautama Buddha, reached by speedboat.", "08:00 AM - 10:00 PM", 17.4239, 78.4738));
+        CURATED_PLACES_DB.put("hyderabad", hydPlaces);
+
+        // Chennai
+        List<PlaceTemplate> chennaiPlaces = new ArrayList<>();
+        chennaiPlaces.add(new PlaceTemplate("Marina Beach & Light House", "Photography", 4.6, 125000, 3.0, 75, 12,
+                "India's longest natural urban beach (13 km) along the Bay of Bengal featuring lighthouse views and evening food stalls.", "Open 24 Hours", 13.0500, 80.2824));
+        chennaiPlaces.add(new PlaceTemplate("Kapaleeshwarar Temple (Mylapore)", "Temples", 4.8, 58000, 4.5, 75, 15,
+                "7th-century Dravidian temple of Lord Shiva with a stunning 37-meter rainbow gopuram and ancient temple tank.", "06:00 AM - 12:30 PM, 04:00 PM - 09:30 PM", 13.0335, 80.2698));
+        chennaiPlaces.add(new PlaceTemplate("San Thome Cathedral Basilica", "Historical", 4.7, 34000, 3.8, 60, 12,
+                "Neo-Gothic Roman Catholic cathedral built over the tomb of St. Thomas the Apostle, constructed by the Portuguese in 1523.", "06:00 AM - 09:00 PM", 13.0336, 80.2785));
+        chennaiPlaces.add(new PlaceTemplate("Fort St. George & Clive House", "Historical", 4.5, 28000, 2.5, 75, 10,
+                "First English fortress in India (1644) housing St. Mary's Church and the Fort Museum with colonial armory and coins.", "09:00 AM - 05:00 PM (Closed Fridays)", 13.0797, 80.2872));
+        chennaiPlaces.add(new PlaceTemplate("Government Museum Chennai & Art Gallery", "Museums", 4.5, 38000, 3.5, 90, 12,
+                "Second oldest museum in India (1851) renowned for its world-class collection of bronze sculptures from the Chola dynasty.", "09:30 AM - 05:00 PM (Closed Fridays)", 13.0700, 80.2560));
+        chennaiPlaces.add(new PlaceTemplate("Guindy National Park & Snake Park", "Parks", 4.4, 31000, 9.0, 90, 25,
+                "Unique protected wildlife park within city limits harboring spotted deer, blackbucks, birds, and an interactive reptile center.", "09:00 AM - 05:30 PM (Closed Tuesdays)", 13.0067, 80.2206));
+        CURATED_PLACES_DB.put("chennai", chennaiPlaces);
+        CURATED_PLACES_DB.put("madras", chennaiPlaces);
+
+        // Mahabalipuram / Mamallapuram
+        List<PlaceTemplate> mahabPlaces = new ArrayList<>();
+        mahabPlaces.add(new PlaceTemplate("Shore Temple", "Historical", 4.8, 65000, 1.2, 75, 5,
+                "UNESCO 8th-century granite temple complex overlooking the Bay of Bengal, built by Pallava king Narasimhavarman II.", "06:00 AM - 06:00 PM", 12.6163, 80.1994));
+        mahabPlaces.add(new PlaceTemplate("Pancha Rathas (Five Rathas)", "Historical", 4.7, 52000, 1.8, 60, 6,
+                "Monolithic rock-cut shrines carved out of single pink granite boulders named after the Pandavas and Draupadi.", "06:00 AM - 06:00 PM", 12.6090, 80.1940));
+        mahabPlaces.add(new PlaceTemplate("Descent of the Ganges (Arjuna's Penance)", "Historical", 4.7, 44000, 1.0, 60, 4,
+                "Enormous open-air bas-relief carved on two 27-meter boulders depicting celestial beings, animals, and the descent of River Ganga.", "06:00 AM - 06:00 PM", 12.6180, 80.1930));
+        mahabPlaces.add(new PlaceTemplate("Krishna's Butter Ball", "Photography", 4.6, 38000, 1.1, 45, 4,
+                "Gigantic 250-ton balancing boulder precariously resting on a 45-degree smooth rock slope for over 1,200 years.", "Open 24 Hours", 12.6190, 80.1920));
+        mahabPlaces.add(new PlaceTemplate("Mahabalipuram Lighthouse & Hillock", "Photography", 4.5, 29000, 1.5, 45, 5,
+                "India's oldest circular stone lighthouse (1887) and 8th-century Olakkannesvara temple with 360-degree coastal panoramas.", "09:00 AM - 05:30 PM", 12.6150, 80.1920));
+        CURATED_PLACES_DB.put("mahabalipuram", mahabPlaces);
+        CURATED_PLACES_DB.put("mamallapuram", mahabPlaces);
+
+        // Gokarna
+        List<PlaceTemplate> gokarnaPlaces = new ArrayList<>();
+        gokarnaPlaces.add(new PlaceTemplate("Om Beach & Rock Formations", "Beaches", 4.7, 48000, 6.0, 120, 15,
+                "Naturally shaped like the sacred Hindu symbol Om, featuring rocky tide pools, seaside cafes, and golden sands.", "Open 24 Hours", 14.5190, 74.3160));
+        gokarnaPlaces.add(new PlaceTemplate("Mahabaleshwar Temple", "Temples", 4.8, 52000, 1.0, 75, 4,
+                "4th-century sacred temple housing the Atmalinga of Lord Shiva, considered as holy as Kashi in Hindu tradition.", "06:00 AM - 12:30 PM, 05:00 PM - 08:00 PM", 14.5428, 74.3167));
+        gokarnaPlaces.add(new PlaceTemplate("Kudle Beach Sunset Point", "Beaches", 4.6, 38000, 3.5, 90, 10,
+                "Crescent-shaped serene beach framed by hills, famous for evening drum circles, yoga, and fresh seafood shacks.", "Open 24 Hours", 14.5280, 74.3140));
+        gokarnaPlaces.add(new PlaceTemplate("Half Moon & Paradise Beach Coastal Trek", "Adventure", 4.7, 26000, 7.5, 150, 20,
+                "Scenic cliffside hiking trail connecting isolated coves accessible only on foot or by traditional fishing boats.", "06:00 AM - 05:30 PM", 14.5120, 74.3280));
+        gokarnaPlaces.add(new PlaceTemplate("Mirjan Historic Fort", "Historical", 4.5, 24000, 21.0, 75, 30,
+                "16th-century laterite stone fortress built by Queen Chennabhairadevi (The Pepper Queen) with bastions and secret exits.", "09:00 AM - 05:30 PM", 14.4850, 74.4200));
+        CURATED_PLACES_DB.put("gokarna", gokarnaPlaces);
+
+        // Dandeli
+        List<PlaceTemplate> dandeliPlaces = new ArrayList<>();
+        dandeliPlaces.add(new PlaceTemplate("Kali River White Water Rafting", "Adventure", 4.8, 36000, 4.0, 180, 10,
+                "Thrilling grade 2 and 3 rapids through dense Western Ghats river gorges on the River Kali.", "08:30 AM - 04:00 PM", 15.2450, 74.6280));
+        dandeliPlaces.add(new PlaceTemplate("Syntheri Rocks Monolithic Canyon", "Nature", 4.6, 28000, 32.0, 90, 50,
+                "300-foot monolithic granite rock structure carved over millennia by River Kanambi inside deep jungle reserves.", "08:30 AM - 05:00 PM", 15.2050, 74.3800));
+        dandeliPlaces.add(new PlaceTemplate("Dandeli Wildlife Sanctuary Safari", "Adventure", 4.5, 24000, 8.0, 150, 20,
+                "Dense evergreen tiger sanctuary home to black panthers, hornbills, flying squirrels, and wild elephants.", "06:00 AM - 09:00 AM, 03:00 PM - 06:00 PM", 15.2380, 74.6050));
+        dandeliPlaces.add(new PlaceTemplate("Supa Reservoir & Dam Lookout", "Nature", 4.5, 18000, 24.0, 60, 35,
+                "Massive concrete gravity dam creating a sprawling lake surrounded by rolling forest hills and sunset vistas.", "08:00 AM - 06:00 PM", 15.2780, 74.5200));
+        dandeliPlaces.add(new PlaceTemplate("Shiroli Peak & Sunset Viewpoint", "Photography", 4.6, 16000, 14.0, 60, 25,
+                "Highest viewpoint in the Dandeli forest reserve offering unobstructed panoramic vistas across the Sahyadri mountains.", "06:00 AM - 06:00 PM", 15.2100, 74.6750));
+        CURATED_PLACES_DB.put("dandeli", dandeliPlaces);
+
+        // Varkala
+        List<PlaceTemplate> varkalaPlaces = new ArrayList<>();
+        varkalaPlaces.add(new PlaceTemplate("Varkala Cliff & Papanasam Beach", "Beaches", 4.8, 62000, 1.5, 120, 6,
+                "Dramatic red laterite sedimentary cliffs towering directly over the Arabian Sea lined with boho cafes and sunsets.", "Open 24 Hours", 8.7360, 76.7030));
+        varkalaPlaces.add(new PlaceTemplate("Janardhana Swami 2000-Year Temple", "Temples", 4.7, 29000, 2.0, 60, 8,
+                "Ancient Vaishnavite shrine known as Dakshin Kashi with copper-plated roof, stone carvings, and natural spring baths.", "05:30 AM - 12:00 PM, 05:00 PM - 08:00 PM", 8.7290, 76.7110));
+        varkalaPlaces.add(new PlaceTemplate("Sivagiri Mutt Spiritual Hermitage", "Spiritual", 4.6, 21000, 4.0, 60, 10,
+                "Ashram founded by philosopher-saint Sree Narayana Guru advocating 'One Caste, One Religion, One God for Man'.", "06:00 AM - 07:00 PM", 8.7450, 76.7350));
+        varkalaPlaces.add(new PlaceTemplate("Kappil Beach & Edava Nadayara Backwater Lake", "Nature", 4.6, 26000, 7.5, 75, 15,
+                "Picturesque bridge where serene backwater lake on one side meets the open sea on the other, lined with palm groves.", "Open 24 Hours", 8.7850, 76.6780));
+        varkalaPlaces.add(new PlaceTemplate("Anjengo Fort & Lighthouse", "Historical", 4.5, 18000, 11.0, 60, 20,
+                "17th-century British East India Company stone fortress flanked by coconut groves and historic seafaring towers.", "09:00 AM - 05:30 PM", 8.6730, 76.7580));
+        CURATED_PLACES_DB.put("varkala", varkalaPlaces);
+
+        // Mangalore & Udupi
+        List<PlaceTemplate> mngUdupiPlaces = new ArrayList<>();
+        mngUdupiPlaces.add(new PlaceTemplate("Sri Krishna Matha Udupi", "Temples", 4.9, 88000, 3.0, 120, 10,
+                "13th-century spiritual complex founded by Saint Madhvacharya where Lord Krishna is viewed through the sacred Kanakana Kindi window.", "05:00 AM - 09:30 PM", 13.3409, 74.7525));
+        mngUdupiPlaces.add(new PlaceTemplate("Malpe Beach & St. Mary's Basalt Islands", "Adventure", 4.7, 56000, 6.5, 150, 18,
+                "Unique national geological monument of columnar hexagonal basalt rock formations created by volcanic activity 88 million years ago.", "09:00 AM - 05:30 PM (Oct-May)", 13.3760, 74.6730));
+        mngUdupiPlaces.add(new PlaceTemplate("Panambur Beach & Port Overlook", "Beaches", 4.5, 42000, 8.0, 75, 18,
+                "Popular shoreline celebrated for golden sunset strolls, camel rides, international kite festivals, and jet skiing.", "Open 24 Hours", 12.9350, 74.8050));
+        mngUdupiPlaces.add(new PlaceTemplate("Kadri Manjunatha Ancient Cave Temple", "Temples", 4.7, 36000, 4.0, 60, 12,
+                "10th-century shrine atop Kadri hills featuring historic bronze statues of Lokeshwara and natural hillside water springs.", "06:00 AM - 01:00 PM, 04:00 PM - 08:30 PM", 12.8870, 74.8580));
+        mngUdupiPlaces.add(new PlaceTemplate("St. Aloysius Chapel Frescoes", "Historical", 4.7, 28000, 2.5, 60, 8,
+                "Built in 1885 atop Lighthouse Hill, decorated with world-renowned Italian frescoes painted by Jesuit priest Antony Moscheni.", "09:00 AM - 05:30 PM", 12.8730, 74.8450));
+        mngUdupiPlaces.add(new PlaceTemplate("Tannirbhavi Beach & Tree Park", "Nature", 4.6, 32000, 9.5, 75, 20,
+                "Peaceful beach accessible via ferry from Gurupura river, framed by a serene coastal pine and botanical park.", "06:00 AM - 07:00 PM", 12.9050, 74.8080));
+        CURATED_PLACES_DB.put("mangalore", mngUdupiPlaces);
+        CURATED_PLACES_DB.put("mangaluru", mngUdupiPlaces);
+        CURATED_PLACES_DB.put("udupi", mngUdupiPlaces);
+
+        // Badami & Pattadakal
+        List<PlaceTemplate> badamiPlaces = new ArrayList<>();
+        badamiPlaces.add(new PlaceTemplate("Badami Cave Temples", "Historical", 4.8, 48000, 1.2, 120, 5,
+                "Four magnificent 6th-century rock-cut temples carved out of red sandstone cliffs, dedicated to Shiva, Vishnu, and Jain tirthankaras.", "09:00 AM - 05:30 PM", 15.9189, 75.6766));
+        badamiPlaces.add(new PlaceTemplate("Agastya Lake & Bhoothanatha Temples", "Photography", 4.8, 38000, 1.5, 75, 6,
+                "Sacred green lake surrounded by sandstone cliffs and 7th-century shrines jutting directly into the tranquil water.", "06:00 AM - 06:30 PM", 15.9220, 75.6880));
+        badamiPlaces.add(new PlaceTemplate("UNESCO Pattadakal Group of Monuments", "Historical", 4.8, 42000, 22.0, 120, 30,
+                "UNESCO World Heritage complex showcasing the zenith of 7th and 8th-century Chalukyan temple architecture along Malaprabha river.", "06:00 AM - 06:00 PM", 15.9490, 75.8160));
+        badamiPlaces.add(new PlaceTemplate("Aihole Durga Temple Complex", "Historical", 4.7, 34000, 34.0, 90, 45,
+                "Renowned as the 'Cradle of Indian Temple Architecture' featuring over 120 stone temples including the apsidal Durga Temple.", "09:00 AM - 05:30 PM", 16.0190, 75.8820));
+        badamiPlaces.add(new PlaceTemplate("Badami North Fort & Cannon Point", "Adventure", 4.6, 22000, 1.8, 90, 8,
+                "Historic hilltop ramparts, 16th-century granaries, and watchtowers offering breathtaking aerial views of Badami town.", "09:00 AM - 05:00 PM", 15.9250, 75.6830));
+        CURATED_PLACES_DB.put("badami", badamiPlaces);
+        CURATED_PLACES_DB.put("pattadakal", badamiPlaces);
+        CURATED_PLACES_DB.put("aihole", badamiPlaces);
+
+        // Anantapur & Kurnool
+        List<PlaceTemplate> anantapurPlaces = new ArrayList<>();
+        anantapurPlaces.add(new PlaceTemplate("Lepakshi Veerabhadra Temple & Hanging Pillar", "Historical", 4.8, 62000, 14.0, 120, 25,
+                "16th-century Vijayanagara marvel celebrated for the Hanging Pillar, colossal monolithic Nandi, and ceiling murals.", "06:00 AM - 06:30 PM", 13.8040, 77.6060));
+        anantapurPlaces.add(new PlaceTemplate("Belum Underground Caves", "Adventure", 4.7, 48000, 68.0, 120, 75,
+                "Second largest natural cave system in India, stretching 3.2 km with underground passages, stalactite chambers, and music halls.", "10:00 AM - 05:00 PM", 15.1030, 78.1130));
+        anantapurPlaces.add(new PlaceTemplate("Oravakallu Rock Garden Canyon", "Nature", 4.6, 28000, 82.0, 90, 85,
+                "Natural silica and quartz rock formations nestled around a picturesque reservoir with canyon walkways and boating.", "08:00 AM - 06:00 PM", 15.6980, 78.1880));
+        anantapurPlaces.add(new PlaceTemplate("Konda Reddy Buruju Historic Fort", "Historical", 4.5, 31000, 92.0, 60, 95,
+                "Iconic medieval circular bastion in Kurnool town with underground tunnels built during the Vijayanagara empire.", "Open 24 Hours", 15.8280, 78.0370));
+        anantapurPlaces.add(new PlaceTemplate("Yaganti Uma Maheshwara Cave Temple", "Temples", 4.7, 36000, 75.0, 90, 80,
+                "Sacred cave shrine nestled inside Yerramala hills famous for the growing Nandi idol and natural Pushkarini springs.", "06:00 AM - 07:30 PM", 15.3520, 78.1430));
+        CURATED_PLACES_DB.put("anantapur", anantapurPlaces);
+        CURATED_PLACES_DB.put("kurnool", anantapurPlaces);
+        CURATED_PLACES_DB.put("lepakshi", anantapurPlaces);
     }
 
     // Curated catalog of famous Indian travel discovery destinations (Section 2)

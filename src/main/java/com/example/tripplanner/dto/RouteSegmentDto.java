@@ -153,4 +153,78 @@ public class RouteSegmentDto {
     public void setVerifiedProvider(String verifiedProvider) {
         this.verifiedProvider = verifiedProvider;
     }
+
+    // Public Transport Verification Fields (Requirement 8)
+    private Boolean transitAvailable;
+    private String transitNotice;
+    private String transitDepartureTime;
+    private String transitArrivalTime;
+    private String transitAgency;
+    private String transitLine;
+    private String publicTransportSearchUrl;
+    private java.util.List<TransitStepDto> transitSteps = new java.util.ArrayList<>();
+
+    public Boolean getTransitAvailable() {
+        return transitAvailable;
+    }
+
+    public void setTransitAvailable(Boolean transitAvailable) {
+        this.transitAvailable = transitAvailable;
+    }
+
+    public String getTransitNotice() {
+        return transitNotice;
+    }
+
+    public void setTransitNotice(String transitNotice) {
+        this.transitNotice = transitNotice;
+    }
+
+    public String getTransitDepartureTime() {
+        return transitDepartureTime;
+    }
+
+    public void setTransitDepartureTime(String transitDepartureTime) {
+        this.transitDepartureTime = transitDepartureTime;
+    }
+
+    public String getTransitArrivalTime() {
+        return transitArrivalTime;
+    }
+
+    public void setTransitArrivalTime(String transitArrivalTime) {
+        this.transitArrivalTime = transitArrivalTime;
+    }
+
+    public String getTransitAgency() {
+        return transitAgency;
+    }
+
+    public void setTransitAgency(String transitAgency) {
+        this.transitAgency = transitAgency;
+    }
+
+    public String getTransitLine() {
+        return transitLine;
+    }
+
+    public void setTransitLine(String transitLine) {
+        this.transitLine = transitLine;
+    }
+
+    public String getPublicTransportSearchUrl() {
+        return publicTransportSearchUrl;
+    }
+
+    public void setPublicTransportSearchUrl(String publicTransportSearchUrl) {
+        this.publicTransportSearchUrl = publicTransportSearchUrl;
+    }
+
+    public java.util.List<TransitStepDto> getTransitSteps() {
+        return transitSteps;
+    }
+
+    public void setTransitSteps(java.util.List<TransitStepDto> transitSteps) {
+        this.transitSteps = transitSteps;
+    }
 }

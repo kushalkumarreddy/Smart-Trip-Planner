@@ -9,12 +9,19 @@ public class DayItineraryDto {
     private Integer dayNumber;
     private LocalDate date;
     private String title;
+    // Metrics definitions (Requirement 6):
+    // travelTimeMinutes: Sum of travel durations between sequential itinerary locations.
+    // sightseeingTimeMinutes: Sum of attraction and experience durations.
+    // breakTimeMinutes: Sum of meal, rest, and other planned breaks.
+    // totalDurationMinutes: The elapsed period between the day's first planned activity start and last planned activity end time.
+    // unallocatedTimeMinutes: Any genuine remaining time that has not been assigned before day's dailyEndTime.
     private Double totalDistanceKm = 0.0;
     private Integer travelTimeMinutes = 0;
     private Integer sightseeingTimeMinutes = 0;
     private Integer breakTimeMinutes = 0;
     private Integer totalDurationMinutes = 0;
-    private String status = "Balanced"; // Balanced, Light Day, Long Day, Overcrowded
+    private Integer unallocatedTimeMinutes = 0;
+    private String status = "Balanced"; // Balanced, Relaxed, Long Driving Day, Overcrowded
     private String warningMessage;
     private Integer visitedCount = 0;
     private Integer totalPlacesCount = 0;
@@ -91,6 +98,14 @@ public class DayItineraryDto {
 
     public void setTotalDurationMinutes(Integer totalDurationMinutes) {
         this.totalDurationMinutes = totalDurationMinutes;
+    }
+
+    public Integer getUnallocatedTimeMinutes() {
+        return unallocatedTimeMinutes;
+    }
+
+    public void setUnallocatedTimeMinutes(Integer unallocatedTimeMinutes) {
+        this.unallocatedTimeMinutes = unallocatedTimeMinutes;
     }
 
     public String getStatus() {

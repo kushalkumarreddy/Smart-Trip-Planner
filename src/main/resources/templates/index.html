@@ -88,10 +88,10 @@
                     </p>
 
                     <!-- Prominent Trip Planner Bar -->
-                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 900px;">
+                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 960px;">
                         <form id="heroPlannerForm" onsubmit="handleHeroQuickPlan(event)">
                             <div class="row g-2 align-items-center">
-                                <div class="col-md-4">
+                                <div class="col-lg-3 col-md-6">
                                     <div class="planner-input-group">
                                         <label for="heroStartLoc"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Starting Location</label>
                                         <div class="autocomplete-wrapper">
@@ -99,7 +99,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-lg-3 col-md-6">
                                     <div class="planner-input-group">
                                         <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
                                         <div class="autocomplete-wrapper">
@@ -107,15 +107,21 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="planner-input-group">
                                         <label for="heroStartDate"><i class="bi bi-calendar3 text-muted me-1"></i>Start Date</label>
                                         <input type="date" id="heroStartDate" required>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-4 col-sm-6">
+                                    <div class="planner-input-group">
+                                        <label for="heroStartTime"><i class="bi bi-clock text-muted me-1"></i>Start Time</label>
+                                        <input type="time" id="heroStartTime" value="08:00" required>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-12">
                                     <button type="submit" class="btn btn-forest w-100 py-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm">
-                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan my trip</span>
+                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan trip</span>
                                     </button>
                                 </div>
                             </div>
@@ -304,7 +310,10 @@
     <!-- Footer -->
     <footer class="py-4">
         <div class="container text-center">
-            <p class="mb-0 text-muted small">VoyageCraft &bull; Every journey, thoughtfully planned.</p>
+            <p class="mb-1 text-muted small">
+                <i class="bi bi-stars text-warning me-1"></i> Made with the help of AI &bull; VoyageCraft Smart Travel Planner
+            </p>
+            <p class="mb-0 text-muted extra-small" style="font-size: 0.78rem;">Every journey, thoughtfully planned.</p>
         </div>
     </footer>
 
@@ -330,10 +339,12 @@
             const start = document.getElementById('heroStartLoc').value.trim();
             const dest = document.getElementById('heroDestLoc').value.trim();
             const startDate = document.getElementById('heroStartDate').value;
+            const startTime = (document.getElementById('heroStartTime')?.value || '08:00').trim();
 
             let url = '/create-trip?start=' + encodeURIComponent(start);
             if (dest) url += '&dest=' + encodeURIComponent(dest);
             if (startDate) url += '&startDate=' + encodeURIComponent(startDate);
+            if (startTime) url += '&startTime=' + encodeURIComponent(startTime);
             window.location.href = url;
         }
 

@@ -100,6 +100,16 @@ public class RouteService {
             }
 
             segment.setGoogleMapsSegmentUrl(GeoUtils.buildGoogleMapsUrl(origin, destination, mode));
+            if ("PUBLIC_TRANSPORT".equalsIgnoreCase(mode)) {
+                segment.setPublicTransportSearchUrl(GeoUtils.buildGoogleMapsUrl(origin, destination, "transit"));
+                if ("GOOGLE_MAPS".equalsIgnoreCase(result.getVerifiedProvider())) {
+                    segment.setTransitAvailable(true);
+                    segment.setTransitNotice("Live transit schedule verified via Google Transit.");
+                } else {
+                    segment.setTransitAvailable(false);
+                    segment.setTransitNotice("Live public transit timetables unavailable for this segment without live transit provider credentials. Use direct transit links below.");
+                }
+            }
             segment.setGeometryCoordinates(result.getGeometryCoords());
             if (result.getGeometryCoords() != null && !result.getGeometryCoords().isEmpty()) {
                 summary.getFullRouteGeometry().addAll(result.getGeometryCoords());

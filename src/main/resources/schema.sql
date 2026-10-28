@@ -122,6 +122,9 @@ CREATE TABLE IF NOT EXISTS itineraries (
     visited BOOLEAN DEFAULT FALSE,
     locked BOOLEAN DEFAULT FALSE,
     notes TEXT,
+    latitude DOUBLE NULL,
+    longitude DOUBLE NULL,
+    category VARCHAR(100) NULL,
     CONSTRAINT fk_itinerary_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
     CONSTRAINT fk_itinerary_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

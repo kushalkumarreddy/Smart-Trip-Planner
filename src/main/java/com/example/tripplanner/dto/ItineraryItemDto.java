@@ -21,6 +21,9 @@ public class ItineraryItemDto {
     private Boolean visited;
     private Boolean locked = false;
     private String notes;
+    private Double latitude;
+    private Double longitude;
+    private String category;
 
     public ItineraryItemDto() {
     }
@@ -159,5 +162,29 @@ public class ItineraryItemDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

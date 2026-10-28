@@ -55,8 +55,17 @@ public class TripResponseDto {
     private List<DayItineraryDto> dayItineraries = new ArrayList<>();
     private RouteSummaryDto routeSummary;
     private List<SightseeingPlaceDto> recommendedNearbyPlaces = new ArrayList<>();
+    private Boolean isGuest = false;
 
     public TripResponseDto() {
+    }
+
+    public Boolean getIsGuest() {
+        return isGuest;
+    }
+
+    public void setIsGuest(Boolean isGuest) {
+        this.isGuest = isGuest;
     }
 
     public Long getId() {

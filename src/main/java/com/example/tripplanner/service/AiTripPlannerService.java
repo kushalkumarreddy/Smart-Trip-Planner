@@ -151,8 +151,22 @@ public class AiTripPlannerService {
         DESTINATION_ATTRACTIONS.put("chikmagalur", List.of("Mullayanagiri Peak", "Hebbe Falls", "Baba Budangiri", "Coffee Plantation Safari"));
         DESTINATION_ATTRACTIONS.put("hampi", List.of("Virupaksha Temple", "Vijaya Vittala Stone Chariot", "Lotus Mahal", "Matanga Hill Sunset"));
         DESTINATION_ATTRACTIONS.put("gokarna", List.of("Om Beach", "Kudle Beach", "Half Moon Beach", "Mahabaleshwar Temple"));
-        DESTINATION_ATTRACTIONS.put("goa", List.of("Dudhsagar Waterfalls", "Fort Aguada", "Anjuna & Vagator Cliffs", "Old Goa Churches"));
         DESTINATION_ATTRACTIONS.put("pondicherry", List.of("Promenade Beach", "Auroville", "French Colony Heritage Walk", "Paradise Beach"));
+        DESTINATION_ATTRACTIONS.put("udaipur", List.of("Udaipur City Palace Complex", "Lake Pichola & Jag Mandir Island", "Saheliyon-ki-Bari Gardens", "Monsoon Palace (Sajjangarh Fort)"));
+        DESTINATION_ATTRACTIONS.put("jodhpur", List.of("Mehrangarh Fort & Museum", "Jaswant Thada White Marble Cenotaph", "Umaid Bhawan Palace & Museum", "Mandore Gardens"));
+        DESTINATION_ATTRACTIONS.put("shimla", List.of("The Ridge & Neo-Gothic Christ Church", "Mall Road & Scandal Point Walk", "Jakhoo Temple & Ropeway", "Viceregal Lodge (IIAS)"));
+        DESTINATION_ATTRACTIONS.put("hyderabad", List.of("Charminar & Laad Bazaar", "Golconda Fort & Sound-Light Show", "Salar Jung Museum", "Chowmahalla Palace"));
+        DESTINATION_ATTRACTIONS.put("chennai", List.of("Marina Beach & Light House", "Kapaleeshwarar Temple (Mylapore)", "San Thome Cathedral Basilica", "Fort St. George & Clive House"));
+        DESTINATION_ATTRACTIONS.put("mahabalipuram", List.of("Shore Temple", "Pancha Rathas (Five Rathas)", "Descent of the Ganges (Arjuna's Penance)", "Krishna's Butter Ball"));
+        DESTINATION_ATTRACTIONS.put("tirupati", List.of("Sri Venkateswara Swamy Temple (Tirumala)", "Kapila Theertham Waterfalls & Temple", "Silathoranam Natural Geological Arch", "Chandragiri Historic Fort & Palace"));
+        DESTINATION_ATTRACTIONS.put("madurai", List.of("Meenakshi Amman Temple", "Thirumalai Nayakkar Mahal", "Gandhi Memorial Museum", "Alagar Koyil Vishnu Temple"));
+        DESTINATION_ATTRACTIONS.put("rameshwaram", List.of("Ramanathaswamy Temple & 22 Theerthams", "Dhanushkodi Ghost Town & Point", "Agni Theertham Holy Beach", "Dr. APJ Abdul Kalam National Memorial"));
+        DESTINATION_ATTRACTIONS.put("kanyakumari", List.of("Vivekananda Rock Memorial", "Thiruvalluvar Giant Stone Statue", "Triveni Sangam Sunset & Sunrise Beach", "Padmanabhapuram Wooden Palace"));
+        DESTINATION_ATTRACTIONS.put("dandeli", List.of("Kali River White Water Rafting", "Syntheri Rocks Monolithic Canyon", "Dandeli Wildlife Sanctuary Safari", "Shiroli Peak & Sunset Viewpoint"));
+        DESTINATION_ATTRACTIONS.put("varkala", List.of("Varkala Cliff & Papanasam Beach", "Janardhana Swami 2000-Year Temple", "Kappil Beach & Edava Nadayara Backwater Lake", "Anjengo Fort & Lighthouse"));
+        DESTINATION_ATTRACTIONS.put("mangalore", List.of("Sri Krishna Matha Udupi", "Malpe Beach & St. Mary's Basalt Islands", "Panambur Beach & Port Overlook", "Kadri Manjunatha Ancient Cave Temple"));
+        DESTINATION_ATTRACTIONS.put("badami", List.of("Badami Cave Temples", "Agastya Lake & Bhoothanatha Temples", "UNESCO Pattadakal Group of Monuments", "Aihole Durga Temple Complex"));
+        DESTINATION_ATTRACTIONS.put("anantapur", List.of("Lepakshi Veerabhadra Temple & Hanging Pillar", "Belum Underground Caves", "Oravakallu Rock Garden Canyon", "Konda Reddy Buruju Historic Fort"));
     }
 
     public AiTripPromptDto.Response parseAndGenerateTrip(String prompt) {

@@ -6,6 +6,7 @@ import com.example.tripplanner.service.AiTripPlannerService;
 import com.example.tripplanner.service.RouteService;
 import com.example.tripplanner.service.TripService;
 import com.example.tripplanner.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +44,123 @@ public class TripApiController {
         User user = resolveCurrentUser(userDetails);
         TripResponseDto created = tripService.createTrip(request, user);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    /**
+     * Guest Trip Generation without requiring authentication (Requirement 3)
+     */
+    @PostMapping("/guest-plan")
+    public ResponseEntity<TripResponseDto> createGuestTrip(@Valid @RequestBody TripRequestDto request,
+                                                           HttpSession session) {
+        TripResponseDto guestTrip = tripService.generateGuestTrip(request);
+        session.setAttribute("GUEST_TRIP", guestTrip);
+        session.setAttribute("GUEST_REQUEST", request);
+        return new ResponseEntity<>(guestTrip, HttpStatus.OK);
+    }
+
+    /**
+     * Authenticated endpoint to permanently save a guest trip to the user's account
+     */
+    @PostMapping("/save-guest")
+    public ResponseEntity<TripResponseDto> saveGuestTrip(@RequestBody(required = false) TripRequestDto request,
+                                                         @AuthenticationPrincipal UserDetails userDetails,
+                                                         HttpSession session) {
+        User user = resolveCurrentUser(userDetails);
+        TripRequestDto payload = request;
+        if (payload == null) {
+            payload = (TripRequestDto) session.getAttribute("GUEST_REQUEST");
+        }
+        if (payload == null) {
+            throw new com.example.tripplanner.exception.BadRequestException("No guest trip data found to save. Please create or configure your trip first.");
+        }
+        TripResponseDto saved = tripService.createTrip(payload, user);
+        session.removeAttribute("GUEST_TRIP");
+        session.removeAttribute("GUEST_REQUEST");
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    /**
+     * Guest Smart Stops Discovery
+     */
+    @GetMapping("/guest/places-along-route")
+    public ResponseEntity<List<PlaceAlongRouteDto>> getGuestPlacesAlongRoute(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "maxDetourMinutes", required = false) Integer maxDetourMinutes,
+            @RequestParam(value = "maxDetourKm", required = false) Double maxDetourKm,
+            @RequestParam(value = "query", required = false) String query,
+            HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+        if (guestTrip == null) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        List<PlaceAlongRouteDto> places = tripService.getGuestPlacesAlongRoute(
+                guestTrip, category, maxDetourMinutes, maxDetourKm, query);
+        return ResponseEntity.ok(places);
+    }
+
+    /**
+     * Add a discovered stop along the route directly into guest trip destinations
+     */
+    @PostMapping(value = {"/guest/places-along-route", "/guest/add-place-along-route"})
+    public ResponseEntity<TripResponseDto> addGuestPlaceAlongRoute(
+            @RequestBody PlaceAlongRouteDto placeDto,
+            HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+        if (guestTrip == null) {
+            throw new com.example.tripplanner.exception.BadRequestException("No active guest trip session found.");
+        }
+        TripResponseDto updated = tripService.addGuestPlaceAlongRoute(guestTrip, placeDto);
+        session.setAttribute("GUEST_TRIP", updated);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Guest Destination Reordering
+     */
+    @PostMapping("/guest/reorder")
+    public ResponseEntity<TripResponseDto> reorderGuestDestinations(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+        if (guestTrip == null) {
+            throw new com.example.tripplanner.exception.BadRequestException("No active guest trip session found.");
+        }
+        TripResponseDto updated = tripService.reorderGuestDestinations(guestTrip, body);
+        session.setAttribute("GUEST_TRIP", updated);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Guest Day Itinerary Regeneration
+     */
+    @PostMapping({"/guest/days/{dayNumber}/regenerate", "/guest/regenerate-day/{dayNumber}"})
+    public ResponseEntity<TripResponseDto> regenerateGuestDay(
+            @PathVariable("dayNumber") Integer dayNumber,
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+        if (guestTrip == null) {
+            throw new com.example.tripplanner.exception.BadRequestException("No active guest trip session found.");
+        }
+        String preference = (body != null) ? body.getOrDefault("preference", "BALANCED") : "BALANCED";
+        TripResponseDto updated = tripService.regenerateGuestDay(guestTrip, dayNumber, preference);
+        session.setAttribute("GUEST_TRIP", updated);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Rehydrate/Sync guest trip from browser localStorage into server session on refresh
+     */
+    @PostMapping("/guest/sync")
+    public ResponseEntity<Map<String, String>> syncGuestSession(
+            @RequestBody TripRequestDto request,
+            HttpSession session) {
+        if (request != null && request.getStartLocation() != null && request.getDestinationNames() != null && !request.getDestinationNames().isEmpty()) {
+            TripResponseDto guestTrip = tripService.generateGuestTrip(request);
+            session.setAttribute("GUEST_TRIP", guestTrip);
+            session.setAttribute("GUEST_REQUEST", request);
+        }
+        return ResponseEntity.ok(Map.of("message", "Guest trip synchronized successfully"));
     }
 
     @GetMapping

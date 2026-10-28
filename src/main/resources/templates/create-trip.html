@@ -43,12 +43,20 @@
                         <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
                     </ul>
                 </div>
-                <a th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
+                <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
                     <i class="bi bi-speedometer2 me-1"></i> My Journeys
+                </a>
+                <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-outline-forest btn-sm">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
                 </a>
             </div>
         </div>
     </nav>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const isUserLoggedIn = /*[[${isLoggedIn}]]*/ false;
+        /*]]>*/
+    </script>
 
     <!-- Main Container -->
     <main class="container py-4 flex-grow-1" style="max-width: 960px;">
@@ -414,9 +422,13 @@
             const startParam = urlParams.get('start');
             const destParam = urlParams.get('dest');
             const startDateParam = urlParams.get('startDate');
+            const startTimeParam = urlParams.get('startTime');
 
             if (startDateParam) {
                 document.getElementById('startDate').value = startDateParam;
+            }
+            if (startTimeParam) {
+                document.getElementById('dailyStartTime').value = startTimeParam;
             }
 
             if (promptParam) {
@@ -953,7 +965,8 @@
             };
 
             try {
-                const response = await fetch('/api/trips', {
+                const endpoint = isUserLoggedIn ? '/api/trips' : '/api/trips/guest-plan';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -965,7 +978,15 @@
                 }
 
                 const result = await response.json();
-                window.location.href = '/trip/' + result.id;
+                if (!isUserLoggedIn) {
+                    try {
+                        localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(result));
+                        localStorage.setItem('voyagecraft_guest_payload', JSON.stringify(payload));
+                    } catch(e) {}
+                    window.location.href = '/trip/guest';
+                } else {
+                    window.location.href = '/trip/' + result.id;
+                }
             } catch (err) {
                 console.error(err);
                 alert("Error generating trip: " + err.message);

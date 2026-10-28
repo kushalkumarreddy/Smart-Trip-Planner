@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -258,19 +259,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(savedTrip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
                 savedTrip.getItineraries().add(item);
             }
@@ -460,19 +449,7 @@ public class TripService {
                 for (ItineraryItemDto itemDto : day.getItems()) {
                     ItineraryItem item = new ItineraryItem();
                     item.setTrip(trip);
-                    item.setDayNumber(day.getDayNumber());
-                    item.setScheduleDate(day.getDate());
-                    item.setStartTime(itemDto.getStartTime());
-                    item.setEndTime(itemDto.getEndTime());
-                    item.setActivity(itemDto.getActivity());
-                    item.setLocation(itemDto.getLocation());
-                    item.setActivityType(itemDto.getActivityType());
-                    item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                    item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                    item.setDurationMinutes(itemDto.getDurationMinutes());
-                    item.setRating(itemDto.getRating());
-                    item.setVisited(itemDto.getVisited());
-                    item.setNotes(itemDto.getNotes());
+                    populateItineraryItemFields(item, itemDto);
                     itineraryItemRepository.save(item);
                 }
             }
@@ -535,19 +512,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -609,20 +574,11 @@ public class TripService {
             }
             ItineraryItem item = new ItineraryItem();
             item.setTrip(trip);
+            populateItineraryItemFields(item, itemDto);
             item.setDayNumber(dayNumber);
             item.setScheduleDate(refreshedDay.getDate());
-            item.setStartTime(itemDto.getStartTime());
-            item.setEndTime(itemDto.getEndTime());
-            item.setActivity(itemDto.getActivity());
-            item.setLocation(itemDto.getLocation());
-            item.setActivityType(itemDto.getActivityType());
-            item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-            item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-            item.setDurationMinutes(itemDto.getDurationMinutes());
-            item.setRating(itemDto.getRating());
             item.setVisited(false);
             item.setLocked(false);
-            item.setNotes(itemDto.getNotes());
             itineraryItemRepository.save(item);
         }
 
@@ -766,19 +722,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -812,19 +756,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -1143,20 +1075,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
-                item.setLocked(itemDto.getLocked());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -1223,20 +1142,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
-                item.setLocked(itemDto.getLocked());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -1300,20 +1206,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
-                item.setLocked(itemDto.getLocked());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -1335,6 +1228,9 @@ public class TripService {
             restored.setVisited(locked.getVisited());
             restored.setNotes(locked.getNotes());
             restored.setLocked(true);
+            restored.setLatitude(locked.getLatitude());
+            restored.setLongitude(locked.getLongitude());
+            restored.setCategory(locked.getCategory());
             itineraryItemRepository.save(restored);
         }
 
@@ -1552,19 +1448,7 @@ public class TripService {
             for (ItineraryItemDto itemDto : day.getItems()) {
                 ItineraryItem item = new ItineraryItem();
                 item.setTrip(trip);
-                item.setDayNumber(day.getDayNumber());
-                item.setScheduleDate(day.getDate());
-                item.setStartTime(itemDto.getStartTime());
-                item.setEndTime(itemDto.getEndTime());
-                item.setActivity(itemDto.getActivity());
-                item.setLocation(itemDto.getLocation());
-                item.setActivityType(itemDto.getActivityType());
-                item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                item.setDurationMinutes(itemDto.getDurationMinutes());
-                item.setRating(itemDto.getRating());
-                item.setVisited(itemDto.getVisited());
-                item.setNotes(itemDto.getNotes());
+                populateItineraryItemFields(item, itemDto);
                 itineraryItemRepository.save(item);
             }
         }
@@ -1771,6 +1655,26 @@ public class TripService {
         return map;
     }
 
+    private void populateItineraryItemFields(ItineraryItem item, ItineraryItemDto itemDto) {
+        item.setDayNumber(itemDto.getDayNumber());
+        item.setScheduleDate(itemDto.getScheduleDate());
+        item.setStartTime(itemDto.getStartTime());
+        item.setEndTime(itemDto.getEndTime());
+        item.setActivity(itemDto.getActivity());
+        item.setLocation(itemDto.getLocation());
+        item.setActivityType(itemDto.getActivityType());
+        item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
+        item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
+        item.setDurationMinutes(itemDto.getDurationMinutes());
+        item.setRating(itemDto.getRating());
+        item.setVisited(itemDto.getVisited());
+        item.setNotes(itemDto.getNotes());
+        item.setLocked(itemDto.getLocked());
+        item.setLatitude(itemDto.getLatitude());
+        item.setLongitude(itemDto.getLongitude());
+        item.setCategory(itemDto.getCategory());
+    }
+
     private List<DayItineraryDto> buildDayItinerariesFromEntities(List<ItineraryItem> items, Trip trip, List<Destination> destinations) {
         Map<Integer, List<ItineraryItem>> byDay = items.stream()
                 .collect(Collectors.groupingBy(ItineraryItem::getDayNumber, TreeMap::new, Collectors.toList()));
@@ -1840,6 +1744,13 @@ public class TripService {
                 dto.setVisited(it.getVisited() != null && it.getVisited());
                 dto.setLocked(it.getLocked() != null && it.getLocked());
                 dto.setNotes(it.getNotes());
+                dto.setLatitude(it.getLatitude());
+                dto.setLongitude(it.getLongitude());
+                dto.setCategory(it.getCategory());
+                if ((dto.getLatitude() == null || dto.getLatitude() == 0.0) && d != null) {
+                    dto.setLatitude(d.getLatitude());
+                    dto.setLongitude(d.getLongitude());
+                }
 
                 itemDtos.add(dto);
 
@@ -1859,7 +1770,31 @@ public class TripService {
             dayDto.setTravelTimeMinutes(dayTravelMinutes);
             dayDto.setSightseeingTimeMinutes(daySightseeingMinutes);
             dayDto.setBreakTimeMinutes(dayBreakMinutes);
-            dayDto.setTotalDurationMinutes(dayTravelMinutes + daySightseeingMinutes + dayBreakMinutes);
+
+            int calculatedTotalDuration = 0;
+            if (!itemDtos.isEmpty()) {
+                ItineraryItemDto first = itemDtos.get(0);
+                ItineraryItemDto last = itemDtos.get(itemDtos.size() - 1);
+                LocalTime startTime = TimeUtils.parseTime(first.getStartTime());
+                LocalTime endTime = TimeUtils.parseTime(last.getEndTime());
+                if (endTime.isBefore(startTime)) {
+                    calculatedTotalDuration = (int) java.time.temporal.ChronoUnit.MINUTES.between(startTime, LocalTime.MAX) + 1
+                            + (int) java.time.temporal.ChronoUnit.MINUTES.between(LocalTime.MIN, endTime);
+                } else {
+                    calculatedTotalDuration = (int) java.time.temporal.ChronoUnit.MINUTES.between(startTime, endTime);
+                }
+            }
+            if (calculatedTotalDuration <= 0) {
+                calculatedTotalDuration = dayTravelMinutes + daySightseeingMinutes + dayBreakMinutes;
+            }
+            dayDto.setTotalDurationMinutes(calculatedTotalDuration);
+
+            String dailyStart = (trip.getDailyStartTime() != null && !trip.getDailyStartTime().isEmpty()) ? trip.getDailyStartTime() : "08:00";
+            String dailyEnd = (trip.getDailyEndTime() != null && !trip.getDailyEndTime().isEmpty()) ? trip.getDailyEndTime() : "20:30";
+            int availableDayMinutes = TimeUtils.differenceInMinutes(dailyStart, dailyEnd);
+            int unallocated = (availableDayMinutes > calculatedTotalDuration) ? (availableDayMinutes - calculatedTotalDuration) : 0;
+            dayDto.setUnallocatedTimeMinutes(unallocated);
+
             dayDto.setTotalPlacesCount(totalPlaces);
             dayDto.setVisitedCount(visitedPlaces);
 
@@ -2245,19 +2180,9 @@ public class TripService {
                 for (ItineraryItemDto itemDto : day.getItems()) {
                     ItineraryItem item = new ItineraryItem();
                     item.setTrip(trip);
-                    item.setDayNumber(day.getDayNumber());
-                    item.setScheduleDate(day.getDate());
+                    populateItineraryItemFields(item, itemDto);
                     item.setStartTime(TimeUtils.roundTime24(itemDto.getStartTime(), 15));
                     item.setEndTime(TimeUtils.roundTime24(itemDto.getEndTime(), 15));
-                    item.setActivity(itemDto.getActivity());
-                    item.setLocation(itemDto.getLocation());
-                    item.setActivityType(itemDto.getActivityType());
-                    item.setTravelDistanceKm(itemDto.getTravelDistanceKm());
-                    item.setTravelTimeMinutes(itemDto.getTravelTimeMinutes());
-                    item.setDurationMinutes(itemDto.getDurationMinutes());
-                    item.setRating(itemDto.getRating());
-                    item.setVisited(itemDto.getVisited());
-                    item.setNotes(itemDto.getNotes());
                     item.setLocked(false);
                     itineraryItemRepository.save(item);
                 }
@@ -2294,6 +2219,7 @@ public class TripService {
 
         // Align times in target day cleanly
         List<ItineraryItem> targetDayItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), targetDay);
+        targetDayItems.sort((a, b) -> TimeUtils.compareItineraryTimes(a.getStartTime(), b.getStartTime()));
         int duration = item.getDurationMinutes() != null && item.getDurationMinutes() > 0 ? item.getDurationMinutes() : 60;
         duration = Math.max(30, (int) Math.round((double) duration / 15.0) * 15);
 
@@ -2301,14 +2227,18 @@ public class TripService {
         if (moveDto.getPreferredStartTime() != null && !moveDto.getPreferredStartTime().trim().isEmpty()) {
             newStart = TimeUtils.roundTime24(moveDto.getPreferredStartTime(), 15);
         } else {
-            String latestEnd = "10:00";
+            java.time.LocalTime maxEndLt = java.time.LocalTime.of(10, 0);
             for (ItineraryItem other : targetDayItems) {
                 if (!other.getId().equals(item.getId()) && !"HOTEL".equalsIgnoreCase(other.getActivityType())) {
                     if (other.getEndTime() != null) {
-                        latestEnd = other.getEndTime();
+                        java.time.LocalTime parsedEnd = TimeUtils.parseTime(other.getEndTime());
+                        if (parsedEnd.isAfter(maxEndLt)) {
+                            maxEndLt = parsedEnd;
+                        }
                     }
                 }
             }
+            String latestEnd = String.format(Locale.US, "%02d:%02d", maxEndLt.getHour(), maxEndLt.getMinute());
             newStart = TimeUtils.roundUpTime24(TimeUtils.addMinutes(latestEnd, 20), 15);
         }
 
@@ -2567,5 +2497,332 @@ public class TripService {
         }
 
         return response;
+    }
+
+    // ==========================================
+    // Guest Trip Planning & Session Support (Requirement 3)
+    // ==========================================
+
+    public TripResponseDto generateGuestTrip(TripRequestDto request) {
+        if (request == null) {
+            throw new BadRequestException("Trip request cannot be null.");
+        }
+        if (request.getStartLocation() == null || request.getStartLocation().trim().isEmpty()) {
+            throw new BadRequestException("Starting location is required.");
+        }
+
+        List<String> cleanedDestinations = new ArrayList<>();
+        List<String> cleanedHotels = new ArrayList<>();
+        if (request.getDestinationNames() != null) {
+            for (int i = 0; i < request.getDestinationNames().size(); i++) {
+                String d = request.getDestinationNames().get(i);
+                if (d != null && !d.trim().isEmpty()) {
+                    cleanedDestinations.add(d.trim());
+                    String h = (request.getDestinationHotels() != null && i < request.getDestinationHotels().size())
+                            ? request.getDestinationHotels().get(i) : "";
+                    cleanedHotels.add(h != null ? h.trim() : "");
+                }
+            }
+        }
+
+        if (cleanedDestinations.isEmpty()) {
+            throw new BadRequestException("At least one valid destination is required.");
+        }
+
+        Trip trip = new Trip();
+        trip.setId(0L);
+        String autoName = (request.getTripName() != null && !request.getTripName().trim().isEmpty())
+                ? request.getTripName().trim()
+                : String.format("%s to %s Journey", request.getStartLocation(), cleanedDestinations.get(cleanedDestinations.size() - 1));
+        trip.setTripName(autoName);
+        trip.setStartLocation(request.getStartLocation().trim());
+        double[] startCoords = googleMapsService.geocode(request.getStartLocation());
+        trip.setStartLat(startCoords[0]);
+        trip.setStartLng(startCoords[1]);
+
+        trip.setStartDate(request.getStartDate() != null ? request.getStartDate() : LocalDate.now());
+        trip.setEndDate(request.getEndDate() != null ? request.getEndDate() : trip.getStartDate().plusDays(Math.max(1, cleanedDestinations.size())));
+        trip.setTransportMode(request.getTransportMode() != null ? request.getTransportMode() : "CAR");
+        trip.setTravelStyle(request.getTravelStyle() != null ? request.getTravelStyle() : "BALANCED");
+        trip.setTravelersCount(request.getTravelersCount() != null ? request.getTravelersCount() : 2);
+        trip.setDailyStartTime(request.getDailyStartTime() != null ? request.getDailyStartTime() : "08:00");
+        trip.setDailyEndTime(request.getDailyEndTime() != null ? request.getDailyEndTime() : "20:00");
+        trip.setBudgetRange(request.getBudgetRange() != null ? request.getBudgetRange() : "Moderate");
+        if (request.getPreferredInterests() != null && !request.getPreferredInterests().isEmpty()) {
+            trip.setPreferredInterests(String.join(",", request.getPreferredInterests()));
+        }
+
+        // Calculate Route Matrix
+        RouteSummaryDto routeSummary = routeService.calculateCompleteRoute(
+                trip.getStartLocation(),
+                cleanedDestinations,
+                trip.getTransportMode()
+        );
+
+        trip.setTotalDistance(routeSummary.getTotalDistanceKm());
+        trip.setTotalTravelTimeMinutes(routeSummary.getTotalTravelTimeMinutes());
+
+        List<Destination> destinations = new ArrayList<>();
+        Set<String> guestSeededPlaces = new HashSet<>();
+        for (int i = 0; i < cleanedDestinations.size(); i++) {
+            String destName = cleanedDestinations.get(i);
+            int stayDays = (request.getDestinationStayDurations() != null && i < request.getDestinationStayDurations().size() && request.getDestinationStayDurations().get(i) != null && request.getDestinationStayDurations().get(i) > 0)
+                    ? request.getDestinationStayDurations().get(i) : 1;
+            int stayNights = (request.getDestinationStayNights() != null && i < request.getDestinationStayNights().size() && request.getDestinationStayNights().get(i) != null && request.getDestinationStayNights().get(i) >= 0)
+                    ? request.getDestinationStayNights().get(i) : Math.max(0, stayDays - 1);
+
+            Destination dest = new Destination(destName, i, stayDays);
+            dest.setId((long) (i + 1));
+            dest.setStayDurationNights(stayNights);
+            dest.setTrip(trip);
+            if (i < cleanedHotels.size() && !cleanedHotels.get(i).isEmpty()) {
+                dest.setHotelName(cleanedHotels.get(i));
+            }
+            double[] coords = googleMapsService.geocode(destName);
+            dest.setLatitude(coords[0]);
+            dest.setLongitude(coords[1]);
+
+            if (i < routeSummary.getSegments().size()) {
+                RouteSegmentDto seg = routeSummary.getSegments().get(i);
+                dest.setDistanceFromPrevious(seg.getDistanceKm());
+                dest.setTravelTimeFromPrevious(seg.getDurationMinutes());
+            }
+
+            // Seed top sightseeing recommendations into places collection
+            List<SightseeingPlaceDto> recommended = recommendationService.getRecommendedPlaces(
+                    destName,
+                    request.getPreferredInterests(),
+                    "popularity",
+                    null
+            );
+
+            long placeIdSeq = (i + 1) * 100L;
+            for (SightseeingPlaceDto rec : recommended) {
+                String recKey = ItineraryService.normalizePlaceKey(rec.getName());
+                if (!recKey.isEmpty() && guestSeededPlaces.contains(recKey)) {
+                    continue;
+                }
+                if (!recKey.isEmpty()) {
+                    guestSeededPlaces.add(recKey);
+                }
+
+                Place place = new Place();
+                place.setId(placeIdSeq++);
+                place.setDestination(dest);
+                place.setName(rec.getName());
+                place.setCategory(rec.getCategory());
+                place.setRating(rec.getRating());
+                place.setReviewCount(rec.getReviewCount());
+                place.setLatitude(rec.getLatitude());
+                place.setLongitude(rec.getLongitude());
+                place.setDistanceKm(rec.getDistanceKm());
+                place.setEstimatedVisitDurationMinutes(rec.getEstimatedVisitDurationMinutes());
+                place.setEstimatedTravelTimeMinutes(rec.getEstimatedTravelTimeMinutes());
+                place.setDescription(rec.getDescription());
+                place.setOpeningHours(rec.getOpeningHours());
+                place.setPriority(rec.getPriority());
+                place.setVisited(false);
+                place.setAddedToItinerary(true);
+                dest.getPlaces().add(place);
+            }
+
+            destinations.add(dest);
+        }
+
+        // Generate in-memory itinerary items
+        List<DayItineraryDto> dayItineraries = itineraryService.generateItineraryPlan(
+                trip, destinations, trip.getTransportMode()
+        );
+
+        TripResponseDto dto = buildTripResponseDto(trip, routeSummary, dayItineraries, destinations);
+        dto.setId(0L);
+        dto.setIsGuest(true);
+        return dto;
+    }
+
+    public TripResponseDto createEmptyGuestTrip() {
+        TripResponseDto dto = new TripResponseDto();
+        dto.setId(0L);
+        dto.setIsGuest(true);
+        dto.setTripName("My Guest Journey");
+        dto.setStartLocation("Bengaluru");
+        dto.setStartDate(LocalDate.now());
+        dto.setEndDate(LocalDate.now().plusDays(2));
+        dto.setTotalDays(3);
+        dto.setTransportMode("CAR");
+        dto.setTravelStyle("BALANCED");
+        dto.setTravelersCount(2);
+        dto.setDailyStartTime("08:00");
+        dto.setDailyEndTime("20:00");
+        dto.setTotalDistanceKm(0.0);
+        dto.setTotalTravelTimeMinutes(0);
+        dto.setRouteSummary(new RouteSummaryDto());
+        return dto;
+    }
+
+    public List<PlaceAlongRouteDto> getGuestPlacesAlongRoute(
+            TripResponseDto guestTrip, String category, Integer maxDetourMinutes, Double maxDetourKm, String query) {
+        if (guestTrip == null || guestTrip.getStartLocation() == null || guestTrip.getDestinations() == null || guestTrip.getDestinations().isEmpty()) {
+            return Collections.emptyList();
+        }
+        Trip transientTrip = new Trip();
+        transientTrip.setId(0L);
+        transientTrip.setStartLocation(guestTrip.getStartLocation());
+        transientTrip.setTransportMode(guestTrip.getTransportMode() != null ? guestTrip.getTransportMode() : "CAR");
+
+        List<Destination> transientDestinations = new ArrayList<>();
+        for (int i = 0; i < guestTrip.getDestinations().size(); i++) {
+            DestinationDto dDto = guestTrip.getDestinations().get(i);
+            Destination d = new Destination(dDto.getName(), i, dDto.getStayDurationDays() != null ? dDto.getStayDurationDays() : 1);
+            d.setId(dDto.getId() != null ? dDto.getId() : (long) (i + 1));
+            d.setLatitude(dDto.getLatitude());
+            d.setLongitude(dDto.getLongitude());
+            transientDestinations.add(d);
+        }
+
+        if (smartStopsService != null) {
+            return smartStopsService.findSmartStopsAlongRoute(
+                    transientTrip, transientDestinations, category, maxDetourMinutes, maxDetourKm, query);
+        }
+        return Collections.emptyList();
+    }
+
+    public TripResponseDto addGuestPlaceAlongRoute(TripResponseDto guestTrip, PlaceAlongRouteDto placeDto) {
+        if (guestTrip == null || placeDto == null || placeDto.getName() == null) {
+            throw new BadRequestException("Invalid guest trip or place data");
+        }
+
+        List<String> currentDests = new ArrayList<>();
+        List<String> currentHotels = new ArrayList<>();
+        List<Integer> currentDays = new ArrayList<>();
+        List<Integer> currentNights = new ArrayList<>();
+
+        if (guestTrip.getDestinations() != null) {
+            for (DestinationDto d : guestTrip.getDestinations()) {
+                currentDests.add(d.getName());
+                currentHotels.add(d.getHotelName() != null ? d.getHotelName() : "");
+                currentDays.add(d.getStayDurationDays() != null ? d.getStayDurationDays() : 1);
+                currentNights.add(d.getStayDurationNights() != null ? d.getStayDurationNights() : 0);
+            }
+        }
+
+        String stopName = placeDto.getName().trim();
+        int insertIndex = currentDests.size();
+
+        if (placeDto.getInsertBeforeDestination() != null) {
+            for (int i = 0; i < currentDests.size(); i++) {
+                if (currentDests.get(i).equalsIgnoreCase(placeDto.getInsertBeforeDestination().trim())) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+        } else if (placeDto.getInsertAfterDestination() != null) {
+            for (int i = 0; i < currentDests.size(); i++) {
+                if (currentDests.get(i).equalsIgnoreCase(placeDto.getInsertAfterDestination().trim())) {
+                    insertIndex = i + 1;
+                    break;
+                }
+            }
+        }
+
+        if (insertIndex < 0) insertIndex = 0;
+        if (insertIndex > currentDests.size()) insertIndex = currentDests.size();
+
+        currentDests.add(insertIndex, stopName);
+        currentHotels.add(insertIndex, "");
+        currentDays.add(insertIndex, 1);
+        currentNights.add(insertIndex, 0);
+
+        TripRequestDto updatedReq = new TripRequestDto();
+        updatedReq.setTripName(guestTrip.getTripName());
+        updatedReq.setStartLocation(guestTrip.getStartLocation());
+        updatedReq.setDestinationNames(currentDests);
+        updatedReq.setDestinationHotels(currentHotels);
+        updatedReq.setDestinationStayDurations(currentDays);
+        updatedReq.setDestinationStayNights(currentNights);
+        updatedReq.setStartDate(guestTrip.getStartDate());
+        updatedReq.setEndDate(guestTrip.getEndDate());
+        updatedReq.setTransportMode(guestTrip.getTransportMode());
+        updatedReq.setTravelStyle(guestTrip.getTravelStyle());
+        updatedReq.setTravelersCount(guestTrip.getTravelersCount());
+        updatedReq.setDailyStartTime(guestTrip.getDailyStartTime());
+        updatedReq.setDailyEndTime(guestTrip.getDailyEndTime());
+        updatedReq.setBudgetRange(guestTrip.getBudgetRange());
+
+        return generateGuestTrip(updatedReq);
+    }
+
+    public TripResponseDto reorderGuestDestinations(TripResponseDto guestTrip, Map<String, Object> body) {
+        if (guestTrip == null || body == null) {
+            throw new BadRequestException("Invalid guest trip or reorder parameters");
+        }
+
+        List<String> reorderedNames = new ArrayList<>();
+        if (body.containsKey("orderedDestinationNames")) {
+            @SuppressWarnings("unchecked")
+            List<String> names = (List<String>) body.get("orderedDestinationNames");
+            if (names != null) reorderedNames.addAll(names);
+        } else if (body.containsKey("orderedDestinationIds") && guestTrip.getDestinations() != null) {
+            @SuppressWarnings("unchecked")
+            List<Object> rawIds = (List<Object>) body.get("orderedDestinationIds");
+            if (rawIds != null) {
+                Map<Long, DestinationDto> byId = new HashMap<>();
+                for (DestinationDto d : guestTrip.getDestinations()) {
+                    if (d.getId() != null) byId.put(d.getId(), d);
+                }
+                for (Object idObj : rawIds) {
+                    Long id = null;
+                    if (idObj instanceof Number) id = ((Number) idObj).longValue();
+                    else if (idObj != null) {
+                        try { id = Long.valueOf(idObj.toString()); } catch (Exception ignored) {}
+                    }
+                    if (id != null && byId.containsKey(id)) {
+                        reorderedNames.add(byId.get(id).getName());
+                    }
+                }
+            }
+        }
+
+        if (reorderedNames.isEmpty() && guestTrip.getDestinations() != null) {
+            for (DestinationDto d : guestTrip.getDestinations()) {
+                reorderedNames.add(d.getName());
+            }
+        }
+
+        TripRequestDto req = new TripRequestDto();
+        req.setTripName(guestTrip.getTripName());
+        req.setStartLocation(guestTrip.getStartLocation());
+        req.setDestinationNames(reorderedNames);
+        req.setStartDate(guestTrip.getStartDate());
+        req.setEndDate(guestTrip.getEndDate());
+        req.setTransportMode(guestTrip.getTransportMode());
+        req.setTravelStyle(guestTrip.getTravelStyle());
+        req.setTravelersCount(guestTrip.getTravelersCount());
+        req.setDailyStartTime(guestTrip.getDailyStartTime());
+        req.setDailyEndTime(guestTrip.getDailyEndTime());
+        req.setBudgetRange(guestTrip.getBudgetRange());
+
+        return generateGuestTrip(req);
+    }
+
+    public TripResponseDto regenerateGuestDay(TripResponseDto guestTrip, int dayNumber, String preference) {
+        TripRequestDto req = new TripRequestDto();
+        req.setTripName(guestTrip.getTripName());
+        req.setStartLocation(guestTrip.getStartLocation());
+        List<String> dests = new ArrayList<>();
+        if (guestTrip.getDestinations() != null) {
+            for (DestinationDto d : guestTrip.getDestinations()) dests.add(d.getName());
+        }
+        req.setDestinationNames(dests);
+        req.setStartDate(guestTrip.getStartDate());
+        req.setEndDate(guestTrip.getEndDate());
+        req.setTransportMode(guestTrip.getTransportMode());
+        req.setTravelStyle(preference != null ? preference : guestTrip.getTravelStyle());
+        req.setTravelersCount(guestTrip.getTravelersCount());
+        req.setDailyStartTime(guestTrip.getDailyStartTime());
+        req.setDailyEndTime(guestTrip.getDailyEndTime());
+        req.setBudgetRange(guestTrip.getBudgetRange());
+
+        return generateGuestTrip(req);
     }
 }

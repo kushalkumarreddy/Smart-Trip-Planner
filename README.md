@@ -2,7 +2,7 @@
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Build Status](https://img.shields.io/badge/Tests-70%20Passing-success.svg)](TEST_REPORT.md)
+[![Build Status](https://img.shields.io/badge/Tests-77%20Passing-success.svg)](TEST_REPORT.md)
 [![Security Hardened](https://img.shields.io/badge/Security-OWASP%20Hardened-blue.svg)](SECURITY_REVIEW.md)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
@@ -14,12 +14,17 @@ VoyageCraft is a modern, consumer-ready travel planning platform designed to mak
 
 - [🚀 Production Deployment Guide](DEPLOYMENT_GUIDE.md) — Comprehensive setup, cloud hosting, Docker, and MySQL 8.0 guide.
 - [🛡️ Application Security Review](SECURITY_REVIEW.md) — Threat modeling, authorization matrix, and CSRF hardening.
-- [🧪 Automated Test Report](TEST_REPORT.md) — Full breakdown of the 70 unit and integration tests.
-- [📋 Project Code Audit](PROJECT_AUDIT.md) — Remediation matrix and status of all 16 audit findings.
+- [🧪 Automated Test Report](TEST_REPORT.md) — Full breakdown of the 77 unit and integration tests.
+- [📋 Project Code Audit](PROJECT_AUDIT.md) — Remediation matrix and status of all audit findings.
 
 ---
 
 ## 1. Key Features
+
+### 🚀 Guest Trip Planning (No Login Required)
+- **Instant Journey Creation**: Plan trips, select start times (default 8:00 AM), reorder destinations, and discover smart stops immediately without creating an account.
+- **Session & Local Persistence**: Guest itineraries persist safely during browser sessions and page reloads.
+- **One-Click Account Save**: Convert active guest itineraries directly into permanent saved account trips upon signing in.
 
 ### 🌟 Categorized Trip Dashboard
 - **Upcoming, Ongoing & Completed Categories**: Trips automatically categorize according to their travel calendar dates with accessible tabs and live counts.

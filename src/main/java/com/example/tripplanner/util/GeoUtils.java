@@ -818,6 +818,7 @@ public class GeoUtils {
             case "WALKING":
                 return "walking";
             case "PUBLIC_TRANSPORT":
+            case "TRANSIT":
                 return "transit";
             case "CAR":
             default:

@@ -108,14 +108,36 @@ public class WebController {
 
     @GetMapping("/create-trip")
     public String createTripPage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            return "redirect:/login";
+        boolean isLoggedIn = (userDetails != null);
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        if (isLoggedIn) {
+            model.addAttribute("user", userService.getUserByEmail(userDetails.getUsername()));
         }
-        User user = resolveCurrentUser(userDetails);
-        model.addAttribute("user", user);
         model.addAttribute("googleMapsApiKey", googleMapsService.getApiKey());
         model.addAttribute("isLiveMapsConfigured", googleMapsService.isLiveApiConfigured());
         return "create-trip";
+    }
+
+    @GetMapping("/trip/guest")
+    public String guestTripDetailsPage(Model model,
+                                       jakarta.servlet.http.HttpSession session,
+                                       @AuthenticationPrincipal UserDetails userDetails) {
+        boolean isLoggedIn = (userDetails != null);
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        if (isLoggedIn) {
+            model.addAttribute("user", userService.getUserByEmail(userDetails.getUsername()));
+        }
+
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+        if (guestTrip == null) {
+            guestTrip = tripService.createEmptyGuestTrip();
+        }
+        guestTrip.setIsGuest(true);
+
+        model.addAttribute("trip", guestTrip);
+        model.addAttribute("googleMapsApiKey", googleMapsService.getApiKey());
+        model.addAttribute("isLiveMapsConfigured", googleMapsService.isLiveApiConfigured());
+        return "trip-details";
     }
 
     @GetMapping("/trip/{id}")
@@ -125,7 +147,9 @@ public class WebController {
         }
         User user = resolveCurrentUser(userDetails);
         TripResponseDto trip = tripService.getTripDtoById(id, user);
+        trip.setIsGuest(false);
 
+        model.addAttribute("isLoggedIn", true);
         model.addAttribute("user", user);
         model.addAttribute("trip", trip);
         model.addAttribute("googleMapsApiKey", googleMapsService.getApiKey());

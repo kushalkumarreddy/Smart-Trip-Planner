@@ -52,7 +52,10 @@ public class SecurityConfig {
                                 "/api/places/reverse-geocode",
                                 "/api/places/photo",
                                 "/api/trips/preview-optimize",
-                                "/api/trips/preview-round-trip"
+                                "/api/trips/preview-round-trip",
+                                "/api/trips/ai-plan",
+                                "/api/trips/guest-plan",
+                                "/api/trips/guest/**"
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
@@ -60,6 +63,8 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/register",
+                                "/create-trip",
+                                "/trip/guest",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
@@ -71,6 +76,9 @@ public class SecurityConfig {
                                 "/api/places/autocomplete",
                                 "/api/places/reverse-geocode",
                                 "/api/places/photo",
+                                "/api/trips/guest-plan",
+                                "/api/trips/guest/**",
+                                "/api/trips/ai-plan",
                                 "/api/trips/preview-optimize",
                                 "/api/trips/preview-round-trip",
                                 "/api/trips/share/**",
@@ -78,7 +86,6 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/dashboard",
-                                "/create-trip",
                                 "/trip/**",
                                 "/api/trips/**",
                                 "/api/destinations/**",

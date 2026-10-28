@@ -59,6 +59,15 @@ public class ItineraryItem {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "category", length = 100)
+    private String category;
+
     public ItineraryItem() {
     }
 
@@ -205,5 +214,29 @@ public class ItineraryItem {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

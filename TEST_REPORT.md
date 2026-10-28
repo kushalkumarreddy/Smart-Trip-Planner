@@ -2,9 +2,9 @@
 
 **Execution Date**: October 2026  
 **Environment**: Windows 11 / Java 21 (Eclipse Temurin) / Maven 3.9.9 / Spring Boot 3.3.4  
-**Command**: `.\mvnw.cmd clean test`  
-**Overall Result**: **SUCCESS — 70 / 70 Tests Passing (0 Failures, 0 Errors, 0 Skipped)**  
-**Total Test Execution Time**: 11.9 seconds  
+**Command**: `.\mvnw.cmd test`  
+**Overall Result**: **SUCCESS — 82 / 82 Tests Passing (0 Failures, 0 Errors, 0 Skipped)**  
+**Total Test Execution Time**: 12.4 seconds  
 
 ---
 
@@ -12,18 +12,21 @@
 
 | Test Suite Class | Tests Run | Passed | Failures | Errors | Execution Time | Coverage Area |
 |---|---|---|---|---|---|---|
-| `PersistenceAndSecurityTest` | 7 | 7 | 0 | 0 | 0.074 s | Authentication requirement, intruder access denial, crew collaborator authorization, itinerary persistence across reload, stop add/remove, visited toggle security, and trip status calculation (`UPCOMING`, `ONGOING`, `COMPLETED`). |
-| `TripServiceTest` | 6 | 6 | 0 | 0 | 0.053 s | Trip creation, user trips query, DTO mapping, destination addition, stop deletion, and travel stats calculation. |
-| `TripVersionServiceTest` | 7 | 7 | 0 | 0 | 0.703 s | Version snapshot generation, version comparison diff engine, version restore with automated backup creation, and retention policy pruning (max 30 versions). |
-| `StayDurationAndSmartDayPlannerTest` | 12 | 12 | 0 | 0 | 0.197 s | Multi-day stay scheduling, stay duration adjustment, hotel accommodation pinning, overnight stays vs day trips, and single-day schedule regeneration. |
-| `RouteAccuracyAndAlternativesTest` | 6 | 6 | 0 | 0 | 1.632 s | TSP route optimization, alternative route strategy comparison (Fastest vs Scenic vs Balanced), and round-trip distance calculation. |
-| `RouteServiceTest` | 5 | 5 | 0 | 0 | 0.018 s | Road distance computation, OSRM geometry polyline parsing, travel time estimation, and mathematical Haversine highway fallbacks. |
-| `ItineraryServiceTest` | 7 | 7 | 0 | 0 | 0.052 s | Daily schedule generation, meal and rest break insertion, clock time slotting (15-minute intervals), and travel fatigue crowd alerts. |
-| `SmartStopsServiceTest` | 7 | 7 | 0 | 0 | 0.235 s | Route corridor waypoint detour calculation, stopover filtering (fuel, food, viewpoint), and offline test decoupling via `smartstops.overpass.enabled=false`. |
-| `AccommodationAndLockTest` | 4 | 4 | 0 | 0 | 2.689 s | Accommodation persistence, stay duration recalculation, activity item locking, and single-day regeneration preservation. |
-| `AiTripPlannerServiceTest` | 4 | 4 | 0 | 0 | 0.077 s | Natural language prompt parsing, destination extraction, travel style detection, and fallback handling. |
-| `IndianPlacesCatalogTest` | 5 | 5 | 0 | 0 | 2.262 s | Indian destination catalog verification, categories (Heritage, Nature, Spiritual, Beach), photo URL integrity, and rating metrics. |
-| **Total** | **70** | **70** | **0** | **0** | **11.947 s** | **Full System & Core Logic Verification** |
+| `ProductionReadinessAndAccuracyMasterTest` | 5 | 5 | 0 | 0 | 0.745 s | Master verification for production readiness: 3-6 activities on sightseeing days, elimination of 4-hour hotel void, mathematical consistency of metrics (travel + sightseeing + breaks + unallocated = total duration), map marker coordinates & category styling, honest public transport reporting without fake timetables. |
+| `PersistenceAndSecurityTest` | 7 | 7 | 0 | 0 | 0.075 s | Authentication requirement, intruder access denial, crew collaborator authorization, itinerary persistence across reload, stop add/remove, visited toggle security, and trip status calculation (`UPCOMING`, `ONGOING`, `COMPLETED`). |
+| `TripServiceTest` | 7 | 7 | 0 | 0 | 0.051 s | Trip creation, user trips query, DTO mapping, destination addition, stop deletion, guest trip generation, and travel stats calculation. |
+| `TripVersionServiceTest` | 7 | 7 | 0 | 0 | 0.642 s | Version snapshot generation, version comparison diff engine, version restore with automated backup creation, and retention policy pruning (max 30 versions). |
+| `StayDurationAndSmartDayPlannerTest` | 12 | 12 | 0 | 0 | 0.075 s | Multi-day stay scheduling, stay duration adjustment, hotel accommodation pinning, overnight stays vs day trips, and single-day schedule regeneration. |
+| `StartTimeAndItinerarySchedulingTest` | 3 | 3 | 0 | 0 | 0.019 s | Start time default (08:00 AM), custom start time support (e.g. 06:30 AM), strictly chronological scheduling, 15-minute departure preparation block, non-overlapping activities. |
+| `GuestTripAndSmartStopsTest` | 3 | 3 | 0 | 0 | 0.970 s | Guest trip planning without login, session persistence, public transport integrity (truthful error states, zero fake timetables), and smart stops emergency hospital/pharmacy discovery. |
+| `RouteAccuracyAndAlternativesTest` | 6 | 6 | 0 | 0 | 0.251 s | TSP route optimization, alternative route strategy comparison (Fastest vs Scenic vs Balanced), and round-trip distance calculation. |
+| `RouteServiceTest` | 5 | 5 | 0 | 0 | 0.026 s | Road distance computation, OSRM geometry polyline parsing, travel time estimation, and mathematical Haversine highway fallbacks. |
+| `ItineraryServiceTest` | 7 | 7 | 0 | 0 | 0.085 s | Daily schedule generation, meal and rest break insertion, clock time slotting (15-minute intervals), and travel fatigue crowd alerts. |
+| `SmartStopsServiceTest` | 7 | 7 | 0 | 0 | 0.104 s | Route corridor waypoint detour calculation, stopover filtering (fuel, food, viewpoint, EV charging, medical), and offline test decoupling via `smartstops.overpass.enabled=false`. |
+| `AccommodationAndLockTest` | 4 | 4 | 0 | 0 | 3.422 s | Accommodation persistence, stay duration recalculation, activity item locking, and single-day regeneration preservation. |
+| `AiTripPlannerServiceTest` | 4 | 4 | 0 | 0 | 0.086 s | Natural language prompt parsing, destination extraction, travel style detection, and fallback handling. |
+| `IndianPlacesCatalogTest` | 5 | 5 | 0 | 0 | 1.214 s | Indian destination catalog verification, categories (Heritage, Nature, Spiritual, Beach), photo URL integrity, and rating metrics. |
+| **Total** | **82** | **82** | **0** | **0** | **12.398 s** | **Full System & Core Logic Verification** |
 
 ---
 

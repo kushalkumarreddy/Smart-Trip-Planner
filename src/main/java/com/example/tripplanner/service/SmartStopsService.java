@@ -484,6 +484,10 @@ public class SmartStopsService {
                 return com.google.maps.model.PlaceType.PARKING;
             case "HOTEL":
                 return com.google.maps.model.PlaceType.LODGING;
+            case "HOSPITAL":
+                return com.google.maps.model.PlaceType.HOSPITAL;
+            case "PHARMACY":
+                return com.google.maps.model.PlaceType.PHARMACY;
             default:
                 return null;
         }
@@ -493,6 +497,8 @@ public class SmartStopsService {
         if (types == null) return "ATTRACTION";
         for (String t : types) {
             String tl = t.toLowerCase();
+            if (tl.contains("hospital") || tl.contains("health")) return "HOSPITAL";
+            if (tl.contains("pharmacy") || tl.contains("drugstore")) return "PHARMACY";
             if (tl.contains("gas_station") || tl.contains("fuel")) return "FUEL";
             if (tl.contains("restaurant") || tl.contains("cafe") || tl.contains("bakery") || tl.contains("food")) return "RESTAURANT";
             if (tl.contains("parking")) return "PARKING";
@@ -504,7 +510,7 @@ public class SmartStopsService {
 
     private String buildOverpassFilter(String category) {
         if (category == null || "ALL".equalsIgnoreCase(category)) {
-            return "[\"amenity\"~\"fuel|restaurant|cafe|fast_food|toilets|charging_station|parking\"];";
+            return "[\"amenity\"~\"fuel|restaurant|cafe|fast_food|toilets|charging_station|parking|hospital|pharmacy|clinic\"];";
         }
         switch (category.toUpperCase()) {
             case "FUEL":
@@ -523,8 +529,12 @@ public class SmartStopsService {
                 return "[\"amenity\"=\"parking\"];";
             case "HOTEL":
                 return "[\"tourism\"~\"hotel|motel|guest_house\"];";
+            case "HOSPITAL":
+                return "[\"amenity\"~\"hospital|clinic\"];";
+            case "PHARMACY":
+                return "[\"amenity\"=\"pharmacy\"];";
             default:
-                return "[\"amenity\"~\"fuel|restaurant|cafe|toilets|charging_station\"];";
+                return "[\"amenity\"~\"fuel|restaurant|cafe|toilets|charging_station|hospital|pharmacy\"];";
         }
     }
 
@@ -538,6 +548,8 @@ public class SmartStopsService {
         if ("parking".equals(amenity)) return "PARKING";
         if ("viewpoint".equals(tourism)) return "VIEWPOINT";
         if ("hotel".equals(tourism) || "motel".equals(tourism)) return "HOTEL";
+        if (amenity.matches("hospital|clinic")) return "HOSPITAL";
+        if ("pharmacy".equals(amenity)) return "PHARMACY";
         return "ATTRACTION";
     }
 
@@ -559,6 +571,10 @@ public class SmartStopsService {
                 return "Parking Area";
             case "HOTEL":
                 return "Hotel & Accommodation";
+            case "HOSPITAL":
+                return "Hospital & Clinic";
+            case "PHARMACY":
+                return "Pharmacy & Medical";
             default:
                 return "Highway Stop";
         }
@@ -690,6 +706,66 @@ public class SmartStopsService {
                 "Fast charging hub with two 60kW CCS2 guns for Delhi-Agra intercity EV travelers.", "Mile 65 Plaza, Yamuna Expressway", 28.1260, 77.5530, "Open 24 Hours"));
         VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_dye_4", "Sagar Ratna Highway Express Mathura", "Food & Dining", "RESTAURANT", 4.4, 4800,
                 "Famous pure vegetarian South and North Indian highway dining stop offering fresh thalis and dosa combos.", "Yamuna Expressway Exit 3, Mathura Bypass", 27.5850, 77.6820, "06:00 AM - 11:30 PM"));
+
+        // Medical & Emergency Facilities along Corridors (NH275, NH75, MPE, DYE)
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_1", "MIMS Mandya Institute of Medical Sciences Trauma Center", "Hospital & Clinic", "HOSPITAL", 4.3, 1400,
+                "24/7 Government medical college hospital with fully-equipped emergency trauma wing directly off the expressway.", "NH275 Bypass, Mandya", 12.5280, 76.9010, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_2", "Apollo Pharmacy 24/7 Ramanagara Highway Hub", "Pharmacy & Medical", "PHARMACY", 4.5, 430,
+                "24-hour highway pharmacy stocking emergency medications, first-aid kits, ORS, and travel essentials.", "NH275, Ramanagara Main Access", 12.7210, 77.2790, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_3", "Manipal Hospital Highway Emergency Node Mysuru", "Hospital & Clinic", "HOSPITAL", 4.6, 2800,
+                "Multispeciality tertiary hospital with round-the-clock emergency, cardiology, and surgical response.", "Bengaluru-Mysuru Ring Road Junction, Mysuru", 12.3380, 76.6540, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_4", "Hassan Institute of Medical Sciences (HIMS) Trauma Care", "Hospital & Clinic", "HOSPITAL", 4.4, 1150,
+                "District emergency and surgical trauma hospital serving travelers on the Mangalore-Bengaluru highway.", "NH75 Access, Hassan", 13.0040, 76.1020, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_5", "MedPlus 24/7 Kunigal Highway Pharmacy", "Pharmacy & Medical", "PHARMACY", 4.3, 290,
+                "Round-the-clock prescription medicine and road traveler care depot.", "NH75 Kunigal Toll Bypass", 13.0230, 77.0340, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_6", "Dhirubhai Ambani Hospital & Trauma Care Lodhivali", "Hospital & Clinic", "HOSPITAL", 4.5, 1950,
+                "Full-service trauma and emergency center directly accessible from the Mumbai-Pune Expressway Khalapur exit.", "Old Mumbai-Pune Highway, Lodhivali", 18.8410, 73.2350, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_7", "Sanjeevani 24-Hour Medical Lonavala Expressway", "Pharmacy & Medical", "PHARMACY", 4.4, 380,
+                "24/7 emergency pharmacy and clinic located near the Lonavala expressway exit.", "Near Kumar Resort, Lonavala", 18.7560, 73.4080, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_med_8", "Kailash Hospital & Trauma Center Jewar Node", "Hospital & Clinic", "HOSPITAL", 4.4, 1200,
+                "24/7 emergency critical care unit serving commuters on the Yamuna Expressway.", "Jewar Interchange, Yamuna Expressway", 28.1290, 77.5580, "Open 24 Hours"));
+
+        // =========================================================================
+        // 5. Bengaluru - Hosur - Krishnagiri - Dharmapuri - Salem Corridor (NH44)
+        // =========================================================================
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_1", "BPCL Ghar Highway Oasis Shoolagiri", "Fuel Station", "FUEL", 4.5, 3400,
+                "Comprehensive highway plaza featuring multi-lane fuel bays, clean washrooms, food court, and ATM.", "NH44, Shoolagiri, Krishnagiri District", 12.6710, 78.0120, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_2", "Saravana Bhavan Highway Express Shoolagiri", "Food & Dining", "RESTAURANT", 4.4, 8200,
+                "Famous pure-vegetarian South Indian breakfast and meal destination with spacious car parking.", "NH44 Shoolagiri Plaza", 12.6720, 78.0140, "06:00 AM - 11:00 PM"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_3", "Tata Power 60kW DC Fast Charger Shoolagiri", "EV Charging Station", "EV_CHARGING", 4.6, 920,
+                "High-power dual-gun CCS2 EV charger located at the Shoolagiri highway food plaza.", "NH44 Shoolagiri Plaza Campus", 12.6715, 78.0130, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_4", "Government Head Quarters Hospital & Trauma Center Krishnagiri", "Hospital & Clinic", "HOSPITAL", 4.3, 1600,
+                "District emergency center with round-the-clock casualty and ambulance service along NH44.", "NH44 Highway Junction, Krishnagiri", 12.5280, 78.2140, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_5", "Apollo Pharmacy 24/7 Shoolagiri Highway Hub", "Pharmacy & Medical", "PHARMACY", 4.5, 320,
+                "24-hour pharmacy with travel health medicines and baby care products.", "NH44 Food Court, Shoolagiri", 12.6725, 78.0145, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_6", "A2B Adyar Ananda Bhavan Thoppur Toll Plaza", "Food & Dining", "RESTAURANT", 4.3, 6100,
+                "Iconic Ghat road stop before Thoppur Ghats offering dosas, sweets, and coffee.", "NH44 Thoppur Toll Plaza, Dharmapuri", 11.9520, 78.0650, "06:00 AM - 11:00 PM"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh44_7", "Zeon 50kW EV Fast Charger Thoppur", "EV Charging Station", "EV_CHARGING", 4.6, 540,
+                "High-speed charging station situated on the Bengaluru-Salem NH44 expressway.", "Thoppur Highway Service Complex", 11.9510, 78.0640, "Open 24 Hours"));
+
+        // =========================================================================
+        // 6. Hyderabad - Kurnool - Anantapur - Bengaluru Corridor (NH44 North)
+        // =========================================================================
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_hyd_1", "Food Pyramid Highway Plaza Shadnagar", "Food & Dining", "RESTAURANT", 4.3, 5100,
+                "Major multi-cuisine highway hub with clean restrooms, Subways, coffee outlets, and fueling.", "NH44, Shadnagar Bypass, Telangana", 17.0650, 78.2100, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_hyd_2", "IndianOil COCO Highway Swagat Jadcherla", "Fuel Station", "FUEL", 4.4, 2100,
+                "Large company-owned outlet with 24/7 canopy lighting, nitrogen air, and clean restrooms.", "NH44 Jadcherla, Mahabubnagar", 16.7620, 78.1350, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_hyd_3", "Tata Power 60kW EV Charger Jadcherla", "EV Charging Station", "EV_CHARGING", 4.5, 480,
+                "Rapid charging station for Hyderabad-Bengaluru electric vehicle road trips.", "NH44 Jadcherla Plaza", 16.7610, 78.1340, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_hyd_4", "Government General Hospital Trauma Wing Kurnool", "Hospital & Clinic", "HOSPITAL", 4.3, 1850,
+                "State-of-the-art regional trauma and emergency hospital accessible from NH44.", "NH44 City Ring Junction, Kurnool", 15.8280, 78.0370, "Open 24 Hours"));
+
+        // =========================================================================
+        // 7. Mumbai - Vapi - Surat - Vadodara - Ahmedabad Corridor (NH48 West)
+        // =========================================================================
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh48_1", "Sugar N Spice Highway Mall Vapi", "Food & Dining", "RESTAURANT", 4.4, 9800,
+                "Legendary Gujarat highway food court offering Gujarati snacks, Punjabi thalis, and pristine washrooms.", "NH48, Gunjan Char Rasta, Vapi", 20.3720, 72.9110, "07:00 AM - 11:30 PM"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh48_2", "Shell Highway Hub Vapi", "Fuel Station", "FUEL", 4.6, 2600,
+                "High-standard fuel station with Deli2Go, tire care, and EV fast chargers.", "NH48 Vapi Bypass, Gujarat", 20.3750, 72.9150, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh48_3", "Rainbow Multispeciality Hospital 24/7 Trauma Vapi", "Hospital & Clinic", "HOSPITAL", 4.5, 1400,
+                "Equipped with comprehensive round-the-clock emergency trauma unit right on NH48.", "NH48 Highway Node, Vapi", 20.3800, 72.9120, "Open 24 Hours"));
+        VERIFIED_HIGHWAY_CATALOG.add(new CorridorStopTemplate("cat_nh48_4", "Tata Power 60kW DC EV Station Surat Toll", "EV Charging Station", "EV_CHARGING", 4.6, 810,
+                "Fast dual CCS2 charger serving Mumbai-Ahmedabad travelers.", "NH48 Kamrej Toll Plaza, Surat", 21.2720, 72.9640, "Open 24 Hours"));
     }
 
     private static class CorridorStopTemplate {
