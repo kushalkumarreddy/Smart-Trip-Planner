@@ -83,20 +83,38 @@ function attachPlaceAutocomplete(inputElement) {
 
     let debounceTimer = null;
     let activeIndex = -1;
+    let currentAbortController = null;
+    let isSelecting = false;
+    let lastQuery = "";
 
     // Input typing listener
-    inputElement.addEventListener("input", function () {
+    inputElement.addEventListener("input", function (e) {
+        // If the input event was triggered programmatically during selection, ignore it
+        if (isSelecting) {
+            return;
+        }
+
         clearTimeout(debounceTimer);
+        if (currentAbortController) {
+            currentAbortController.abort();
+            currentAbortController = null;
+        }
+
         const query = this.value.trim();
+        lastQuery = query;
 
         if (query.length < 2) {
+            // User cleared or shortened query; remove stale coordinates
+            delete this.dataset.placeId;
+            delete this.dataset.lat;
+            delete this.dataset.lng;
             closeDropdown();
             return;
         }
 
         // Show subtle loading state
         dropdown.innerHTML = `
-            <div class="p-2 text-muted small text-center">
+            <div class="p-2 text-muted small text-center autocomplete-loading">
                 <span class="spinner-border spinner-border-sm me-1 text-primary" role="status"></span>
                 <span>Searching places...</span>
             </div>
@@ -104,8 +122,18 @@ function attachPlaceAutocomplete(inputElement) {
         dropdown.classList.add("show");
 
         debounceTimer = setTimeout(async () => {
+            const controller = new AbortController();
+            currentAbortController = controller;
+
             try {
-                const response = await fetch(`/api/places/autocomplete?query=${encodeURIComponent(query)}&limit=6`);
+                const response = await fetch(`/api/places/autocomplete?query=${encodeURIComponent(query)}&limit=6`, {
+                    signal: controller.signal
+                });
+
+                if (controller.signal.aborted || inputElement.value.trim() !== query) {
+                    return; // Stale or cancelled response
+                }
+
                 if (!response.ok) {
                     dropdown.innerHTML = `
                         <div class="p-2 text-danger small text-center">
@@ -116,14 +144,26 @@ function attachPlaceAutocomplete(inputElement) {
                 }
 
                 const suggestions = await response.json();
+                if (controller.signal.aborted || inputElement.value.trim() !== query) {
+                    return; // Stale query check
+                }
                 renderDropdown(suggestions, query);
             } catch (err) {
+                if (err.name === "AbortError") {
+                    return; // Safely ignore user-cancelled requests
+                }
                 console.error("Autocomplete fetch error:", err);
-                dropdown.innerHTML = `
-                    <div class="p-2 text-muted small text-center">
-                        <i class="bi bi-wifi-off me-1"></i> Search service unavailable
-                    </div>
-                `;
+                if (inputElement.value.trim() === query) {
+                    dropdown.innerHTML = `
+                        <div class="p-2 text-muted small text-center">
+                            <i class="bi bi-wifi-off me-1"></i> Search service unavailable
+                        </div>
+                    `;
+                }
+            } finally {
+                if (currentAbortController === controller) {
+                    currentAbortController = null;
+                }
             }
         }, 180);
     });
@@ -147,14 +187,19 @@ function attachPlaceAutocomplete(inputElement) {
                 selectItem(items[activeIndex]);
             }
         } else if (e.key === "Escape") {
+            e.preventDefault();
             closeDropdown();
         }
     });
 
     // Focus listener
     inputElement.addEventListener("focus", function () {
-        if (dropdown.children.length > 0 && this.value.trim().length >= 2) {
-            dropdown.classList.add("show");
+        if (dropdown.children.length > 0 && this.value.trim().length >= 2 && !dropdown.classList.contains("show")) {
+            // Only re-show if dropdown already has rendered items matching current value
+            const currentVal = this.value.trim();
+            if (currentVal === lastQuery) {
+                dropdown.classList.add("show");
+            }
         }
     });
 
@@ -175,7 +220,10 @@ function attachPlaceAutocomplete(inputElement) {
         items.forEach(item => {
             const row = document.createElement("div");
             row.className = "autocomplete-item";
-            row.dataset.placeName = item.name;
+            row.dataset.placeName = item.name || "";
+            if (item.placeId) row.dataset.placeId = item.placeId;
+            if (item.lat !== undefined && item.lat !== null) row.dataset.lat = item.lat;
+            if (item.lng !== undefined && item.lng !== null) row.dataset.lng = item.lng;
 
             const highlightedName = highlightMatch(item.name, query);
             const subtext = escapeHtml(item.description || item.category || "Destination");
@@ -192,6 +240,7 @@ function attachPlaceAutocomplete(inputElement) {
 
             row.addEventListener("mousedown", (e) => {
                 e.preventDefault(); // Prevents input blur before click
+                e.stopPropagation();
                 selectItem(row);
             });
 
@@ -202,13 +251,36 @@ function attachPlaceAutocomplete(inputElement) {
     }
 
     function selectItem(itemElement) {
+        clearTimeout(debounceTimer);
+        if (currentAbortController) {
+            currentAbortController.abort();
+            currentAbortController = null;
+        }
+
         const placeName = itemElement.dataset.placeName;
+        const placeId = itemElement.dataset.placeId;
+        const lat = itemElement.dataset.lat;
+        const lng = itemElement.dataset.lng;
+
         if (placeName) {
+            isSelecting = true;
             inputElement.value = placeName;
+            lastQuery = placeName.trim();
+
+            if (placeId) inputElement.dataset.placeId = placeId;
+            if (lat) inputElement.dataset.lat = lat;
+            if (lng) inputElement.dataset.lng = lng;
+
+            // Immediately close and empty dropdown to eliminate stale UI & race conditions
+            closeDropdown();
+
+            // Dispatch events safely so external listeners update without re-triggering search
             inputElement.dispatchEvent(new Event("input", { bubbles: true }));
             inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+            isSelecting = false;
+        } else {
+            closeDropdown();
         }
-        closeDropdown();
     }
 
     function updateActiveItem(items) {
@@ -223,15 +295,23 @@ function attachPlaceAutocomplete(inputElement) {
     }
 
     function closeDropdown() {
+        if (currentAbortController) {
+            currentAbortController.abort();
+            currentAbortController = null;
+        }
         dropdown.classList.remove("show");
+        dropdown.innerHTML = "";
         activeIndex = -1;
     }
 }
 
-// Global click outside to dismiss all autocomplete dropdowns
+// Global click outside to dismiss all autocomplete dropdowns and clear stale suggestions
 document.addEventListener("click", (e) => {
     if (!e.target.closest(".autocomplete-wrapper")) {
-        document.querySelectorAll(".autocomplete-dropdown.show").forEach(d => d.classList.remove("show"));
+        document.querySelectorAll(".autocomplete-dropdown").forEach(d => {
+            d.classList.remove("show");
+            d.innerHTML = "";
+        });
     }
 });
 

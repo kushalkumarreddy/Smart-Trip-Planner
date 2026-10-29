@@ -616,7 +616,7 @@ public class RecommendationService {
         CURATED_PLACES_DB.put("pattadakal", badamiPlaces);
         CURATED_PLACES_DB.put("aihole", badamiPlaces);
 
-        // Anantapur & Kurnool
+        // Anantapur
         List<PlaceTemplate> anantapurPlaces = new ArrayList<>();
         anantapurPlaces.add(new PlaceTemplate("Lepakshi Veerabhadra Temple & Hanging Pillar", "Historical", 4.8, 62000, 14.0, 120, 25,
                 "16th-century Vijayanagara marvel celebrated for the Hanging Pillar, colossal monolithic Nandi, and ceiling murals.", "06:00 AM - 06:30 PM", 13.8040, 77.6060));
@@ -629,8 +629,23 @@ public class RecommendationService {
         anantapurPlaces.add(new PlaceTemplate("Yaganti Uma Maheshwara Cave Temple", "Temples", 4.7, 36000, 75.0, 90, 80,
                 "Sacred cave shrine nestled inside Yerramala hills famous for the growing Nandi idol and natural Pushkarini springs.", "06:00 AM - 07:30 PM", 15.3520, 78.1430));
         CURATED_PLACES_DB.put("anantapur", anantapurPlaces);
-        CURATED_PLACES_DB.put("kurnool", anantapurPlaces);
         CURATED_PLACES_DB.put("lepakshi", anantapurPlaces);
+
+        // Kurnool
+        List<PlaceTemplate> kurnoolPlaces = new ArrayList<>();
+        kurnoolPlaces.add(new PlaceTemplate("Konda Reddy Buruju Historic Fort", "Historical", 4.6, 38000, 1.5, 60, 6,
+                "Iconic medieval circular bastion in Kurnool town with underground tunnels built during the Vijayanagara empire.", "Open 24 Hours", 15.8280, 78.0370));
+        kurnoolPlaces.add(new PlaceTemplate("Oravakallu Rock Garden Canyon", "Nature", 4.6, 28000, 22.0, 90, 30,
+                "Natural silica and quartz rock formations nestled around a picturesque reservoir with canyon walkways and boating.", "08:00 AM - 06:00 PM", 15.6980, 78.1880));
+        kurnoolPlaces.add(new PlaceTemplate("Belum Underground Caves", "Adventure", 4.7, 48000, 70.0, 120, 75,
+                "Second largest natural cave system in India, stretching 3.2 km with underground passages, stalactite chambers, and music halls.", "10:00 AM - 05:00 PM", 15.1030, 78.1130));
+        kurnoolPlaces.add(new PlaceTemplate("Yaganti Uma Maheshwara Cave Temple", "Temples", 4.7, 36000, 65.0, 90, 70,
+                "Sacred cave shrine nestled inside Yerramala hills famous for the growing Nandi idol and natural Pushkarini springs.", "06:00 AM - 07:30 PM", 15.3520, 78.1430));
+        kurnoolPlaces.add(new PlaceTemplate("Rollapadu Wildlife Sanctuary", "Nature", 4.4, 16000, 45.0, 90, 50,
+                "Renowned open grassland sanctuary known for the Great Indian Bustard, blackbucks, and migratory bird wetlands.", "07:00 AM - 06:00 PM", 15.7410, 78.3620));
+        kurnoolPlaces.add(new PlaceTemplate("Tomb of Abdul Wahab Khan", "Historical", 4.3, 11000, 2.0, 45, 8,
+                "17th-century heritage mausoleum near Handri River featuring Golconda-style domes, arches, and stone carvings.", "09:00 AM - 06:00 PM", 15.8340, 78.0480));
+        CURATED_PLACES_DB.put("kurnool", kurnoolPlaces);
     }
 
     // Curated catalog of famous Indian travel discovery destinations (Section 2)

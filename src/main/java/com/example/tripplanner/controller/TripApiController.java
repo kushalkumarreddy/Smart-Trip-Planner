@@ -6,6 +6,7 @@ import com.example.tripplanner.service.AiTripPlannerService;
 import com.example.tripplanner.service.RouteService;
 import com.example.tripplanner.service.TripService;
 import com.example.tripplanner.service.UserService;
+import com.example.tripplanner.exception.BadRequestException;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class TripApiController {
     /**
      * Guest Trip Generation without requiring authentication (Requirement 3)
      */
-    @PostMapping("/guest-plan")
+    @PostMapping(value = {"/guest-plan", "/guest"})
     public ResponseEntity<TripResponseDto> createGuestTrip(@Valid @RequestBody TripRequestDto request,
                                                            HttpSession session) {
         TripResponseDto guestTrip = tripService.generateGuestTrip(request);
@@ -217,9 +218,18 @@ public class TripApiController {
      */
     @GetMapping("/{id}/round-trip")
     public ResponseEntity<RoundTripDetailsDto> getTripRoundTripDetails(@PathVariable("id") Long id,
-                                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        User user = resolveCurrentUser(userDetails);
-        TripResponseDto trip = tripService.getTripDtoById(id, user);
+                                                                       @AuthenticationPrincipal UserDetails userDetails,
+                                                                       HttpSession session) {
+        TripResponseDto trip;
+        if (id == 0L) {
+            trip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (trip == null) {
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            User user = resolveCurrentUser(userDetails);
+            trip = tripService.getTripDtoById(id, user);
+        }
 
         List<String> destNames = new ArrayList<>();
         if (trip.getDestinations() != null) {
@@ -233,6 +243,11 @@ public class TripApiController {
         RoundTripDetailsDto details = routeService.calculateRoundTripDetails(
                 trip.getStartLocation(), destNames, trip.getTransportMode(), trip.getRouteSummary());
         return ResponseEntity.ok(details);
+    }
+
+    @GetMapping("/guest/round-trip")
+    public ResponseEntity<RoundTripDetailsDto> guestGetTripRoundTripDetails(HttpSession session) {
+        return getTripRoundTripDetails(0L, null, session);
     }
 
     /**
@@ -413,51 +428,186 @@ public class TripApiController {
     /**
      * Lock or Unlock Activity (Requirement 3 & 5)
      */
+    /**
+     * Lock / Unlock Activity (supports both authenticated and guest trips)
+     */
     @PostMapping("/{id}/itinerary-items/{itemId}/lock")
     public ResponseEntity<Map<String, Object>> toggleActivityLock(@PathVariable("id") Long id,
                                                                  @PathVariable("itemId") Long itemId,
-                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+                                                                 @AuthenticationPrincipal UserDetails userDetails,
+                                                                 HttpSession session) {
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            Map<String, Object> result = tripService.guestToggleLock(guestTrip, itemId);
+            return ResponseEntity.ok(result);
+        }
         User user = resolveCurrentUser(userDetails);
         Map<String, Object> result = tripService.toggleActivityLock(id, itemId, user);
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/guest/activities/{itemId}/lock")
+    public ResponseEntity<Map<String, Object>> guestToggleActivityLock(@PathVariable("itemId") Long itemId,
+                                                                       HttpSession session) {
+        return toggleActivityLock(0L, itemId, null, session);
+    }
+
     /**
-     * Edit / Replace Activity
+     * Edit / Replace Activity (supports both authenticated and guest trips)
      */
     @PutMapping("/{id}/itinerary-items/{itemId}")
     public ResponseEntity<TripResponseDto> replaceActivity(@PathVariable("id") Long id,
                                                            @PathVariable("itemId") Long itemId,
                                                            @RequestBody ItineraryItemDto itemDto,
-                                                           @AuthenticationPrincipal UserDetails userDetails) {
+                                                           @AuthenticationPrincipal UserDetails userDetails,
+                                                           HttpSession session) {
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            TripResponseDto updated = tripService.guestReplaceActivity(guestTrip, itemId, itemDto);
+            session.setAttribute("GUEST_TRIP", updated);
+            return ResponseEntity.ok(updated);
+        }
         User user = resolveCurrentUser(userDetails);
         TripResponseDto updated = tripService.replaceActivity(id, itemId, itemDto, user);
         return ResponseEntity.ok(updated);
     }
 
+    @PutMapping({"/guest/activities/{itemId}", "/guest/itinerary-items/{itemId}"})
+    public ResponseEntity<TripResponseDto> guestReplaceActivity(@PathVariable("itemId") Long itemId,
+                                                                @RequestBody ItineraryItemDto itemDto,
+                                                                HttpSession session) {
+        return replaceActivity(0L, itemId, itemDto, null, session);
+    }
+
     /**
-     * Delete Activity
+     * Delete Activity (supports both authenticated and guest trips)
      */
     @DeleteMapping("/{id}/itinerary-items/{itemId}")
     public ResponseEntity<TripResponseDto> deleteActivity(@PathVariable("id") Long id,
                                                           @PathVariable("itemId") Long itemId,
-                                                          @AuthenticationPrincipal UserDetails userDetails) {
+                                                          @AuthenticationPrincipal UserDetails userDetails,
+                                                          HttpSession session) {
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            TripResponseDto updated = tripService.guestDeleteActivity(guestTrip, itemId);
+            session.setAttribute("GUEST_TRIP", updated);
+            return ResponseEntity.ok(updated);
+        }
         User user = resolveCurrentUser(userDetails);
         TripResponseDto updated = tripService.deleteItineraryItem(id, itemId, user);
         return ResponseEntity.ok(updated);
     }
 
+    @DeleteMapping({"/guest/activities/{itemId}", "/guest/itinerary-items/{itemId}"})
+    public ResponseEntity<TripResponseDto> guestDeleteActivity(@PathVariable("itemId") Long itemId,
+                                                               HttpSession session) {
+        return deleteActivity(0L, itemId, null, session);
+    }
+
     /**
-     * Add Activity to Day
+     * Add Activity to Day (supports both authenticated and guest trips)
      */
     @PostMapping("/{id}/days/{dayNumber}/itinerary-items")
     public ResponseEntity<TripResponseDto> addActivityToDay(@PathVariable("id") Long id,
                                                             @PathVariable("dayNumber") Integer dayNumber,
                                                             @RequestBody ItineraryItemDto itemDto,
-                                                            @AuthenticationPrincipal UserDetails userDetails) {
+                                                            @AuthenticationPrincipal UserDetails userDetails,
+                                                            HttpSession session) {
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            TripResponseDto updated = tripService.guestAddActivity(guestTrip, dayNumber, itemDto);
+            session.setAttribute("GUEST_TRIP", updated);
+            return ResponseEntity.ok(updated);
+        }
         User user = resolveCurrentUser(userDetails);
         TripResponseDto updated = tripService.addActivityToDay(id, dayNumber, itemDto, user);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping({"/guest/days/{dayNumber}/activities", "/guest/days/{dayNumber}/itinerary-items"})
+    public ResponseEntity<TripResponseDto> guestAddActivityToDay(@PathVariable("dayNumber") Integer dayNumber,
+                                                                 @RequestBody ItineraryItemDto itemDto,
+                                                                 HttpSession session) {
+        return addActivityToDay(0L, dayNumber, itemDto, null, session);
+    }
+
+    /**
+     * Move Activity Direction (UP / DOWN) (supports both authenticated and guest trips)
+     */
+    @PostMapping("/{id}/days/{dayNumber}/activities/{itemId}/move")
+    public ResponseEntity<TripResponseDto> moveActivityDirection(@PathVariable("id") Long id,
+                                                                 @PathVariable("dayNumber") Integer dayNumber,
+                                                                 @PathVariable("itemId") Long itemId,
+                                                                 @RequestParam(value = "direction", defaultValue = "UP") String direction,
+                                                                 @AuthenticationPrincipal UserDetails userDetails,
+                                                                 HttpSession session) {
+        String effectiveDirection = (direction != null && !direction.trim().isEmpty()) ? direction.trim().toUpperCase() : "UP";
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            TripResponseDto updated = tripService.guestMoveActivityDirection(guestTrip, dayNumber, itemId, effectiveDirection);
+            session.setAttribute("GUEST_TRIP", updated);
+            return ResponseEntity.ok(updated);
+        }
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.moveActivityDirection(id, dayNumber, itemId, effectiveDirection, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/guest/days/{dayNumber}/activities/{itemId}/move")
+    public ResponseEntity<TripResponseDto> guestMoveActivityDirection(@PathVariable("dayNumber") Integer dayNumber,
+                                                                      @PathVariable("itemId") Long itemId,
+                                                                      @RequestParam(value = "direction", defaultValue = "UP") String direction,
+                                                                      HttpSession session) {
+        return moveActivityDirection(0L, dayNumber, itemId, direction, null, session);
+    }
+
+    /**
+     * Reorder Day Activities (supports both authenticated and guest trips)
+     */
+    @PostMapping("/{id}/days/{dayNumber}/reorder-activities")
+    public ResponseEntity<TripResponseDto> reorderDayActivities(@PathVariable("id") Long id,
+                                                                @PathVariable("dayNumber") Integer dayNumber,
+                                                                @RequestBody(required = false) Object body,
+                                                                @AuthenticationPrincipal UserDetails userDetails,
+                                                                HttpSession session) {
+        List<Long> orderedItemIds = new ArrayList<>();
+        if (body instanceof List<?> list) {
+            for (Object o : list) {
+                if (o instanceof Number n) orderedItemIds.add(n.longValue());
+                else if (o != null) orderedItemIds.add(Long.valueOf(o.toString()));
+            }
+        } else if (body instanceof Map<?, ?> map && map.containsKey("orderedItemIds")) {
+            Object val = map.get("orderedItemIds");
+            if (val instanceof List<?> list) {
+                for (Object o : list) {
+                    if (o instanceof Number n) orderedItemIds.add(n.longValue());
+                    else if (o != null) orderedItemIds.add(Long.valueOf(o.toString()));
+                }
+            }
+        }
+
+        if (id == 0L) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
+            if (guestTrip == null) throw new BadRequestException("No active guest trip session found.");
+            TripResponseDto updated = tripService.guestReorderActivities(guestTrip, dayNumber, orderedItemIds);
+            session.setAttribute("GUEST_TRIP", updated);
+            return ResponseEntity.ok(updated);
+        }
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.reorderDayActivities(id, dayNumber, orderedItemIds, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/guest/days/{dayNumber}/reorder-activities")
+    public ResponseEntity<TripResponseDto> guestReorderDayActivities(@PathVariable("dayNumber") Integer dayNumber,
+                                                                     @RequestBody(required = false) Object body,
+                                                                     HttpSession session) {
+        return reorderDayActivities(0L, dayNumber, body, null, session);
     }
 
     /**

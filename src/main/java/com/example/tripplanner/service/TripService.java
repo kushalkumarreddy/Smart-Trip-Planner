@@ -6,6 +6,7 @@ import com.example.tripplanner.exception.BadRequestException;
 import com.example.tripplanner.exception.ResourceNotFoundException;
 import com.example.tripplanner.repository.*;
 import com.example.tripplanner.util.TimeUtils;
+import com.example.tripplanner.util.GeoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,6 +93,11 @@ public class TripService {
     @Transactional
     public TripResponseDto createTrip(TripRequestDto request, User user) {
         // Validation
+        if (request.getStartLocation() == null || request.getStartLocation().trim().isEmpty()) {
+            throw new BadRequestException("Starting location is required.");
+        }
+        String startLoc = request.getStartLocation().trim();
+
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new BadRequestException("Trip start date cannot be after end date.");
         }
@@ -119,8 +125,20 @@ public class TripService {
             }
         }
 
+        // Remove redundant intermediate stops that match starting location
+        for (int i = cleanedDestinations.size() - 2; i >= 0; i--) {
+            if (cleanedDestinations.get(i).equalsIgnoreCase(startLoc)) {
+                cleanedDestinations.remove(i);
+                if (i < cleanedHotels.size()) cleanedHotels.remove(i);
+            }
+        }
+
         if (cleanedDestinations.isEmpty()) {
             throw new BadRequestException("At least one valid destination is required.");
+        }
+
+        if (cleanedDestinations.size() == 1 && cleanedDestinations.get(0).equalsIgnoreCase(startLoc)) {
+            throw new BadRequestException("Destination cannot be identical to the starting location.");
         }
 
         // Create Trip Entity
@@ -918,23 +936,11 @@ public class TripService {
         if (updatedItem.getLocation() != null && !updatedItem.getLocation().trim().isEmpty()) {
             item.setLocation(updatedItem.getLocation().trim());
         }
-        if (updatedItem.getStartTime() != null) {
-            item.setStartTime(updatedItem.getStartTime());
-        }
-        if (updatedItem.getEndTime() != null) {
-            item.setEndTime(updatedItem.getEndTime());
-        }
         if (updatedItem.getActivityType() != null) {
             item.setActivityType(updatedItem.getActivityType());
         }
-        if (updatedItem.getDurationMinutes() != null) {
+        if (updatedItem.getDurationMinutes() != null && updatedItem.getDurationMinutes() > 0) {
             item.setDurationMinutes(updatedItem.getDurationMinutes());
-        }
-        if (updatedItem.getTravelDistanceKm() != null) {
-            item.setTravelDistanceKm(updatedItem.getTravelDistanceKm());
-        }
-        if (updatedItem.getTravelTimeMinutes() != null) {
-            item.setTravelTimeMinutes(updatedItem.getTravelTimeMinutes());
         }
         if (updatedItem.getRating() != null) {
             item.setRating(updatedItem.getRating());
@@ -945,8 +951,22 @@ public class TripService {
         if (updatedItem.getLocked() != null) {
             item.setLocked(updatedItem.getLocked());
         }
+        if (updatedItem.getLatitude() != null && updatedItem.getLatitude() != 0.0) {
+            item.setLatitude(updatedItem.getLatitude());
+        }
+        if (updatedItem.getLongitude() != null && updatedItem.getLongitude() != 0.0) {
+            item.setLongitude(updatedItem.getLongitude());
+        }
+        if (updatedItem.getCategory() != null) {
+            item.setCategory(updatedItem.getCategory());
+        }
 
         itineraryItemRepository.save(item);
+
+        // Authoritative recalculation of this day's schedule so all subsequent items adjust smoothly
+        List<Destination> destinations = destinationRepository.findByTripIdOrderBySequenceOrderAsc(trip.getId());
+        recalculateAndSaveDayItems(trip, item.getDayNumber(), destinations);
+
         return getTripDtoById(tripId, user);
     }
 
@@ -962,7 +982,13 @@ public class TripService {
             throw new BadRequestException("Activity does not belong to this trip.");
         }
 
+        int dayNumber = item.getDayNumber();
         itineraryItemRepository.delete(item);
+
+        // Authoritative recalculation of this day's schedule to eliminate voids
+        List<Destination> destinations = destinationRepository.findByTripIdOrderBySequenceOrderAsc(trip.getId());
+        recalculateAndSaveDayItems(trip, dayNumber, destinations);
+
         return getTripDtoById(tripId, user);
     }
 
@@ -972,25 +998,180 @@ public class TripService {
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
         checkTripAccess(trip, user, "EDITOR");
 
+        List<Destination> destinations = destinationRepository.findByTripIdOrderBySequenceOrderAsc(trip.getId());
+        Destination dest = itineraryService.findDestinationForDay(destinations, dayNumber);
+        String cityName = (dest != null) ? dest.getName() : trip.getStartLocation();
+        double[] cityCoords = (dest != null && dest.getLatitude() != null && dest.getLatitude() != 0.0)
+                ? new double[]{dest.getLatitude(), dest.getLongitude()}
+                : GeoUtils.getApproximateCoordinates(cityName);
+
         ItineraryItem item = new ItineraryItem();
         item.setTrip(trip);
         item.setDayNumber(dayNumber);
         LocalDate itemDate = (trip.getStartDate() != null) ? trip.getStartDate().plusDays(dayNumber - 1) : LocalDate.now();
         item.setScheduleDate(itemDate);
-        item.setStartTime(newItem.getStartTime() != null ? newItem.getStartTime() : "10:00");
-        item.setEndTime(newItem.getEndTime() != null ? newItem.getEndTime() : "11:30");
-        item.setActivity(newItem.getActivity() != null ? newItem.getActivity() : "Sightseeing Activity");
-        item.setLocation(newItem.getLocation() != null ? newItem.getLocation() : trip.getStartLocation());
+        item.setActivity(newItem.getActivity() != null && !newItem.getActivity().trim().isEmpty() ? newItem.getActivity().trim() : "Custom Activity");
+        item.setLocation(newItem.getLocation() != null && !newItem.getLocation().trim().isEmpty() ? newItem.getLocation().trim() : cityName);
         item.setActivityType(newItem.getActivityType() != null ? newItem.getActivityType() : "SIGHTSEEING");
-        item.setTravelDistanceKm(newItem.getTravelDistanceKm() != null ? newItem.getTravelDistanceKm() : 2.0);
-        item.setTravelTimeMinutes(newItem.getTravelTimeMinutes() != null ? newItem.getTravelTimeMinutes() : 15);
-        item.setDurationMinutes(newItem.getDurationMinutes() != null ? newItem.getDurationMinutes() : 90);
+        item.setDurationMinutes(newItem.getDurationMinutes() != null && newItem.getDurationMinutes() > 0 ? newItem.getDurationMinutes() : 60);
         item.setRating(newItem.getRating() != null ? newItem.getRating() : 4.5);
         item.setVisited(false);
         item.setLocked(newItem.getLocked() != null ? newItem.getLocked() : false);
         item.setNotes(newItem.getNotes());
+        double pLat = (newItem.getLatitude() != null && newItem.getLatitude() != 0.0) ? newItem.getLatitude() : cityCoords[0];
+        double pLng = (newItem.getLongitude() != null && newItem.getLongitude() != 0.0) ? newItem.getLongitude() : cityCoords[1];
+        item.setLatitude(pLat);
+        item.setLongitude(pLng);
+        item.setCategory(newItem.getCategory() != null ? newItem.getCategory() : "Experience");
 
         itineraryItemRepository.save(item);
+
+        // Authoritative recalculation of this day's schedule so the new item is scheduled cleanly
+        recalculateAndSaveDayItems(trip, dayNumber, destinations);
+
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto moveActivityDirection(Long tripId, Integer dayNumber, Long itemId, String direction, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        List<ItineraryItem> allItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), dayNumber);
+        List<ItineraryItem> daytimeItems = new ArrayList<>();
+        for (ItineraryItem it : allItems) {
+            String t = it.getActivityType() != null ? it.getActivityType().toUpperCase() : "SIGHTSEEING";
+            if (!"DEPARTURE".equals(t) && !"ARRIVAL".equals(t) && !"TRANSIT".equals(t) && !"HOTEL".equals(t)) {
+                daytimeItems.add(it);
+            }
+        }
+
+        int targetIdx = -1;
+        for (int i = 0; i < daytimeItems.size(); i++) {
+            if (daytimeItems.get(i).getId().equals(itemId)) {
+                targetIdx = i;
+                break;
+            }
+        }
+
+        if (targetIdx != -1) {
+            if ("UP".equalsIgnoreCase(direction) && targetIdx > 0) {
+                Collections.swap(daytimeItems, targetIdx, targetIdx - 1);
+            } else if ("DOWN".equalsIgnoreCase(direction) && targetIdx < daytimeItems.size() - 1) {
+                Collections.swap(daytimeItems, targetIdx, targetIdx + 1);
+            }
+        }
+
+        List<ItineraryItemDto> reassembledDtos = new ArrayList<>();
+        for (ItineraryItem it : allItems) {
+            String t = it.getActivityType() != null ? it.getActivityType().toUpperCase() : "SIGHTSEEING";
+            if ("DEPARTURE".equals(t) || "ARRIVAL".equals(t) || "TRANSIT".equals(t)) {
+                ItineraryItemDto dto = new ItineraryItemDto();
+                populateDtoFromEntity(dto, it);
+                reassembledDtos.add(dto);
+            }
+        }
+        for (ItineraryItem it : daytimeItems) {
+            ItineraryItemDto dto = new ItineraryItemDto();
+            populateDtoFromEntity(dto, it);
+            reassembledDtos.add(dto);
+        }
+        for (ItineraryItem it : allItems) {
+            String t = it.getActivityType() != null ? it.getActivityType().toUpperCase() : "SIGHTSEEING";
+            if ("HOTEL".equals(t) || ("MEAL".equals(t) && it.getActivity() != null && it.getActivity().toLowerCase().contains("dinner"))) {
+                ItineraryItemDto dto = new ItineraryItemDto();
+                populateDtoFromEntity(dto, it);
+                reassembledDtos.add(dto);
+            }
+        }
+
+        List<Destination> destinations = destinationRepository.findByTripIdOrderBySequenceOrderAsc(trip.getId());
+        Destination dest = itineraryService.findDestinationForDay(destinations, dayNumber);
+        String cityName = (dest != null && dest.getName() != null) ? dest.getName() : trip.getStartLocation();
+        double[] cityCoords = (dest != null && dest.getLatitude() != null && dest.getLatitude() != 0.0)
+                ? new double[]{dest.getLatitude(), dest.getLongitude()} : GeoUtils.getApproximateCoordinates(cityName);
+        String dayOrigin = (dayNumber == 1) ? trip.getStartLocation() : (dest != null && dest.getHotelName() != null ? dest.getHotelName() : cityName);
+        double[] originCoords = (dayNumber == 1 && trip.getStartLat() != null && trip.getStartLat() != 0.0) ? new double[]{trip.getStartLat(), trip.getStartLng()} : cityCoords;
+        String hotelStay = (dest != null && dest.getHotelName() != null) ? dest.getHotelName() : ("Hotel in " + cityName);
+        double[] hotelCoords = new double[]{cityCoords[0] - 0.002, cityCoords[1] - 0.002};
+        LocalDate dayDate = (trip.getStartDate() != null) ? trip.getStartDate().plusDays(dayNumber - 1) : LocalDate.now();
+
+        DayItineraryDto recalculatedDay = itineraryService.recalculateDaySchedule(
+                trip, dest, dayNumber, dayDate, reassembledDtos, dayOrigin, originCoords, hotelStay, hotelCoords, trip.getTransportMode()
+        );
+
+        Map<Long, ItineraryItem> entityMap = allItems.stream().collect(Collectors.toMap(ItineraryItem::getId, it -> it));
+        for (ItineraryItemDto rItem : recalculatedDay.getItems()) {
+            if (rItem.getId() != null && entityMap.containsKey(rItem.getId())) {
+                ItineraryItem entity = entityMap.get(rItem.getId());
+                populateItineraryItemFields(entity, rItem);
+                itineraryItemRepository.save(entity);
+            }
+        }
+
+        return getTripDtoById(tripId, user);
+    }
+
+    @Transactional
+    public TripResponseDto reorderDayActivities(Long tripId, Integer dayNumber, List<Long> orderedItemIds, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        List<ItineraryItem> allItems = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), dayNumber);
+        Map<Long, ItineraryItem> byId = allItems.stream().collect(Collectors.toMap(ItineraryItem::getId, it -> it));
+
+        List<ItineraryItemDto> reassembledDtos = new ArrayList<>();
+        for (ItineraryItem it : allItems) {
+            String t = it.getActivityType() != null ? it.getActivityType().toUpperCase() : "SIGHTSEEING";
+            if ("DEPARTURE".equals(t) || "ARRIVAL".equals(t) || "TRANSIT".equals(t)) {
+                ItineraryItemDto dto = new ItineraryItemDto();
+                populateDtoFromEntity(dto, it);
+                reassembledDtos.add(dto);
+            }
+        }
+        if (orderedItemIds != null) {
+            for (Long oId : orderedItemIds) {
+                if (byId.containsKey(oId)) {
+                    ItineraryItemDto dto = new ItineraryItemDto();
+                    populateDtoFromEntity(dto, byId.get(oId));
+                    reassembledDtos.add(dto);
+                }
+            }
+        }
+        for (ItineraryItem it : allItems) {
+            String t = it.getActivityType() != null ? it.getActivityType().toUpperCase() : "SIGHTSEEING";
+            if ("HOTEL".equals(t) || ("MEAL".equals(t) && it.getActivity() != null && it.getActivity().toLowerCase().contains("dinner"))) {
+                ItineraryItemDto dto = new ItineraryItemDto();
+                populateDtoFromEntity(dto, it);
+                reassembledDtos.add(dto);
+            }
+        }
+
+        List<Destination> destinations = destinationRepository.findByTripIdOrderBySequenceOrderAsc(trip.getId());
+        Destination dest = itineraryService.findDestinationForDay(destinations, dayNumber);
+        String cityName = (dest != null && dest.getName() != null) ? dest.getName() : trip.getStartLocation();
+        double[] cityCoords = (dest != null && dest.getLatitude() != null && dest.getLatitude() != 0.0)
+                ? new double[]{dest.getLatitude(), dest.getLongitude()} : GeoUtils.getApproximateCoordinates(cityName);
+        String dayOrigin = (dayNumber == 1) ? trip.getStartLocation() : (dest != null && dest.getHotelName() != null ? dest.getHotelName() : cityName);
+        double[] originCoords = (dayNumber == 1 && trip.getStartLat() != null && trip.getStartLat() != 0.0) ? new double[]{trip.getStartLat(), trip.getStartLng()} : cityCoords;
+        String hotelStay = (dest != null && dest.getHotelName() != null) ? dest.getHotelName() : ("Hotel in " + cityName);
+        double[] hotelCoords = new double[]{cityCoords[0] - 0.002, cityCoords[1] - 0.002};
+        LocalDate dayDate = (trip.getStartDate() != null) ? trip.getStartDate().plusDays(dayNumber - 1) : LocalDate.now();
+
+        DayItineraryDto recalculatedDay = itineraryService.recalculateDaySchedule(
+                trip, dest, dayNumber, dayDate, reassembledDtos, dayOrigin, originCoords, hotelStay, hotelCoords, trip.getTransportMode()
+        );
+
+        for (ItineraryItemDto rItem : recalculatedDay.getItems()) {
+            if (rItem.getId() != null && byId.containsKey(rItem.getId())) {
+                ItineraryItem entity = byId.get(rItem.getId());
+                populateItineraryItemFields(entity, rItem);
+                itineraryItemRepository.save(entity);
+            }
+        }
+
         return getTripDtoById(tripId, user);
     }
 
@@ -1653,6 +1834,72 @@ public class TripService {
         map.put("percentage", percentage);
         map.put("tripId", trip.getId());
         return map;
+    }
+
+    private void populateDtoFromEntity(ItineraryItemDto dto, ItineraryItem it) {
+        dto.setId(it.getId());
+        dto.setDayNumber(it.getDayNumber());
+        dto.setScheduleDate(it.getScheduleDate());
+        dto.setStartTime(it.getStartTime());
+        dto.setEndTime(it.getEndTime());
+        dto.setActivity(it.getActivity());
+        dto.setLocation(it.getLocation());
+        dto.setActivityType(it.getActivityType());
+        dto.setTravelDistanceKm(it.getTravelDistanceKm());
+        dto.setTravelTimeMinutes(it.getTravelTimeMinutes());
+        dto.setDurationMinutes(it.getDurationMinutes());
+        dto.setRating(it.getRating());
+        dto.setVisited(it.getVisited());
+        dto.setLocked(it.getLocked());
+        dto.setNotes(it.getNotes());
+        dto.setLatitude(it.getLatitude());
+        dto.setLongitude(it.getLongitude());
+        dto.setCategory(it.getCategory());
+        if (it.getPlace() != null) dto.setPlaceId(it.getPlace().getId());
+    }
+
+    private void recalculateAndSaveDayItems(Trip trip, int dayNumber, List<Destination> destinations) {
+        List<ItineraryItem> dayEntities = itineraryItemRepository.findByTripIdAndDayNumberOrderByStartTimeAsc(trip.getId(), dayNumber);
+        if (dayEntities.isEmpty()) return;
+
+        Destination dest = itineraryService.findDestinationForDay(destinations, dayNumber);
+        String cityName = (dest != null && dest.getName() != null) ? dest.getName() : trip.getStartLocation();
+        double[] cityCoords = (dest != null && dest.getLatitude() != null && dest.getLatitude() != 0.0)
+                ? new double[]{dest.getLatitude(), dest.getLongitude()}
+                : GeoUtils.getApproximateCoordinates(cityName);
+
+        String dayOrigin = (dayNumber == 1) ? trip.getStartLocation() : (dest != null && dest.getHotelName() != null ? dest.getHotelName() : cityName);
+        double[] originCoords = (dayNumber == 1 && trip.getStartLat() != null && trip.getStartLat() != 0.0)
+                ? new double[]{trip.getStartLat(), trip.getStartLng()}
+                : cityCoords;
+
+        String hotelStay = (dest != null && dest.getHotelName() != null) ? dest.getHotelName() : ("Hotel in " + cityName);
+        double[] hotelCoords = new double[]{cityCoords[0] - 0.002, cityCoords[1] - 0.002};
+
+        LocalDate dayDate = (trip.getStartDate() != null) ? trip.getStartDate().plusDays(dayNumber - 1) : LocalDate.now();
+
+        List<ItineraryItemDto> dtos = new ArrayList<>();
+        Map<Long, ItineraryItem> entityMap = new HashMap<>();
+        for (ItineraryItem entity : dayEntities) {
+            ItineraryItemDto dto = new ItineraryItemDto();
+            populateDtoFromEntity(dto, entity);
+            dtos.add(dto);
+            if (entity.getId() != null) {
+                entityMap.put(entity.getId(), entity);
+            }
+        }
+
+        DayItineraryDto recalculatedDay = itineraryService.recalculateDaySchedule(
+                trip, dest, dayNumber, dayDate, dtos, dayOrigin, originCoords, hotelStay, hotelCoords, trip.getTransportMode()
+        );
+
+        for (ItineraryItemDto rItem : recalculatedDay.getItems()) {
+            if (rItem.getId() != null && entityMap.containsKey(rItem.getId())) {
+                ItineraryItem entity = entityMap.get(rItem.getId());
+                populateItineraryItemFields(entity, rItem);
+                itineraryItemRepository.save(entity);
+            }
+        }
     }
 
     private void populateItineraryItemFields(ItineraryItem item, ItineraryItemDto itemDto) {
@@ -2510,6 +2757,7 @@ public class TripService {
         if (request.getStartLocation() == null || request.getStartLocation().trim().isEmpty()) {
             throw new BadRequestException("Starting location is required.");
         }
+        String startLoc = request.getStartLocation().trim();
 
         List<String> cleanedDestinations = new ArrayList<>();
         List<String> cleanedHotels = new ArrayList<>();
@@ -2525,8 +2773,20 @@ public class TripService {
             }
         }
 
+        // Remove redundant intermediate stops that match starting location
+        for (int i = cleanedDestinations.size() - 2; i >= 0; i--) {
+            if (cleanedDestinations.get(i).equalsIgnoreCase(startLoc)) {
+                cleanedDestinations.remove(i);
+                if (i < cleanedHotels.size()) cleanedHotels.remove(i);
+            }
+        }
+
         if (cleanedDestinations.isEmpty()) {
             throw new BadRequestException("At least one valid destination is required.");
+        }
+
+        if (cleanedDestinations.size() == 1 && cleanedDestinations.get(0).equalsIgnoreCase(startLoc)) {
+            throw new BadRequestException("Destination cannot be identical to the starting location.");
         }
 
         Trip trip = new Trip();
@@ -2824,5 +3084,201 @@ public class TripService {
         req.setBudgetRange(guestTrip.getBudgetRange());
 
         return generateGuestTrip(req);
+    }
+
+    public TripResponseDto guestReplaceActivity(TripResponseDto guestTrip, Long itemId, ItineraryItemDto updatedItem) {
+        if (guestTrip == null || guestTrip.getDayItineraries() == null) {
+            throw new BadRequestException("Invalid guest trip");
+        }
+        for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+            if (day.getItems() != null) {
+                for (int i = 0; i < day.getItems().size(); i++) {
+                    ItineraryItemDto item = day.getItems().get(i);
+                    if (item.getId() != null && item.getId().equals(itemId)) {
+                        if (updatedItem.getActivity() != null) item.setActivity(updatedItem.getActivity());
+                        if (updatedItem.getLocation() != null) item.setLocation(updatedItem.getLocation());
+                        if (updatedItem.getActivityType() != null) item.setActivityType(updatedItem.getActivityType());
+                        if (updatedItem.getDurationMinutes() != null && updatedItem.getDurationMinutes() > 0) item.setDurationMinutes(updatedItem.getDurationMinutes());
+                        if (updatedItem.getNotes() != null) item.setNotes(updatedItem.getNotes());
+                        if (updatedItem.getLocked() != null) item.setLocked(updatedItem.getLocked());
+                        if (updatedItem.getCategory() != null) item.setCategory(updatedItem.getCategory());
+                        if (updatedItem.getLatitude() != null && updatedItem.getLatitude() != 0.0) item.setLatitude(updatedItem.getLatitude());
+                        if (updatedItem.getLongitude() != null && updatedItem.getLongitude() != 0.0) item.setLongitude(updatedItem.getLongitude());
+
+                        recalculateGuestDay(guestTrip, day);
+                        return guestTrip;
+                    }
+                }
+            }
+        }
+        return guestTrip;
+    }
+
+    public TripResponseDto guestDeleteActivity(TripResponseDto guestTrip, Long itemId) {
+        if (guestTrip == null || guestTrip.getDayItineraries() == null) {
+            throw new BadRequestException("Invalid guest trip");
+        }
+        for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+            if (day.getItems() != null) {
+                boolean removed = day.getItems().removeIf(it -> it.getId() != null && it.getId().equals(itemId));
+                if (removed) {
+                    recalculateGuestDay(guestTrip, day);
+                    return guestTrip;
+                }
+            }
+        }
+        return guestTrip;
+    }
+
+    public TripResponseDto guestAddActivity(TripResponseDto guestTrip, Integer dayNumber, ItineraryItemDto newItem) {
+        if (guestTrip == null || guestTrip.getDayItineraries() == null) {
+            throw new BadRequestException("Invalid guest trip");
+        }
+        for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+            if (day.getDayNumber() == dayNumber) {
+                if (newItem.getId() == null) newItem.setId(System.currentTimeMillis());
+                newItem.setDayNumber(dayNumber);
+                if (day.getItems() == null) day.setItems(new ArrayList<>());
+                day.getItems().add(newItem);
+                recalculateGuestDay(guestTrip, day);
+                return guestTrip;
+            }
+        }
+        return guestTrip;
+    }
+
+    public TripResponseDto guestMoveActivityDirection(TripResponseDto guestTrip, Integer dayNumber, Long itemId, String direction) {
+        if (guestTrip == null || guestTrip.getDayItineraries() == null) {
+            throw new BadRequestException("Invalid guest trip");
+        }
+        for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+            if (day.getDayNumber() == dayNumber && day.getItems() != null) {
+                List<ItineraryItemDto> daytime = day.getItems().stream()
+                        .filter(it -> !"DEPARTURE".equalsIgnoreCase(it.getActivityType())
+                                && !"ARRIVAL".equalsIgnoreCase(it.getActivityType())
+                                && !"TRANSIT".equalsIgnoreCase(it.getActivityType())
+                                && !"HOTEL".equalsIgnoreCase(it.getActivityType()))
+                        .collect(Collectors.toList());
+
+                int idx = -1;
+                for (int i = 0; i < daytime.size(); i++) {
+                    if (daytime.get(i).getId() != null && daytime.get(i).getId().equals(itemId)) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx != -1) {
+                    if ("UP".equalsIgnoreCase(direction) && idx > 0) {
+                        Collections.swap(daytime, idx, idx - 1);
+                    } else if ("DOWN".equalsIgnoreCase(direction) && idx < daytime.size() - 1) {
+                        Collections.swap(daytime, idx, idx + 1);
+                    }
+                    List<ItineraryItemDto> reassembled = new ArrayList<>();
+                    day.getItems().stream()
+                            .filter(it -> "DEPARTURE".equalsIgnoreCase(it.getActivityType()) || "ARRIVAL".equalsIgnoreCase(it.getActivityType()) || "TRANSIT".equalsIgnoreCase(it.getActivityType()))
+                            .forEach(reassembled::add);
+                    reassembled.addAll(daytime);
+                    day.getItems().stream()
+                            .filter(it -> "HOTEL".equalsIgnoreCase(it.getActivityType()) || ("MEAL".equalsIgnoreCase(it.getActivityType()) && it.getActivity() != null && it.getActivity().toLowerCase().contains("dinner")))
+                            .forEach(reassembled::add);
+                    day.setItems(reassembled);
+                    recalculateGuestDay(guestTrip, day);
+                }
+                return guestTrip;
+            }
+        }
+        return guestTrip;
+    }
+
+    public TripResponseDto guestReorderActivities(TripResponseDto guestTrip, Integer dayNumber, List<Long> orderedIds) {
+        if (guestTrip == null || guestTrip.getDayItineraries() == null) {
+            throw new BadRequestException("Invalid guest trip");
+        }
+        for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+            if (day.getDayNumber() == dayNumber && day.getItems() != null && orderedIds != null) {
+                Map<Long, ItineraryItemDto> byId = new HashMap<>();
+                for (ItineraryItemDto it : day.getItems()) {
+                    if (it.getId() != null) byId.put(it.getId(), it);
+                }
+                List<ItineraryItemDto> reassembled = new ArrayList<>();
+                day.getItems().stream()
+                        .filter(it -> "DEPARTURE".equalsIgnoreCase(it.getActivityType()) || "ARRIVAL".equalsIgnoreCase(it.getActivityType()) || "TRANSIT".equalsIgnoreCase(it.getActivityType()))
+                        .forEach(reassembled::add);
+                for (Long id : orderedIds) {
+                    if (byId.containsKey(id)) reassembled.add(byId.get(id));
+                }
+                day.getItems().stream()
+                        .filter(it -> "HOTEL".equalsIgnoreCase(it.getActivityType()) || ("MEAL".equalsIgnoreCase(it.getActivityType()) && it.getActivity() != null && it.getActivity().toLowerCase().contains("dinner")))
+                        .forEach(reassembled::add);
+                day.setItems(reassembled);
+                recalculateGuestDay(guestTrip, day);
+                return guestTrip;
+            }
+        }
+        return guestTrip;
+    }
+
+    public Map<String, Object> guestToggleLock(TripResponseDto guestTrip, Long itemId) {
+        if (guestTrip != null && guestTrip.getDayItineraries() != null) {
+            for (DayItineraryDto day : guestTrip.getDayItineraries()) {
+                if (day.getItems() != null) {
+                    for (ItineraryItemDto it : day.getItems()) {
+                        if (it.getId() != null && it.getId().equals(itemId)) {
+                            boolean newStatus = !Boolean.TRUE.equals(it.getLocked());
+                            it.setLocked(newStatus);
+                            return Map.of("itemId", itemId, "locked", newStatus, "message", newStatus ? "Activity locked" : "Activity unlocked");
+                        }
+                    }
+                }
+            }
+        }
+        return Map.of("itemId", itemId, "locked", false, "message", "Item not found");
+    }
+
+    private void recalculateGuestDay(TripResponseDto guestTrip, DayItineraryDto day) {
+        Trip trip = new Trip();
+        trip.setStartLocation(guestTrip.getStartLocation());
+        trip.setStartDate(guestTrip.getStartDate());
+        trip.setEndDate(guestTrip.getEndDate());
+        trip.setDailyStartTime(guestTrip.getDailyStartTime());
+        trip.setDailyEndTime(guestTrip.getDailyEndTime());
+        trip.setTransportMode(guestTrip.getTransportMode());
+
+        List<Destination> dests = new ArrayList<>();
+        if (guestTrip.getDestinations() != null) {
+            for (DestinationDto dd : guestTrip.getDestinations()) {
+                Destination d = new Destination(dd.getName(), dd.getSequenceOrder() != null ? dd.getSequenceOrder() : 0);
+                d.setStayDurationDays(dd.getStayDurationDays() != null ? dd.getStayDurationDays() : 1);
+                d.setLatitude(dd.getLatitude());
+                d.setLongitude(dd.getLongitude());
+                d.setHotelName(dd.getHotelName());
+                dests.add(d);
+            }
+        }
+
+        Destination targetDest = itineraryService.findDestinationForDay(dests, day.getDayNumber());
+        String cityName = targetDest != null ? targetDest.getName() : guestTrip.getStartLocation();
+        double[] cityCoords = (targetDest != null && targetDest.getLatitude() != null && targetDest.getLatitude() != 0.0)
+                ? new double[]{targetDest.getLatitude(), targetDest.getLongitude()} : GeoUtils.getApproximateCoordinates(cityName);
+
+        String dayOrigin = (day.getDayNumber() == 1) ? guestTrip.getStartLocation() : (targetDest != null && targetDest.getHotelName() != null ? targetDest.getHotelName() : cityName);
+        double[] originCoords = (day.getDayNumber() == 1 && guestTrip.getStartLat() != null && guestTrip.getStartLat() != 0.0) ? new double[]{guestTrip.getStartLat(), guestTrip.getStartLng()} : cityCoords;
+        String hotelStay = (targetDest != null && targetDest.getHotelName() != null) ? targetDest.getHotelName() : ("Hotel in " + cityName);
+        double[] hotelCoords = new double[]{cityCoords[0] - 0.002, cityCoords[1] - 0.002};
+
+        DayItineraryDto recalculated = itineraryService.recalculateDaySchedule(
+                trip, targetDest, day.getDayNumber(), day.getDate(), day.getItems(),
+                dayOrigin, originCoords, hotelStay, hotelCoords, guestTrip.getTransportMode()
+        );
+
+        day.setItems(recalculated.getItems());
+        day.setTotalDistanceKm(recalculated.getTotalDistanceKm());
+        day.setTravelTimeMinutes(recalculated.getTravelTimeMinutes());
+        day.setSightseeingTimeMinutes(recalculated.getSightseeingTimeMinutes());
+        day.setBreakTimeMinutes(recalculated.getBreakTimeMinutes());
+        day.setTotalDurationMinutes(recalculated.getTotalDurationMinutes());
+        day.setUnallocatedTimeMinutes(recalculated.getUnallocatedTimeMinutes());
+        day.setStatus(recalculated.getStatus());
+        day.setWarningMessage(recalculated.getWarningMessage());
     }
 }

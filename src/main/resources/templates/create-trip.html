@@ -160,6 +160,9 @@
                         <button type="button" class="btn btn-outline-forest btn-sm" onclick="checkAndOptimizePreview()">
                             <i class="bi bi-shuffle me-1"></i> Optimize Route Order
                         </button>
+                        <button type="button" class="btn btn-outline-forest btn-sm" onclick="addIntermediateStop()">
+                            <i class="bi bi-plus-circle me-1"></i>+ Add a stop
+                        </button>
                         <button type="button" class="btn btn-forest btn-sm" onclick="addDestinationInput()">
                             <i class="bi bi-plus-lg me-1"></i> Add Destination
                         </button>
@@ -183,9 +186,14 @@
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                    <button type="button" class="btn btn-sand btn-sm px-3" onclick="addDestinationInput()">
-                        <i class="bi bi-plus-circle me-1"></i> + Add Another Stop
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-forest btn-sm px-3" onclick="addIntermediateStop()">
+                            <i class="bi bi-plus-circle me-1"></i>+ Add a stop
+                        </button>
+                        <button type="button" class="btn btn-sand btn-sm px-3" onclick="addDestinationInput()">
+                            <i class="bi bi-plus-lg me-1"></i> + Add Another Stop
+                        </button>
+                    </div>
                     <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>At least one destination is required</span>
                 </div>
             </div>
@@ -421,6 +429,7 @@
             const promptParam = urlParams.get('prompt');
             const startParam = urlParams.get('start');
             const destParam = urlParams.get('dest');
+            const stopsParam = urlParams.getAll('stops');
             const startDateParam = urlParams.get('startDate');
             const startTimeParam = urlParams.get('startTime');
 
@@ -434,11 +443,17 @@
             if (promptParam) {
                 document.getElementById('aiPromptInput').value = promptParam;
                 handleAiPlan();
-            } else if (startParam || destParam) {
+            } else if (startParam || destParam || (stopsParam && stopsParam.length > 0)) {
                 if (startParam) document.getElementById('startLocationInput').value = startParam;
+                // Add intermediate stops first in order, then destination
+                if (stopsParam && stopsParam.length > 0) {
+                    stopsParam.forEach(stop => {
+                        if (stop && stop.trim()) addDestinationInput(stop.trim());
+                    });
+                }
                 if (destParam) {
                     addDestinationInput(destParam);
-                } else {
+                } else if (!stopsParam || stopsParam.length === 0) {
                     addDestinationInput();
                 }
             } else {
@@ -551,8 +566,20 @@
             }
         }
 
-        // Add Destination Card Row with Stay Duration (Requirement 1)
-        function addDestinationInput(nameValue = '', hotelValue = '', stayDays = 1, stayNights = null) {
+        function addIntermediateStop(nameValue = '') {
+            const container = document.getElementById('destinationsContainer');
+            const rows = container.querySelectorAll('.destination-card-row');
+            if (rows.length > 0) {
+                // Insert right before the last destination stop
+                const lastRow = rows[rows.length - 1];
+                addDestinationInput(nameValue, '', 1, null, lastRow);
+            } else {
+                addDestinationInput(nameValue);
+            }
+        }
+
+        // Add Destination Card Row with Stay Duration (Requirement 1 & 3)
+        function addDestinationInput(nameValue = '', hotelValue = '', stayDays = 1, stayNights = null, insertBeforeEl = null) {
             const container = document.getElementById('destinationsContainer');
             const currentRows = container.querySelectorAll('.destination-card-row');
             const nextIndex = currentRows.length;
@@ -616,7 +643,11 @@
                 </div>
             `;
 
-            container.appendChild(card);
+            if (insertBeforeEl) {
+                container.insertBefore(card, insertBeforeEl);
+            } else {
+                container.appendChild(card);
+            }
             initDragAndDrop(card);
             renumberDestinations();
 
@@ -931,11 +962,40 @@
                 }
             });
 
+            if (!startLoc) {
+                alert("Please specify your journey starting location.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
+                return;
+            }
+
             if (dests.length === 0) {
                 alert("Please specify at least one destination to visit.");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                 return;
+            }
+
+            if (dests.length === 1 && dests[0].toLowerCase() === startLoc.toLowerCase()) {
+                alert("Destination cannot be identical to the starting location.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
+                return;
+            }
+
+            for (let i = 0; i < dests.length; i++) {
+                if (dests[i].toLowerCase() === startLoc.toLowerCase()) {
+                    alert('Stop "' + dests[i] + '" cannot be identical to the starting location.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
+                    return;
+                }
+                if (i > 0 && dests[i].toLowerCase() === dests[i - 1].toLowerCase()) {
+                    alert('Consecutive duplicate stop "' + dests[i] + '" detected. Please remove duplicate consecutive stops.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
+                    return;
+                }
             }
 
             const interests = [];

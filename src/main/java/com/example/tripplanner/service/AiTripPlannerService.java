@@ -16,14 +16,23 @@ import java.util.regex.Pattern;
 public class AiTripPlannerService {
 
     private final RouteService routeService;
+    private final RecommendationService recommendationService;
 
     @Autowired
+    public AiTripPlannerService(RouteService routeService,
+            @Autowired(required = false) RecommendationService recommendationService) {
+        this.routeService = routeService;
+        this.recommendationService = recommendationService;
+    }
+
     public AiTripPlannerService(RouteService routeService) {
         this.routeService = routeService;
+        this.recommendationService = null;
     }
 
     public AiTripPlannerService() {
         this.routeService = null;
+        this.recommendationService = null;
     }
 
     // Curated destination recommendations per interest
@@ -108,10 +117,12 @@ public class AiTripPlannerService {
         INTEREST_DESTINATIONS.put("heritage", List.of("Mysore", "Hampi", "Badami", "Jaipur", "Agra", "Calicut"));
         INTEREST_DESTINATIONS.put("historical", List.of("Mysore", "Hampi", "Jaipur", "Agra", "Delhi", "Udaipur"));
         INTEREST_DESTINATIONS.put("beaches", List.of("Goa", "Gokarna", "Calicut", "Pondicherry", "Varkala", "Kovalam"));
-        INTEREST_DESTINATIONS.put("temples", List.of("Mysore", "Madurai", "Rameshwaram", "Tirupati", "Hampi", "Guntakal"));
+        INTEREST_DESTINATIONS.put("temples",
+                List.of("Mysore", "Madurai", "Rameshwaram", "Tirupati", "Hampi", "Guntakal"));
         INTEREST_DESTINATIONS.put("hills", List.of("Munnar", "Kodaikanal", "Ooty", "Coorg", "Manali", "Shimla"));
         INTEREST_DESTINATIONS.put("adventure", List.of("Dandeli", "Rishikesh", "Manali", "Wayanad", "Munnar"));
-        INTEREST_DESTINATIONS.put("relaxation", List.of("Munnar", "Kodaikanal", "Coorg", "Alleppey", "Pondicherry", "Gokarna"));
+        INTEREST_DESTINATIONS.put("relaxation",
+                List.of("Munnar", "Kodaikanal", "Coorg", "Alleppey", "Pondicherry", "Gokarna"));
 
         // Hotels per destination
         DESTINATION_HOTELS.put("calicut", "The Raviz Kadavu or Beach Heritage Resort");
@@ -140,33 +151,69 @@ public class AiTripPlannerService {
         DESTINATION_HOTELS.put("kurnool", "Mourya Inn or Hotel DVR Mansion Kurnool");
 
         // Top Attractions
-        DESTINATION_ATTRACTIONS.put("calicut", List.of("Kozhikode Beach & Sea Pier", "Mananchira Square", "Kappad Beach & Vasco da Gama Monument", "Beypore Port & Ancient Dhow Yard", "Thusharagiri Waterfalls"));
-        DESTINATION_ATTRACTIONS.put("munnar", List.of("Tea Gardens & Tata Tea Museum", "Eravikulam National Park", "Mattupetty Dam & Lake", "Top Station Cloud Point", "Attukad Waterfalls"));
-        DESTINATION_ATTRACTIONS.put("kodaikanal", List.of("Kodaikanal Lake & Boathouse", "Coaker's Walk", "Pillar Rocks Viewpoint", "Bryant Park & Glasshouse", "Silver Cascade Waterfall"));
-        DESTINATION_ATTRACTIONS.put("guntakal", List.of("Kasapuram Neti Anjaneya Swamy Temple", "Guntakal Historic Heritage Rail Junction", "Chippagiri Historical Overlook"));
-        DESTINATION_ATTRACTIONS.put("coorg", List.of("Abbey Falls", "Raja's Seat", "Namdroling Golden Temple", "Dubare Elephant Camp", "Mandalpatti Peak"));
-        DESTINATION_ATTRACTIONS.put("mysore", List.of("Mysore Palace", "Chamundi Hill & Temple", "Brindavan Gardens", "St. Philomena's Cathedral"));
-        DESTINATION_ATTRACTIONS.put("wayanad", List.of("Soochipara Waterfalls", "Banasura Sagar Dam", "Edakkal Caves", "Chembra Peak", "Pookode Lake"));
-        DESTINATION_ATTRACTIONS.put("ooty", List.of("Ooty Botanical Gardens", "Doddabetta Peak", "Pykara Waterfalls", "Nilgiri Mountain Toy Train"));
-        DESTINATION_ATTRACTIONS.put("chikmagalur", List.of("Mullayanagiri Peak", "Hebbe Falls", "Baba Budangiri", "Coffee Plantation Safari"));
-        DESTINATION_ATTRACTIONS.put("hampi", List.of("Virupaksha Temple", "Vijaya Vittala Stone Chariot", "Lotus Mahal", "Matanga Hill Sunset"));
-        DESTINATION_ATTRACTIONS.put("gokarna", List.of("Om Beach", "Kudle Beach", "Half Moon Beach", "Mahabaleshwar Temple"));
-        DESTINATION_ATTRACTIONS.put("pondicherry", List.of("Promenade Beach", "Auroville", "French Colony Heritage Walk", "Paradise Beach"));
-        DESTINATION_ATTRACTIONS.put("udaipur", List.of("Udaipur City Palace Complex", "Lake Pichola & Jag Mandir Island", "Saheliyon-ki-Bari Gardens", "Monsoon Palace (Sajjangarh Fort)"));
-        DESTINATION_ATTRACTIONS.put("jodhpur", List.of("Mehrangarh Fort & Museum", "Jaswant Thada White Marble Cenotaph", "Umaid Bhawan Palace & Museum", "Mandore Gardens"));
-        DESTINATION_ATTRACTIONS.put("shimla", List.of("The Ridge & Neo-Gothic Christ Church", "Mall Road & Scandal Point Walk", "Jakhoo Temple & Ropeway", "Viceregal Lodge (IIAS)"));
-        DESTINATION_ATTRACTIONS.put("hyderabad", List.of("Charminar & Laad Bazaar", "Golconda Fort & Sound-Light Show", "Salar Jung Museum", "Chowmahalla Palace"));
-        DESTINATION_ATTRACTIONS.put("chennai", List.of("Marina Beach & Light House", "Kapaleeshwarar Temple (Mylapore)", "San Thome Cathedral Basilica", "Fort St. George & Clive House"));
-        DESTINATION_ATTRACTIONS.put("mahabalipuram", List.of("Shore Temple", "Pancha Rathas (Five Rathas)", "Descent of the Ganges (Arjuna's Penance)", "Krishna's Butter Ball"));
-        DESTINATION_ATTRACTIONS.put("tirupati", List.of("Sri Venkateswara Swamy Temple (Tirumala)", "Kapila Theertham Waterfalls & Temple", "Silathoranam Natural Geological Arch", "Chandragiri Historic Fort & Palace"));
-        DESTINATION_ATTRACTIONS.put("madurai", List.of("Meenakshi Amman Temple", "Thirumalai Nayakkar Mahal", "Gandhi Memorial Museum", "Alagar Koyil Vishnu Temple"));
-        DESTINATION_ATTRACTIONS.put("rameshwaram", List.of("Ramanathaswamy Temple & 22 Theerthams", "Dhanushkodi Ghost Town & Point", "Agni Theertham Holy Beach", "Dr. APJ Abdul Kalam National Memorial"));
-        DESTINATION_ATTRACTIONS.put("kanyakumari", List.of("Vivekananda Rock Memorial", "Thiruvalluvar Giant Stone Statue", "Triveni Sangam Sunset & Sunrise Beach", "Padmanabhapuram Wooden Palace"));
-        DESTINATION_ATTRACTIONS.put("dandeli", List.of("Kali River White Water Rafting", "Syntheri Rocks Monolithic Canyon", "Dandeli Wildlife Sanctuary Safari", "Shiroli Peak & Sunset Viewpoint"));
-        DESTINATION_ATTRACTIONS.put("varkala", List.of("Varkala Cliff & Papanasam Beach", "Janardhana Swami 2000-Year Temple", "Kappil Beach & Edava Nadayara Backwater Lake", "Anjengo Fort & Lighthouse"));
-        DESTINATION_ATTRACTIONS.put("mangalore", List.of("Sri Krishna Matha Udupi", "Malpe Beach & St. Mary's Basalt Islands", "Panambur Beach & Port Overlook", "Kadri Manjunatha Ancient Cave Temple"));
-        DESTINATION_ATTRACTIONS.put("badami", List.of("Badami Cave Temples", "Agastya Lake & Bhoothanatha Temples", "UNESCO Pattadakal Group of Monuments", "Aihole Durga Temple Complex"));
-        DESTINATION_ATTRACTIONS.put("anantapur", List.of("Lepakshi Veerabhadra Temple & Hanging Pillar", "Belum Underground Caves", "Oravakallu Rock Garden Canyon", "Konda Reddy Buruju Historic Fort"));
+        DESTINATION_ATTRACTIONS.put("calicut",
+                List.of("Kozhikode Beach & Sea Pier", "Mananchira Square", "Kappad Beach & Vasco da Gama Monument",
+                        "Beypore Port & Ancient Dhow Yard", "Thusharagiri Waterfalls"));
+        DESTINATION_ATTRACTIONS.put("munnar", List.of("Tea Gardens & Tata Tea Museum", "Eravikulam National Park",
+                "Mattupetty Dam & Lake", "Top Station Cloud Point", "Attukad Waterfalls"));
+        DESTINATION_ATTRACTIONS.put("kodaikanal", List.of("Kodaikanal Lake & Boathouse", "Coaker's Walk",
+                "Pillar Rocks Viewpoint", "Bryant Park & Glasshouse", "Silver Cascade Waterfall"));
+        DESTINATION_ATTRACTIONS.put("guntakal", List.of("Kasapuram Neti Anjaneya Swamy Temple",
+                "Guntakal Historic Heritage Rail Junction", "Chippagiri Historical Overlook"));
+        DESTINATION_ATTRACTIONS.put("coorg", List.of("Abbey Falls", "Raja's Seat", "Namdroling Golden Temple",
+                "Dubare Elephant Camp", "Mandalpatti Peak"));
+        DESTINATION_ATTRACTIONS.put("mysore",
+                List.of("Mysore Palace", "Chamundi Hill & Temple", "Brindavan Gardens", "St. Philomena's Cathedral"));
+        DESTINATION_ATTRACTIONS.put("wayanad", List.of("Soochipara Waterfalls", "Banasura Sagar Dam", "Edakkal Caves",
+                "Chembra Peak", "Pookode Lake"));
+        DESTINATION_ATTRACTIONS.put("ooty", List.of("Ooty Botanical Gardens", "Doddabetta Peak", "Pykara Waterfalls",
+                "Nilgiri Mountain Toy Train"));
+        DESTINATION_ATTRACTIONS.put("chikmagalur",
+                List.of("Mullayanagiri Peak", "Hebbe Falls", "Baba Budangiri", "Coffee Plantation Safari"));
+        DESTINATION_ATTRACTIONS.put("hampi",
+                List.of("Virupaksha Temple", "Vijaya Vittala Stone Chariot", "Lotus Mahal", "Matanga Hill Sunset"));
+        DESTINATION_ATTRACTIONS.put("gokarna",
+                List.of("Om Beach", "Kudle Beach", "Half Moon Beach", "Mahabaleshwar Temple"));
+        DESTINATION_ATTRACTIONS.put("pondicherry",
+                List.of("Promenade Beach", "Auroville", "French Colony Heritage Walk", "Paradise Beach"));
+        DESTINATION_ATTRACTIONS.put("udaipur", List.of("Udaipur City Palace Complex",
+                "Lake Pichola & Jag Mandir Island", "Saheliyon-ki-Bari Gardens", "Monsoon Palace (Sajjangarh Fort)"));
+        DESTINATION_ATTRACTIONS.put("jodhpur", List.of("Mehrangarh Fort & Museum",
+                "Jaswant Thada White Marble Cenotaph", "Umaid Bhawan Palace & Museum", "Mandore Gardens"));
+        DESTINATION_ATTRACTIONS.put("shimla", List.of("The Ridge & Neo-Gothic Christ Church",
+                "Mall Road & Scandal Point Walk", "Jakhoo Temple & Ropeway", "Viceregal Lodge (IIAS)"));
+        DESTINATION_ATTRACTIONS.put("hyderabad", List.of("Charminar & Laad Bazaar", "Golconda Fort & Sound-Light Show",
+                "Salar Jung Museum", "Chowmahalla Palace"));
+        DESTINATION_ATTRACTIONS.put("chennai", List.of("Marina Beach & Light House", "Kapaleeshwarar Temple (Mylapore)",
+                "San Thome Cathedral Basilica", "Fort St. George & Clive House"));
+        DESTINATION_ATTRACTIONS.put("mahabalipuram", List.of("Shore Temple", "Pancha Rathas (Five Rathas)",
+                "Descent of the Ganges (Arjuna's Penance)", "Krishna's Butter Ball"));
+        DESTINATION_ATTRACTIONS.put("tirupati",
+                List.of("Sri Venkateswara Swamy Temple (Tirumala)", "Kapila Theertham Waterfalls & Temple",
+                        "Silathoranam Natural Geological Arch", "Chandragiri Historic Fort & Palace"));
+        DESTINATION_ATTRACTIONS.put("madurai", List.of("Meenakshi Amman Temple", "Thirumalai Nayakkar Mahal",
+                "Gandhi Memorial Museum", "Alagar Koyil Vishnu Temple"));
+        DESTINATION_ATTRACTIONS.put("rameshwaram",
+                List.of("Ramanathaswamy Temple & 22 Theerthams", "Dhanushkodi Ghost Town & Point",
+                        "Agni Theertham Holy Beach", "Dr. APJ Abdul Kalam National Memorial"));
+        DESTINATION_ATTRACTIONS.put("kanyakumari",
+                List.of("Vivekananda Rock Memorial", "Thiruvalluvar Giant Stone Statue",
+                        "Triveni Sangam Sunset & Sunrise Beach", "Padmanabhapuram Wooden Palace"));
+        DESTINATION_ATTRACTIONS.put("dandeli",
+                List.of("Kali River White Water Rafting", "Syntheri Rocks Monolithic Canyon",
+                        "Dandeli Wildlife Sanctuary Safari", "Shiroli Peak & Sunset Viewpoint"));
+        DESTINATION_ATTRACTIONS.put("varkala",
+                List.of("Varkala Cliff & Papanasam Beach", "Janardhana Swami 2000-Year Temple",
+                        "Kappil Beach & Edava Nadayara Backwater Lake", "Anjengo Fort & Lighthouse"));
+        DESTINATION_ATTRACTIONS.put("mangalore",
+                List.of("Sri Krishna Matha Udupi", "Malpe Beach & St. Mary's Basalt Islands",
+                        "Panambur Beach & Port Overlook", "Kadri Manjunatha Ancient Cave Temple"));
+        DESTINATION_ATTRACTIONS.put("badami", List.of("Badami Cave Temples", "Agastya Lake & Bhoothanatha Temples",
+                "UNESCO Pattadakal Group of Monuments", "Aihole Durga Temple Complex"));
+        DESTINATION_ATTRACTIONS.put("anantapur", List.of("Lepakshi Veerabhadra Temple & Hanging Pillar",
+                "Belum Underground Caves", "Penukonda Historic Hill Fort", "ISKCON Temple Anantapur"));
+        DESTINATION_ATTRACTIONS.put("kurnool", List.of("Konda Reddy Buruju Historic Fort",
+                "Oravakallu Rock Garden Canyon", "Belum Underground Caves", "Yaganti Uma Maheshwara Cave Temple"));
     }
 
     public AiTripPromptDto.Response parseAndGenerateTrip(String prompt) {
@@ -271,10 +318,25 @@ public class AiTripPlannerService {
             String hotel = DESTINATION_HOTELS.getOrDefault(key, accommodationPref + " in " + dest);
             hotels.add(hotel);
 
-            List<String> attractions = DESTINATION_ATTRACTIONS.getOrDefault(key,
-                    List.of(dest + " Scenic Walk", dest + " Panoramic Viewpoint", dest + " Nature Gardens"));
+            List<String> attractions = DESTINATION_ATTRACTIONS.get(key);
+            if (attractions == null && recommendationService != null) {
+                List<com.example.tripplanner.dto.SightseeingPlaceDto> recPlaces = recommendationService
+                        .getRecommendedPlaces(dest, null, "popularity", null);
+                if (recPlaces != null && !recPlaces.isEmpty()) {
+                    attractions = recPlaces.stream()
+                            .map(com.example.tripplanner.dto.SightseeingPlaceDto::getName)
+                            .limit(5)
+                            .collect(java.util.stream.Collectors.toList());
+                }
+            }
+            if (attractions == null) {
+                attractions = Collections.emptyList();
+            }
 
-            String reason = "Handpicked stop featuring verified road connectivity from " + origin + ", picturesque scenery, and pre-selected stays.";
+            String reason = !attractions.isEmpty()
+                    ? "Handpicked stop featuring verified road connectivity from " + origin
+                            + ", picturesque scenery, and pre-selected stays."
+                    : "Stop featuring verified road connectivity from " + origin + " and pre-selected stays.";
             if (interests.contains("Waterfalls")) {
                 reason = "Celebrated for beautiful waterfalls, mountain breezes, and tranquil valley viewpoints.";
             } else if (interests.contains("Heritage") || interests.contains("Historical")) {
@@ -292,7 +354,8 @@ public class AiTripPlannerService {
         if (destinations.isEmpty()) {
             tripTitle = origin + " Road Trip Experience";
         } else if (destinations.size() == 1) {
-            tripTitle = String.format("%s to %s %s", origin, destinations.get(0), travelStyle.equalsIgnoreCase("RELAXED") ? "Getaway" : "Journey");
+            tripTitle = String.format("%s to %s %s", origin, destinations.get(0),
+                    travelStyle.equalsIgnoreCase("RELAXED") ? "Getaway" : "Journey");
         } else if (destinations.size() == 2) {
             tripTitle = String.format("%s to %s & %s Journey", origin, destinations.get(0), destinations.get(1));
         } else {
@@ -308,8 +371,7 @@ public class AiTripPlannerService {
                 travelers > 2 ? "family" : (travelers == 1 ? "solo" : "couple"),
                 origin,
                 String.join(" → ", destinations),
-                travelStyle.toLowerCase()
-        ));
+                travelStyle.toLowerCase()));
 
         if (validatedDistanceKm > 0) {
             summary.append(String.format(Locale.US, "Verified highway distance: %.1f km (%s). ",
@@ -317,10 +379,10 @@ public class AiTripPlannerService {
         }
 
         if (!interests.isEmpty()) {
-            summary.append(String.format("Handpicked top attractions highlighting %s with realistic driving intervals and %s accommodations. ",
+            summary.append(String.format(
+                    "Handpicked top attractions highlighting %s with realistic driving intervals and %s accommodations. ",
                     String.join(", ", interests),
-                    accommodationPref.toLowerCase()
-            ));
+                    accommodationPref.toLowerCase()));
         }
         summary.append("Your route is validated and ready below!");
 
@@ -346,7 +408,8 @@ public class AiTripPlannerService {
         ExtractedLocations result = new ExtractedLocations();
 
         // 1. Look for explicit "from <Origin>"
-        Pattern fromPattern = Pattern.compile("(?i)(?:starting\\s+from|start\\s+from|from)\\s+([^,;\\n\\r]+?)(?:,|;|\\s+and\\b|\\s+to\\b|\\s+via\\b|\\s+->|\\s+-|\\s+with\\b|\\s+for\\b|$)");
+        Pattern fromPattern = Pattern.compile(
+                "(?i)(?:starting\\s+from|start\\s+from|from)\\s+([^,;\\n\\r]+?)(?:,|;|\\s+and\\b|\\s+to\\b|\\s+via\\b|\\s+->|\\s+-|\\s+with\\b|\\s+for\\b|$)");
         Matcher fromMatcher = fromPattern.matcher(rawText);
 
         String foundOrigin = null;
@@ -385,7 +448,8 @@ public class AiTripPlannerService {
 
         // 3. If no tokens found after origin, check standard "to <Destinations>"
         if (rawTokens.isEmpty()) {
-            Pattern toPattern = Pattern.compile("(?i)\\bto\\s+([^;\\n\\r.]+?)(?:\\s+with\\b|\\s+for\\b|\\s+during\\b|$)");
+            Pattern toPattern = Pattern
+                    .compile("(?i)\\bto\\s+([^;\\n\\r.]+?)(?:\\s+with\\b|\\s+for\\b|\\s+during\\b|$)");
             Matcher toMatcher = toPattern.matcher(rawText);
             if (toMatcher.find()) {
                 String toSection = toMatcher.group(1);
@@ -399,9 +463,11 @@ public class AiTripPlannerService {
             }
         }
 
-        // 4. If prompt is structured like "Place1, Place2, Place3" or "Place1 to Place2" without "from"
+        // 4. If prompt is structured like "Place1, Place2, Place3" or "Place1 to
+        // Place2" without "from"
         if (foundOrigin == null && !rawTokens.isEmpty()) {
-            // Check if there's an origin at the end: "... starting from <Place>" or "... from <Place>"
+            // Check if there's an origin at the end: "... starting from <Place>" or "...
+            // from <Place>"
             Pattern endFromPattern = Pattern.compile("(?i)(?:starting\\s+from|from)\\s+([A-Za-z\\s'-]+)$");
             Matcher endMatcher = endFromPattern.matcher(rawText.trim());
             if (endMatcher.find()) {
@@ -462,7 +528,8 @@ public class AiTripPlannerService {
     }
 
     private String cleanPlaceToken(String token) {
-        if (token == null) return "";
+        if (token == null)
+            return "";
         String s = token.trim();
         // Remove common prompt fluff words
         s = s.replaceAll("(?i)^(?:plan|build|make|create|curate|a|an|the|my|our)\\s+", "");
@@ -470,13 +537,16 @@ public class AiTripPlannerService {
         s = s.replaceAll("(?i)^(?:trip|journey|tour|vacation|itinerary|getaway|circuit|drive)\\s+", "");
         s = s.replaceAll("(?i)\\b(?:trip|journey|tour|vacation|itinerary|getaway|circuit|drive)\\b.*$", "");
         s = s.replaceAll("(?i)\\b(?:with|for|having|featuring|around|during|in)\\b.*$", "");
-        s = s.replaceAll("(?i)\\b(?:waterfalls|nature|heritage|beaches|temples|hills|adventure|scenic|viewpoints|relaxed|fast)\\b.*$", "");
+        s = s.replaceAll(
+                "(?i)\\b(?:waterfalls|nature|heritage|beaches|temples|hills|adventure|scenic|viewpoints|relaxed|fast)\\b.*$",
+                "");
         s = s.replaceAll("[^A-Za-z\\s'-]", " ").trim();
         return s.replaceAll("\\s+", " ").trim();
     }
 
     private boolean isPlausiblePlace(String str) {
-        if (str == null || str.trim().length() < 2) return false;
+        if (str == null || str.trim().length() < 2)
+            return false;
         String l = str.toLowerCase().trim();
         if (l.contains("want") || l.contains("need") || l.contains("looking") || l.contains("planning") ||
                 l.contains("suggest") || l.contains("scenic") || l.contains("would like") || l.contains("explore")) {
@@ -487,8 +557,7 @@ public class AiTripPlannerService {
                 "waterfalls", "nature", "heritage", "temples", "beach", "beaches", "hills",
                 "adventure", "car", "bike", "driving", "driving trip", "relaxed", "fast",
                 "with", "and", "from", "to", "via", "the", "a", "an", "place", "places", "home",
-                "journey", "vacation", "tour", "road trip", "getaway"
-        );
+                "journey", "vacation", "tour", "road trip", "getaway");
         return !stopWords.contains(l);
     }
 
@@ -501,7 +570,8 @@ public class AiTripPlannerService {
     }
 
     private String capitalizeWords(String str) {
-        if (str == null || str.isEmpty()) return str;
+        if (str == null || str.isEmpty())
+            return str;
         String[] parts = str.split("\\s+");
         StringBuilder sb = new StringBuilder();
         for (String p : parts) {
@@ -518,27 +588,43 @@ public class AiTripPlannerService {
         if (matcher.find()) {
             try {
                 return Math.max(1, Math.min(14, Integer.parseInt(matcher.group(1))));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
-        if (lower.contains("weekend")) return 2;
-        if (lower.contains("long weekend")) return 3;
-        if (lower.contains("week")) return 7;
+        if (lower.contains("weekend"))
+            return 2;
+        if (lower.contains("long weekend"))
+            return 3;
+        if (lower.contains("week"))
+            return 7;
 
         return 4; // Sensible default
     }
 
     private List<String> extractInterests(String lower) {
         List<String> interests = new ArrayList<>();
-        if (lower.contains("waterfall") || lower.contains("falls") || lower.contains("cascade")) interests.add("Waterfalls");
-        if (lower.contains("viewpoint") || lower.contains("viewpoints")) interests.add("Viewpoints");
-        if (lower.contains("nature") || lower.contains("scenic") || lower.contains("green") || lower.contains("plantation") || lower.contains("tea")) interests.add("Nature");
-        if (lower.contains("heritage") || lower.contains("palace") || lower.contains("fort") || lower.contains("historic") || lower.contains("monument")) interests.add("Historical");
-        if (lower.contains("temple") || lower.contains("spiritual") || lower.contains("shrine")) interests.add("Temples");
-        if (lower.contains("beach") || lower.contains("sea") || lower.contains("ocean") || lower.contains("coastal")) interests.add("Beaches");
-        if (lower.contains("adventure") || lower.contains("trek") || lower.contains("safari") || lower.contains("hiking")) interests.add("Adventure");
-        if (lower.contains("museum") || lower.contains("art") || lower.contains("science")) interests.add("Museums");
-        if (lower.contains("photo") || lower.contains("sunset")) interests.add("Photography");
+        if (lower.contains("waterfall") || lower.contains("falls") || lower.contains("cascade"))
+            interests.add("Waterfalls");
+        if (lower.contains("viewpoint") || lower.contains("viewpoints"))
+            interests.add("Viewpoints");
+        if (lower.contains("nature") || lower.contains("scenic") || lower.contains("green")
+                || lower.contains("plantation") || lower.contains("tea"))
+            interests.add("Nature");
+        if (lower.contains("heritage") || lower.contains("palace") || lower.contains("fort")
+                || lower.contains("historic") || lower.contains("monument"))
+            interests.add("Historical");
+        if (lower.contains("temple") || lower.contains("spiritual") || lower.contains("shrine"))
+            interests.add("Temples");
+        if (lower.contains("beach") || lower.contains("sea") || lower.contains("ocean") || lower.contains("coastal"))
+            interests.add("Beaches");
+        if (lower.contains("adventure") || lower.contains("trek") || lower.contains("safari")
+                || lower.contains("hiking"))
+            interests.add("Adventure");
+        if (lower.contains("museum") || lower.contains("art") || lower.contains("science"))
+            interests.add("Museums");
+        if (lower.contains("photo") || lower.contains("sunset"))
+            interests.add("Photography");
 
         if (interests.isEmpty()) {
             interests.add("Nature");
@@ -548,40 +634,50 @@ public class AiTripPlannerService {
     }
 
     private String extractTransportMode(String lower) {
-        if (lower.contains("bike") || lower.contains("motorcycle") || lower.contains("two wheeler") || lower.contains("riding")) {
+        if (lower.contains("bike") || lower.contains("motorcycle") || lower.contains("two wheeler")
+                || lower.contains("riding")) {
             return "BIKE";
         }
         if (lower.contains("walk") || lower.contains("trekking") || lower.contains("pedestrian")) {
             return "WALKING";
         }
-        if (lower.contains("train") || lower.contains("bus") || lower.contains("public transport") || lower.contains("transit")) {
+        if (lower.contains("train") || lower.contains("bus") || lower.contains("public transport")
+                || lower.contains("transit")) {
             return "PUBLIC_TRANSPORT";
         }
         return "CAR"; // Default driving
     }
 
     private String extractTravelStyle(String lower) {
-        if (lower.contains("relaxed") || lower.contains("slow") || lower.contains("leisure") || lower.contains("easy") || lower.contains("laid-back")) {
+        if (lower.contains("relaxed") || lower.contains("slow") || lower.contains("leisure") || lower.contains("easy")
+                || lower.contains("laid-back")) {
             return "RELAXED";
         }
-        if (lower.contains("fast") || lower.contains("packed") || lower.contains("busy") || lower.contains("quick") || lower.contains("maximum spots")) {
+        if (lower.contains("fast") || lower.contains("packed") || lower.contains("busy") || lower.contains("quick")
+                || lower.contains("maximum spots")) {
             return "FAST_PACED";
         }
         return "BALANCED";
     }
 
     private int extractTravelersCount(String lower) {
-        if (lower.contains("family") || lower.contains("kids") || lower.contains("parents")) return 4;
-        if (lower.contains("solo") || lower.contains("alone") || lower.contains("myself")) return 1;
-        if (lower.contains("couple") || lower.contains("partner") || lower.contains("wife") || lower.contains("husband") || lower.contains("girlfriend") || lower.contains("boyfriend")) return 2;
-        if (lower.contains("friends") || lower.contains("group") || lower.contains("buddies")) return 4;
+        if (lower.contains("family") || lower.contains("kids") || lower.contains("parents"))
+            return 4;
+        if (lower.contains("solo") || lower.contains("alone") || lower.contains("myself"))
+            return 1;
+        if (lower.contains("couple") || lower.contains("partner") || lower.contains("wife") || lower.contains("husband")
+                || lower.contains("girlfriend") || lower.contains("boyfriend"))
+            return 2;
+        if (lower.contains("friends") || lower.contains("group") || lower.contains("buddies"))
+            return 4;
 
         Pattern p = Pattern.compile("(\\d+)\\s*(?:people|persons|travelers|friends|adults)");
         Matcher m = p.matcher(lower);
         if (m.find()) {
             try {
                 return Integer.parseInt(m.group(1));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         return 2;
     }
@@ -590,10 +686,12 @@ public class AiTripPlannerService {
         if (lower.contains("comfortable") && (lower.contains("overnight") || lower.contains("stay"))) {
             return "Comfortable overnight stays";
         }
-        if (lower.contains("resort") || lower.contains("luxury") || lower.contains("5 star") || lower.contains("villa")) {
+        if (lower.contains("resort") || lower.contains("luxury") || lower.contains("5 star")
+                || lower.contains("villa")) {
             return "Resort & Luxury Stays";
         }
-        if (lower.contains("homestay") || lower.contains("estate stay") || lower.contains("coffee estate") || lower.contains("plantation stay")) {
+        if (lower.contains("homestay") || lower.contains("estate stay") || lower.contains("coffee estate")
+                || lower.contains("plantation stay")) {
             return "Homestay & Plantation Stays";
         }
         if (lower.contains("hotel") || lower.contains("comfortable stay") || lower.contains("overnight stay")) {
@@ -609,14 +707,16 @@ public class AiTripPlannerService {
         if (lower.contains("relaxed driving") || lower.contains("less driving") || lower.contains("short driving")) {
             return "Max 3-4 hours daily driving";
         }
-        if (lower.contains("long drive") || lower.contains("road trip enthusiast") || lower.contains("highway driving")) {
+        if (lower.contains("long drive") || lower.contains("road trip enthusiast")
+                || lower.contains("highway driving")) {
             return "Comfortable with 6+ hours driving";
         }
         return "Max 4-5 hours comfortable driving";
     }
 
     private String extractAccessibilityOrFamily(String lower) {
-        if (lower.contains("family") || lower.contains("kids") || lower.contains("children") || lower.contains("elderly") || lower.contains("parents")) {
+        if (lower.contains("family") || lower.contains("kids") || lower.contains("children")
+                || lower.contains("elderly") || lower.contains("parents")) {
             return "Family-friendly stops with easy walking and clean restrooms";
         }
         if (lower.contains("wheelchair") || lower.contains("accessible") || lower.contains("senior")) {
@@ -629,7 +729,8 @@ public class AiTripPlannerService {
         if (lower.contains("luxury") || lower.contains("premium") || lower.contains("high end")) {
             return "LUXURY";
         }
-        if (lower.contains("budget") || lower.contains("economical") || lower.contains("cheap") || lower.contains("low cost")) {
+        if (lower.contains("budget") || lower.contains("economical") || lower.contains("cheap")
+                || lower.contains("low cost")) {
             return "BUDGET";
         }
         return "MODERATE";

@@ -103,7 +103,7 @@
                                     <div class="planner-input-group">
                                         <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroDestLoc" placeholder="Where do you want to go?" autocomplete="off">
+                                            <input type="text" id="heroDestLoc" placeholder="Where do you want to go?" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -124,6 +124,13 @@
                                         <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan trip</span>
                                     </button>
                                 </div>
+                            </div>
+                            <!-- Optional Intermediate Stops Container (Requirement 3: Hyderabad -> Add a stop -> Kurnool -> Bengaluru) -->
+                            <div id="heroStopsContainer" class="mt-1"></div>
+                            <div class="mt-2 text-start">
+                                <button type="button" class="btn btn-sm btn-link text-decoration-none text-forest p-0 fw-semibold" id="heroAddStopBtn" onclick="addHeroStop()">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Add a stop
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -334,6 +341,30 @@
             document.getElementById('heroStartDate').value = tomorrow.toISOString().split('T')[0];
         });
 
+        function addHeroStop() {
+            const container = document.getElementById('heroStopsContainer');
+            if (!container) return;
+            const stopDiv = document.createElement('div');
+            stopDiv.className = 'd-flex align-items-center gap-2 mt-2 hero-stop-row';
+            stopDiv.innerHTML = `
+                <div class="planner-input-group flex-grow-1 mb-0 py-2">
+                    <label class="small text-muted mb-0"><i class="bi bi-geo text-warning me-1"></i>Intermediate Stop</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" class="hero-stop-input" placeholder="Stop along the way (e.g. Kurnool)" autocomplete="off">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger px-2 py-2" title="Remove this stop" onclick="this.closest('.hero-stop-row').remove()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+            container.appendChild(stopDiv);
+            const input = stopDiv.querySelector('.hero-stop-input');
+            if (input && window.attachPlaceAutocomplete) {
+                window.attachPlaceAutocomplete(input);
+                input.focus();
+            }
+        }
+
         function handleHeroQuickPlan(e) {
             e.preventDefault();
             const start = document.getElementById('heroStartLoc').value.trim();
@@ -341,8 +372,48 @@
             const startDate = document.getElementById('heroStartDate').value;
             const startTime = (document.getElementById('heroStartTime')?.value || '08:00').trim();
 
+            if (!start) {
+                alert('Please enter a starting location.');
+                return;
+            }
+            if (!dest) {
+                alert('Please enter a destination.');
+                return;
+            }
+            if (start.toLowerCase() === dest.toLowerCase()) {
+                alert('Starting location and destination cannot be identical. Please choose a different destination.');
+                return;
+            }
+
             let url = '/create-trip?start=' + encodeURIComponent(start);
-            if (dest) url += '&dest=' + encodeURIComponent(dest);
+
+            // Collect intermediate stops
+            const stopInputs = document.querySelectorAll('#heroStopsContainer .hero-stop-input');
+            const seenStops = new Set();
+            seenStops.add(start.toLowerCase());
+
+            for (const input of stopInputs) {
+                const val = input.value.trim();
+                if (val) {
+                    const lower = val.toLowerCase();
+                    if (lower === start.toLowerCase()) {
+                        alert('Intermediate stop "' + val + '" cannot be identical to the starting location.');
+                        return;
+                    }
+                    if (lower === dest.toLowerCase()) {
+                        alert('Intermediate stop "' + val + '" cannot be identical to the destination.');
+                        return;
+                    }
+                    if (seenStops.has(lower)) {
+                        alert('Duplicate stop "' + val + '" detected. Each stop should be unique.');
+                        return;
+                    }
+                    seenStops.add(lower);
+                    url += '&stops=' + encodeURIComponent(val);
+                }
+            }
+
+            url += '&dest=' + encodeURIComponent(dest);
             if (startDate) url += '&startDate=' + encodeURIComponent(startDate);
             if (startTime) url += '&startTime=' + encodeURIComponent(startTime);
             window.location.href = url;

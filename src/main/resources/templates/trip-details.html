@@ -23,6 +23,38 @@
             document.documentElement.setAttribute('data-theme', effectiveTheme);
         })();
     </script>
+    <style>
+        @media print {
+            nav.navbar, footer, .btn, .dropdown, #mapColumn, .round-trip-card-header button, 
+            .smart-stops-dropbox-card, .ai-itinerary-caption, .timeline-item-actions,
+            .modal, #reorderLiveAnnouncer, .alert {
+                display: none !important;
+            }
+            #itineraryColumn {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+            .card-modern {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+                margin-bottom: 20px !important;
+            }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+                font-size: 11pt !important;
+            }
+            .timeline-container {
+                border-left: 2px solid #555 !important;
+            }
+            .timeline-dot {
+                background: #555 !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -116,13 +148,16 @@
                     </p>
                 </div>
 
-                <!-- Action Controls: Version History, Crew Collaboration, Share, External Navigation -->
+                <!-- Action Controls: Version History, Crew Collaboration, Share, External Navigation, Print/Export -->
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     <button type="button" class="btn btn-outline-forest btn-sm" onclick="openVersionHistoryModal()" title="View trip timeline, snapshots, and restore previous versions">
                         <i class="bi bi-clock-history me-1"></i> Version History <span id="topVersionBadge" class="badge bg-secondary ms-1" style="display: none;">0</span>
                     </button>
                     <button type="button" class="btn btn-sand btn-sm" data-bs-toggle="modal" data-bs-target="#collaborateModal">
                         <i class="bi bi-people-fill text-success me-1"></i> Crew &amp; Share
+                    </button>
+                    <button type="button" class="btn btn-outline-forest btn-sm" onclick="exportTripItinerary()" title="Print or save PDF of itinerary">
+                        <i class="bi bi-printer me-1"></i> Print / Export
                     </button>
                     <a th:href="${trip.routeSummary.googleMapsFullRouteUrl}" target="_blank" rel="noopener noreferrer" 
                        class="btn btn-outline-forest btn-sm" title="Launch navigation in Google Maps">
@@ -270,6 +305,22 @@
                         <div class="rt-metric-sub fw-semibold text-dark">
                             <i class="bi bi-hourglass-split text-success"></i>
                             <span id="rtTotalTime">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Estimated Fuel & Toll Metric (Priority 5) -->
+                    <div class="rt-metric-box" style="background: var(--card-bg, #fbfbfd);">
+                        <div>
+                            <div class="rt-metric-label" style="color: #64748b;">
+                                <i class="bi bi-fuel-pump text-warning"></i> Fuel &amp; Toll Estimates
+                            </div>
+                            <div id="rtFuelTollCost" class="rt-metric-val" style="color: #1e293b;">
+                                <span th:text="${'~₹' + T(java.lang.Math).round(trip.totalDistanceKm * 7.28 + trip.totalDistanceKm * 1.85)}">₹0</span>
+                            </div>
+                        </div>
+                        <div class="rt-metric-sub">
+                            <i class="bi bi-info-circle text-muted"></i>
+                            <span id="rtFuelTollSub" th:text="${'~' + T(java.lang.Math).round(trip.totalDistanceKm / 14.0) + ' L fuel + tolls'}">--</span>
                         </div>
                     </div>
                 </div>
@@ -759,15 +810,23 @@
                             <span>Total Active:</span><br>
                             <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong>
                         </div>
+                        <div th:if="${day.unallocatedTimeMinutes != null and day.unallocatedTimeMinutes > 0}">
+                            <span>Free / Leisure:</span><br>
+                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.unallocatedTimeMinutes)}"></strong>
+                        </div>
                     </div>
 
-                    <!-- Feasibility & Crowding Warning (Requirement 2) -->
-                    <div th:if="${day.totalDurationMinutes != null and day.totalDurationMinutes > 600}" class="day-crowding-warning">
+                    <!-- Feasibility & Crowding / Driving Limit Warning (Priority 5) -->
+                    <div th:if="${(day.warningMessage != null and !#strings.isEmpty(day.warningMessage)) or (day.totalDurationMinutes != null and day.totalDurationMinutes > 600)}" class="day-crowding-warning">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>
-                            <strong>Feasibility Notice:</strong> Day <span th:text="${day.dayNumber}"></span> looks crowded. Your planned activities require approximately 
-                            <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong> (excluding traffic delays).
-                            Consider moving one attraction to another day.
+                            <strong>Feasibility Notice:</strong> 
+                            <span th:if="${day.warningMessage != null and !#strings.isEmpty(day.warningMessage)}" th:text="${day.warningMessage}"></span>
+                            <span th:if="${day.warningMessage == null or #strings.isEmpty(day.warningMessage)}">
+                                Day <span th:text="${day.dayNumber}"></span> looks crowded. Your planned activities require approximately 
+                                <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong> (excluding traffic delays).
+                                Consider moving one attraction to another day.
+                            </span>
                         </div>
                     </div>
 
@@ -823,8 +882,32 @@
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                                 th:title="${(item.locked != null and item.locked) ? 'Activity is locked (preserved during single-day regeneration)' : 'Lock activity'}"
                                                 th:data-trip-id="${trip.id}" th:data-item-id="${item.id}"
-                                                onclick="toggleItemLock(this.dataset.tripId, this.dataset.itemId)">
+                                                onclick="event.stopPropagation(); toggleItemLock(this.dataset.tripId, this.dataset.itemId)">
                                             <i th:class="${(item.locked != null and item.locked) ? 'bi bi-lock-fill text-warning' : 'bi bi-unlock text-muted'}"></i>
+                                        </button>
+
+                                        <!-- Move Activity Earlier (Up) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                                style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                                title="Move activity earlier"
+                                                th:data-trip-id="${trip.id}"
+                                                th:data-day="${day.dayNumber}"
+                                                th:data-item-id="${item.id}"
+                                                th:disabled="${itemStat.first}"
+                                                onclick="event.stopPropagation(); moveActivityStep(this.dataset.tripId, this.dataset.day, this.dataset.itemId, 'UP')">
+                                            <i class="bi bi-arrow-up text-secondary"></i>
+                                        </button>
+
+                                        <!-- Move Activity Later (Down) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                                style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                                title="Move activity later"
+                                                th:data-trip-id="${trip.id}"
+                                                th:data-day="${day.dayNumber}"
+                                                th:data-item-id="${item.id}"
+                                                th:disabled="${itemStat.last}"
+                                                onclick="event.stopPropagation(); moveActivityStep(this.dataset.tripId, this.dataset.day, this.dataset.itemId, 'DOWN')">
+                                            <i class="bi bi-arrow-down text-secondary"></i>
                                         </button>
 
                                         <!-- Move Activity to Another Day (Requirement 2) -->
@@ -834,7 +917,7 @@
                                                 th:data-item-id="${item.id}"
                                                 th:data-activity="${item.activity}"
                                                 th:data-current-day="${day.dayNumber}"
-                                                onclick="openMoveActivityModal(this)">
+                                                onclick="event.stopPropagation(); openMoveActivityModal(this)">
                                             <i class="bi bi-arrow-left-right text-success"></i>
                                         </button>
 
@@ -850,7 +933,7 @@
                                                 th:data-notes="${item.notes}"
                                                 th:data-type="${item.activityType}"
                                                 th:data-locked="${item.locked}"
-                                                onclick="openEditActivityModal(this)">
+                                                onclick="event.stopPropagation(); openEditActivityModal(this)">
                                             <i class="bi bi-pencil-square text-primary"></i>
                                         </button>
 
@@ -859,7 +942,7 @@
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                                 title="Delete activity"
                                                 th:data-trip-id="${trip.id}" th:data-item-id="${item.id}"
-                                                onclick="deleteActivityItem(this.dataset.tripId, this.dataset.itemId)">
+                                                onclick="event.stopPropagation(); deleteActivityItem(this.dataset.tripId, this.dataset.itemId)">
                                             <i class="bi bi-trash text-danger"></i>
                                         </button>
                                     </div>
@@ -1347,6 +1430,41 @@
         </div>
     </div>
 
+    <!-- 3b. Move Activity to Another Day Modal -->
+    <div class="modal fade" id="moveActivityModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-arrow-left-right text-success me-2"></i>Move Activity to Another Day
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form onsubmit="handleExecuteMoveActivityToDay(event)">
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="moveActivityItemId">
+                        <input type="hidden" id="moveActivityCurrentDay">
+                        <p class="small text-muted mb-3">
+                            Move <strong id="moveActivityItemTitle" class="text-dark">Activity</strong> to a different day. The daily schedules will automatically recalculate without time gaps.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Target Day</label>
+                            <select id="moveActivityTargetDaySelect" class="form-select form-select-sm" required>
+                                <!-- populated by openMoveActivityModal -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top py-2 px-4">
+                        <button type="button" class="btn btn-sand btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-forest btn-sm px-3">
+                            <i class="bi bi-check2-circle me-1"></i> Move Activity
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- 4. Add Destination Stop Modal -->
     <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1689,6 +1807,7 @@
 
             initTripWorkspaceMap(tripData);
             initDestinationDragAndDrop();
+            initActivityDragAndDrop();
             initQuickUndoCheck();
             loadVersionHistoryCount();
             loadSmartStopsAlongRoute();
@@ -2178,7 +2297,8 @@
                 if (content) content.style.display = "none";
                 if (errorBox) errorBox.style.display = "none";
 
-                const response = await fetch(`/api/trips/${tripData.id}/round-trip`);
+                const rtUrl = (!tripData || !tripData.id || tripData.id === 0) ? '/api/trips/guest/round-trip' : `/api/trips/${tripData.id}/round-trip`;
+                const response = await fetch(rtUrl);
                 if (!response.ok) {
                     throw new Error("Unable to obtain return road route from routing engine");
                 }
@@ -2219,6 +2339,47 @@
             if (totalDist) totalDist.textContent = `${details.roundTripTotalDistanceKm} km`;
             if (totalTime) totalTime.textContent = details.roundTripTotalDurationFormatted || "--";
             if (providerBadge && details.routingProvider) providerBadge.textContent = details.routingProvider;
+
+            // Update Fuel & Toll Cost Estimates based on round-trip road distance
+            const totalKm = details.roundTripTotalDistanceKm || (details.outboundDistanceKm ? details.outboundDistanceKm * 2 : 0);
+            const mode = (tripData && tripData.transportMode) ? tripData.transportMode.toUpperCase() : 'CAR';
+            let fuelLiters = 0;
+            let fuelCost = 0;
+            let tollCost = 0;
+            if (mode === 'CAR') {
+                fuelLiters = Math.round((totalKm / 14.0) * 10) / 10;
+                fuelCost = Math.round(fuelLiters * 102); // ~₹102/L avg fuel
+                tollCost = Math.round(totalKm * 1.85); // ~₹1.85/km avg national toll
+            } else if (mode === 'MOTORCYCLE' || mode === 'BIKE') {
+                fuelLiters = Math.round((totalKm / 35.0) * 10) / 10;
+                fuelCost = Math.round(fuelLiters * 102);
+                tollCost = Math.round(totalKm * 0.5);
+            }
+
+            const ftCostEl = document.getElementById("rtFuelTollCost");
+            const ftSubEl = document.getElementById("rtFuelTollSub");
+            if (ftCostEl) {
+                if (mode === 'PUBLIC_TRANSPORT' || mode === 'TRANSIT') {
+                    ftCostEl.textContent = "Transit Fares";
+                } else if (mode === 'WALKING') {
+                    ftCostEl.textContent = "₹0 (Zero Fuel)";
+                } else {
+                    ftCostEl.textContent = `~₹${(fuelCost + tollCost).toLocaleString()}`;
+                }
+            }
+            if (ftSubEl) {
+                if (mode === 'PUBLIC_TRANSPORT' || mode === 'TRANSIT') {
+                    ftSubEl.textContent = "Direct transit provider tickets";
+                } else if (mode === 'WALKING') {
+                    ftSubEl.textContent = "Pedestrian journey";
+                } else {
+                    ftSubEl.textContent = `~₹${fuelCost.toLocaleString()} fuel (${fuelLiters}L) + ~₹${tollCost.toLocaleString()} tolls`;
+                }
+            }
+        }
+
+        function exportTripItinerary() {
+            window.print();
         }
 
         function renderReturnRouteOnMap(details) {
@@ -2337,6 +2498,302 @@
                 checkbox.checked = !checkbox.checked;
                 alert("Could not update visited status.");
             }
+        }
+
+        // =========================================================
+        // TIMELINE ACTIVITY ACTIONS (Move, Lock, Edit, Delete, Add)
+        // =========================================================
+
+        async function moveActivityStep(tripId, day, itemId, direction) {
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const url = isGuest
+                    ? `/api/trips/guest/days/${day}/activities/${itemId}/move?direction=${direction}`
+                    : `/api/trips/${tripId}/days/${day}/activities/${itemId}/move?direction=${direction}`;
+                
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ direction: direction })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || "Failed to move activity");
+                }
+                const updated = await res.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+                window.location.reload();
+            } catch (err) {
+                console.error("Move activity error:", err);
+                alert("Could not reorder activity: " + err.message);
+            }
+        }
+
+        async function toggleItemLock(tripId, itemId) {
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const url = isGuest
+                    ? `/api/trips/guest/activities/${itemId}/lock`
+                    : `/api/trips/${tripId}/itinerary-items/${itemId}/lock`;
+                
+                const res = await fetch(url, { method: 'POST' });
+                if (!res.ok) throw new Error("Could not update lock status");
+                const result = await res.json();
+                window.location.reload();
+            } catch (err) {
+                console.error("Toggle lock error:", err);
+                alert("Failed to update activity lock status.");
+            }
+        }
+
+        async function deleteActivityItem(tripId, itemId) {
+            if (!confirm("Are you sure you want to remove this activity from your itinerary? The day's schedule will automatically recalculate.")) {
+                return;
+            }
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const url = isGuest
+                    ? `/api/trips/guest/activities/${itemId}`
+                    : `/api/trips/${tripId}/itinerary-items/${itemId}`;
+                
+                const res = await fetch(url, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Failed to delete activity");
+                const updated = await res.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+                window.location.reload();
+            } catch (err) {
+                console.error("Delete activity error:", err);
+                alert("Could not delete activity: " + err.message);
+            }
+        }
+
+        function openEditActivityModal(btn) {
+            const itemId = btn.dataset.itemId;
+            const activity = btn.dataset.activity || "";
+            const location = btn.dataset.location || "";
+            const startTime = btn.dataset.start || "10:00";
+            const endTime = btn.dataset.end || "11:30";
+            const notes = btn.dataset.notes || "";
+            const locked = btn.dataset.locked === "true";
+
+            document.getElementById("editItemId").value = itemId;
+            document.getElementById("editActivityTitle").value = activity;
+            document.getElementById("editActivityLocation").value = location;
+            document.getElementById("editActivityNotes").value = notes;
+            document.getElementById("editActivityLocked").checked = locked;
+
+            document.getElementById("editActivityStart").value = convertTo24Hour(startTime) || "10:00";
+            document.getElementById("editActivityEnd").value = convertTo24Hour(endTime) || "11:30";
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("editActivityModal"));
+            modal.show();
+        }
+
+        async function handleSaveEditedActivity(e) {
+            e.preventDefault();
+            const itemId = document.getElementById("editItemId").value;
+            const title = document.getElementById("editActivityTitle").value.trim();
+            const location = document.getElementById("editActivityLocation").value.trim();
+            const notes = document.getElementById("editActivityNotes").value.trim();
+            const locked = document.getElementById("editActivityLocked").checked;
+            const startVal = document.getElementById("editActivityStart").value;
+            const endVal = document.getElementById("editActivityEnd").value;
+
+            let durationMins = 60;
+            if (startVal && endVal) {
+                const [sh, sm] = startVal.split(":").map(Number);
+                const [eh, em] = endVal.split(":").map(Number);
+                const diff = (eh * 60 + em) - (sh * 60 + sm);
+                if (diff > 0) durationMins = diff;
+            }
+
+            const payload = {
+                activity: title,
+                location: location,
+                notes: notes,
+                locked: locked,
+                durationMinutes: durationMins
+            };
+
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const url = isGuest
+                    ? `/api/trips/guest/activities/${itemId}`
+                    : `/api/trips/${tripData.id}/itinerary-items/${itemId}`;
+
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error("Failed to save changes");
+                const updated = await res.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+                const modal = bootstrap.Modal.getInstance(document.getElementById("editActivityModal"));
+                if (modal) modal.hide();
+                window.location.reload();
+            } catch (err) {
+                console.error("Save activity edit error:", err);
+                alert("Could not update activity: " + err.message);
+            }
+        }
+
+        function openAddActivityModal(dayNumber) {
+            document.getElementById("addActivityDayNumber").value = dayNumber;
+            const label = document.getElementById("addActivityDayLabel");
+            if (label) label.textContent = dayNumber;
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("addActivityModal"));
+            modal.show();
+        }
+
+        async function handleSaveNewActivity(e) {
+            e.preventDefault();
+            const dayNum = parseInt(document.getElementById("addActivityDayNumber").value, 10);
+            const title = document.getElementById("addActivityTitle").value.trim();
+            const type = document.getElementById("addActivityType").value;
+            const location = document.getElementById("addActivityLocation").value.trim();
+            const startVal = document.getElementById("addActivityStart").value;
+            const endVal = document.getElementById("addActivityEnd").value;
+            const notes = document.getElementById("addActivityNotes").value.trim();
+            const locked = document.getElementById("addActivityLocked").checked;
+
+            let durationMins = 60;
+            if (startVal && endVal) {
+                const [sh, sm] = startVal.split(":").map(Number);
+                const [eh, em] = endVal.split(":").map(Number);
+                const diff = (eh * 60 + em) - (sh * 60 + sm);
+                if (diff > 0) durationMins = diff;
+            }
+
+            const payload = {
+                dayNumber: dayNum,
+                activity: title,
+                activityType: type,
+                location: location,
+                notes: notes,
+                locked: locked,
+                durationMinutes: durationMins,
+                category: type
+            };
+
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const url = isGuest
+                    ? `/api/trips/guest/days/${dayNum}/activities`
+                    : `/api/trips/${tripData.id}/days/${dayNum}/itinerary-items`;
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error("Failed to add activity");
+                const updated = await res.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+                const modal = bootstrap.Modal.getInstance(document.getElementById("addActivityModal"));
+                if (modal) modal.hide();
+                window.location.reload();
+            } catch (err) {
+                console.error("Add activity error:", err);
+                alert("Could not add activity: " + err.message);
+            }
+        }
+
+        function openMoveActivityModal(btn) {
+            const itemId = btn.dataset.itemId;
+            const activity = btn.dataset.activity || "Activity";
+            const currentDay = parseInt(btn.dataset.currentDay || "1", 10);
+
+            document.getElementById("moveActivityItemId").value = itemId;
+            document.getElementById("moveActivityCurrentDay").value = currentDay;
+            document.getElementById("moveActivityItemTitle").textContent = activity;
+
+            const select = document.getElementById("moveActivityTargetDaySelect");
+            select.innerHTML = "";
+            const totalDays = (tripData && tripData.totalDays) ? tripData.totalDays : (tripData.dayItineraries ? tripData.dayItineraries.length : 3);
+            for (let d = 1; d <= totalDays; d++) {
+                if (d !== currentDay) {
+                    const opt = document.createElement("option");
+                    opt.value = d;
+                    opt.textContent = `Day ${d}`;
+                    select.appendChild(opt);
+                }
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("moveActivityModal"));
+            modal.show();
+        }
+
+        async function handleExecuteMoveActivityToDay(e) {
+            e.preventDefault();
+            const itemId = document.getElementById("moveActivityItemId").value;
+            const currentDay = parseInt(document.getElementById("moveActivityCurrentDay").value, 10);
+            const targetDay = parseInt(document.getElementById("moveActivityTargetDaySelect").value, 10);
+
+            try {
+                let itemToMove = null;
+                if (tripData && tripData.dayItineraries) {
+                    for (const day of tripData.dayItineraries) {
+                        if (day.dayNumber === currentDay && day.items) {
+                            const found = day.items.find(it => String(it.id) === String(itemId));
+                            if (found) { itemToMove = { ...found }; break; }
+                        }
+                    }
+                }
+                if (!itemToMove) throw new Error("Could not locate activity details");
+
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+
+                // Step 1: Delete from current day
+                const delUrl = isGuest
+                    ? `/api/trips/guest/activities/${itemId}`
+                    : `/api/trips/${tripData.id}/itinerary-items/${itemId}`;
+                await fetch(delUrl, { method: 'DELETE' });
+
+                // Step 2: Add to target day
+                const addUrl = isGuest
+                    ? `/api/trips/guest/days/${targetDay}/activities`
+                    : `/api/trips/${tripData.id}/days/${targetDay}/itinerary-items`;
+                itemToMove.dayNumber = targetDay;
+                const addRes = await fetch(addUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(itemToMove)
+                });
+                if (!addRes.ok) throw new Error("Failed to add activity to Day " + targetDay);
+                const updated = await addRes.json();
+                if (isGuest) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById("moveActivityModal"));
+                if (modal) modal.hide();
+                window.location.reload();
+            } catch (err) {
+                console.error("Move activity to day error:", err);
+                alert("Could not move activity: " + err.message);
+            }
+        }
+
+        function convertTo24Hour(timeStr) {
+            if (!timeStr) return "";
+            const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+            if (!match) return timeStr;
+            let [_, hours, mins, ampm] = match;
+            hours = parseInt(hours, 10);
+            if (ampm) {
+                if (ampm.toUpperCase() === "PM" && hours < 12) hours += 12;
+                if (ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
+            }
+            return String(hours).padStart(2, '0') + ":" + mins;
         }
 
         // Single Day Regeneration (Requirement 4: Regenerate-one-day action)
@@ -2845,7 +3302,8 @@
 
         async function toggleItemLock(tripId, itemId) {
             try {
-                const res = await fetch(`/api/trips/${tripId}/itinerary-items/${itemId}/lock`, {
+                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
+                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}/lock`, {
                     method: 'POST'
                 });
                 if (!res.ok) throw new Error("Lock toggle failed");
@@ -2854,6 +3312,96 @@
                 console.error(err);
                 alert("Could not update item lock state.");
             }
+        }
+
+        async function moveActivityStep(tripId, dayNumber, itemId, direction) {
+            try {
+                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
+                const res = await fetch(`/api/trips/${effectiveTripId}/days/${dayNumber}/activities/${itemId}/move?direction=${direction}`, {
+                    method: 'POST'
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || "Failed to move activity.");
+                }
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Could not reorder activity: " + err.message);
+            }
+        }
+
+        function initActivityDragAndDrop() {
+            document.querySelectorAll(".timeline-container").forEach(container => {
+                let draggedItem = null;
+                container.querySelectorAll(".timeline-item").forEach(item => {
+                    item.setAttribute("draggable", "true");
+
+                    item.addEventListener("dragstart", function(e) {
+                        draggedItem = this;
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", this.dataset.itemId);
+                        this.classList.add("dragging");
+                    });
+
+                    item.addEventListener("dragend", function() {
+                        draggedItem = null;
+                        this.classList.remove("dragging");
+                        container.querySelectorAll(".timeline-item").forEach(i => i.classList.remove("drag-over"));
+                    });
+
+                    item.addEventListener("dragover", function(e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                    });
+
+                    item.addEventListener("dragenter", function() {
+                        if (this !== draggedItem) {
+                            this.classList.add("drag-over");
+                        }
+                    });
+
+                    item.addEventListener("dragleave", function() {
+                        this.classList.remove("drag-over");
+                    });
+
+                    item.addEventListener("drop", async function(e) {
+                        e.preventDefault();
+                        this.classList.remove("drag-over");
+                        if (!draggedItem || draggedItem === this) return;
+
+                        const dayNumber = this.dataset.day;
+                        const items = Array.from(container.querySelectorAll(".timeline-item"));
+                        const fromIdx = items.indexOf(draggedItem);
+                        const toIdx = items.indexOf(this);
+                        if (fromIdx === -1 || toIdx === -1) return;
+
+                        if (fromIdx < toIdx) {
+                            this.after(draggedItem);
+                        } else {
+                            this.before(draggedItem);
+                        }
+
+                        const updatedOrder = Array.from(container.querySelectorAll(".timeline-item"))
+                            .map(it => Number(it.dataset.itemId))
+                            .filter(id => !isNaN(id) && id > 0);
+
+                        const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripData ? tripData.id : 0);
+                        try {
+                            const res = await fetch(`/api/trips/${effectiveTripId}/days/${dayNumber}/reorder-activities`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ orderedItemIds: updatedOrder })
+                            });
+                            if (!res.ok) throw new Error("Reorder failed");
+                            window.location.reload();
+                        } catch(err) {
+                            console.error("Reorder activities error:", err);
+                            alert("Could not update activity order: " + err.message);
+                        }
+                    });
+                });
+            });
         }
 
         function convertTo24Hour(timeStr) {
@@ -2902,7 +3450,8 @@
             };
 
             try {
-                const res = await fetch(`/api/trips/${tripData.id}/itinerary-items/${itemId}`, {
+                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripData ? tripData.id : 0);
+                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -2919,7 +3468,8 @@
             if (!confirm("Are you sure you want to delete this activity from your itinerary?")) return;
 
             try {
-                const res = await fetch(`/api/trips/${tripId}/itinerary-items/${itemId}`, {
+                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
+                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}`, {
                     method: 'DELETE'
                 });
                 if (!res.ok) throw new Error("Delete failed");
@@ -2955,7 +3505,8 @@
             };
 
             try {
-                const res = await fetch(`/api/trips/${tripData.id}/days/${dayNumber}/itinerary-items`, {
+                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripData ? tripData.id : 0);
+                const res = await fetch(`/api/trips/${effectiveTripId}/days/${dayNumber}/itinerary-items`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
