@@ -571,6 +571,23 @@ class TargetedBugFixesVerificationTest {
                 .as("Should format 468 minutes into '7 hr 48 min' with hours and minutes")
                 .contains("7 hr 48 min")
                 .doesNotContain("468 min");
+
+        // Verify direct DTO robustness with exact screenshot string and emojis
+        com.example.tripplanner.dto.TimelineTransitionDto dtoWithEmojiAndMinutes =
+                new com.example.tripplanner.dto.TimelineTransitionDto("bi-car-front", "🚗 🚙 Travel to next stop · 468 min · 566.5 km", "TRAVEL", 566.5, 468);
+        assertThat(dtoWithEmojiAndMinutes.getText())
+                .as("Must strip duplicate emojis and format 468 min to 7 hr 48 min")
+                .isEqualTo("Travel to next stop · 7 hr 48 min · 566.5 km");
+        assertThat(dtoWithEmojiAndMinutes.getFormattedText())
+                .isEqualTo("Travel to next stop · 7 hr 48 min · 566.5 km");
+
+        com.example.tripplanner.dto.TimelineTransitionDto freeTimeDto =
+                new com.example.tripplanner.dto.TimelineTransitionDto("bi-sun", "Free time · 180 min", "FREE_TIME", 0.0, 180);
+        assertThat(freeTimeDto.getText()).isEqualTo("Free time · 3 hr");
+
+        com.example.tripplanner.dto.TimelineTransitionDto walkDto =
+                new com.example.tripplanner.dto.TimelineTransitionDto("bi-person-walking", "🚶 Walk to next attraction · 75 min · 3.5 km", "WALK", 3.5, 75);
+        assertThat(walkDto.getText()).isEqualTo("Walk to next attraction · 1 hr 15 min · 3.5 km");
     }
 
     // =========================================================================

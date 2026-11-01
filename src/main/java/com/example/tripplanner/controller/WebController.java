@@ -144,6 +144,8 @@ public class WebController {
         TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("GUEST_TRIP");
         if (guestTrip == null) {
             guestTrip = tripService.createEmptyGuestTrip();
+        } else {
+            tripService.refreshTripTransitions(guestTrip);
         }
         guestTrip.setIsGuest(true);
 

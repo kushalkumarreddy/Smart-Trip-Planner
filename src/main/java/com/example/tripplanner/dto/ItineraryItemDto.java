@@ -193,7 +193,24 @@ public class ItineraryItemDto {
     }
 
     public String getTransitionCaption() {
-        return transitionCaption;
+        if (transitionCaption == null || transitionCaption.isEmpty()) {
+            return transitionCaption;
+        }
+        String clean = transitionCaption.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
+                                        .replaceAll("^[\\s·•-]+", "")
+                                        .trim();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)\\s*min").matcher(clean);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            try {
+                int mins = Integer.parseInt(matcher.group(1));
+                matcher.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(com.example.tripplanner.util.TimeUtils.formatDuration(mins)));
+            } catch (Exception e) {
+                matcher.appendReplacement(sb, matcher.group(0));
+            }
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     public void setTransitionCaption(String transitionCaption) {
@@ -225,5 +242,102 @@ public class ItineraryItemDto {
 
     public void setTownOrArea(String townOrArea) {
         this.townOrArea = townOrArea;
+    }
+
+    public String getFormattedDuration() {
+        return (durationMinutes != null && durationMinutes > 0) ? com.example.tripplanner.util.TimeUtils.formatDuration(durationMinutes) : "";
+    }
+
+    public String getFormattedStartTime() {
+        return (startTime != null && !startTime.isEmpty()) ? com.example.tripplanner.util.TimeUtils.formatAmPm(startTime) : "";
+    }
+
+    public String getFormattedEndTime() {
+        return (endTime != null && !endTime.isEmpty()) ? com.example.tripplanner.util.TimeUtils.formatAmPm(endTime) : "";
+    }
+
+    public String getFormattedTimeSpan() {
+        String s = getFormattedStartTime();
+        String e = getFormattedEndTime();
+        if (!s.isEmpty() && !e.isEmpty()) return s + " – " + e;
+        if (!s.isEmpty()) return s;
+        return "";
+    }
+
+    public String getTimelineType() {
+        String act = activity != null ? activity.toLowerCase() : "";
+        String type = activityType != null ? activityType.toUpperCase() : "";
+        String cat = category != null ? category.toUpperCase() : "";
+
+        if (act.contains("return") || act.contains("journey home") || act.contains("depart for home") || act.contains("drive back")) {
+            return "RETURN";
+        }
+        if (type.equals("DEPARTURE") || act.contains("depart") || act.contains("starting journey") || act.contains("start journey")) {
+            return "DEPARTURE";
+        }
+        if (type.equals("TRANSIT") || type.equals("DRIVING") || act.contains("transit") || act.contains("train") || act.contains("flight")) {
+            return "TRANSIT";
+        }
+        if (type.equals("ARRIVAL") || act.contains("arrival") || act.contains("arrive at")) {
+            return "ARRIVAL";
+        }
+        if (type.equals("MEAL") || cat.contains("FOOD") || cat.contains("RESTAURANT") || act.contains("breakfast") || act.contains("lunch") || act.contains("dinner")) {
+            return "MEAL";
+        }
+        if (type.equals("REST") || act.contains("tea") || act.contains("coffee") || act.contains("relax") || act.contains("rest break") || act.contains("leisure")) {
+            return "REST";
+        }
+        if (act.contains("overnight") || act.contains("night stay")) {
+            return "OVERNIGHT";
+        }
+        if (type.equals("HOTEL") || cat.contains("LODGING") || act.contains("hotel") || act.contains("resort") || act.contains("check-in") || act.contains("check-out")) {
+            return "HOTEL";
+        }
+        return "SIGHTSEEING";
+    }
+
+    public String getTimelineTypeLabel() {
+        return switch (getTimelineType()) {
+            case "DEPARTURE" -> "Departure";
+            case "TRANSIT" -> "Transit / Journey";
+            case "ARRIVAL" -> "Arrival";
+            case "SIGHTSEEING" -> "Sightseeing";
+            case "MEAL" -> "Dining";
+            case "REST" -> "Rest & Relaxation";
+            case "HOTEL" -> "Hotel / Stay";
+            case "OVERNIGHT" -> "Overnight Stay";
+            case "RETURN" -> "Return Journey";
+            default -> "Attraction";
+        };
+    }
+
+    public String getTimelineIcon() {
+        return switch (getTimelineType()) {
+            case "DEPARTURE" -> "bi-geo-alt-fill";
+            case "TRANSIT" -> "bi-car-front-fill";
+            case "ARRIVAL" -> "bi-pin-map-fill";
+            case "SIGHTSEEING" -> "bi-compass";
+            case "MEAL" -> "bi-cup-hot-fill";
+            case "REST" -> "bi-pause-circle-fill";
+            case "HOTEL" -> "bi-building";
+            case "OVERNIGHT" -> "bi-moon-stars-fill";
+            case "RETURN" -> "bi-arrow-left-circle-fill";
+            default -> "bi-geo-alt";
+        };
+    }
+
+    public String getTimelineColorClass() {
+        return switch (getTimelineType()) {
+            case "DEPARTURE" -> "timeline-dot-departure";
+            case "TRANSIT" -> "timeline-dot-transit";
+            case "ARRIVAL" -> "timeline-dot-arrival";
+            case "SIGHTSEEING" -> "timeline-dot-sightseeing";
+            case "MEAL" -> "timeline-dot-meal";
+            case "REST" -> "timeline-dot-rest";
+            case "HOTEL" -> "timeline-dot-hotel";
+            case "OVERNIGHT" -> "timeline-dot-overnight";
+            case "RETURN" -> "timeline-dot-return";
+            default -> "timeline-dot-sightseeing";
+        };
     }
 }

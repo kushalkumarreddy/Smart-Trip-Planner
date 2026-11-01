@@ -6,6 +6,7 @@ import com.example.tripplanner.dto.RouteSummaryDto;
 import com.example.tripplanner.entity.Destination;
 import com.example.tripplanner.entity.Trip;
 import com.example.tripplanner.util.GeoUtils;
+import com.example.tripplanner.util.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.maps.GeoApiContext;
@@ -229,7 +230,7 @@ public class SmartStopsService {
 
             String formattedDetour;
             if (detourCalculated && detourKm != null && detourMins != null) {
-                formattedDetour = String.format(Locale.US, "+%.1f km detour (+%d min extra)", detourKm, detourMins);
+                formattedDetour = String.format(Locale.US, "+%.1f km detour (+%s extra)", detourKm, TimeUtils.formatDuration(detourMins));
             } else {
                 formattedDetour = String.format(Locale.US, "%.1f km from highway (detour route pending)", distFromRoute);
             }

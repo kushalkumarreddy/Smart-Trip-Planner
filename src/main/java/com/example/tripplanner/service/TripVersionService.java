@@ -320,7 +320,9 @@ public class TripVersionService {
                 sb.append(String.format("%+.1f km road distance, ", comparison.getDistanceDiffKm()));
             }
             if (comparison.getTravelTimeDiffMinutes() != 0) {
-                sb.append(String.format("%+d min driving time. ", comparison.getTravelTimeDiffMinutes()));
+                int diff = comparison.getTravelTimeDiffMinutes();
+                String sign = diff > 0 ? "+" : "-";
+                sb.append(String.format("%s%s driving time. ", sign, TimeUtils.formatDuration(Math.abs(diff))));
             }
         }
         comparison.setSummaryText(sb.toString().trim());

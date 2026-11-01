@@ -875,6 +875,201 @@ h6 {
     border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
+/* =========================================================
+   Feature 1: Connected Vertical Travel Timeline & Connectors
+   ========================================================= */
+.timeline-dot {
+    position: absolute;
+    left: -2rem;
+    top: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--forest-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--forest-green);
+    z-index: 3;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 9 Distinct Activity Types */
+.timeline-dot.timeline-dot-departure { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+.timeline-dot.timeline-dot-transit   { border-color: #0284c7; color: #0284c7; background: #f0f9ff; }
+.timeline-dot.timeline-dot-arrival   { border-color: #0d9488; color: #0d9488; background: #f0fdfa; }
+.timeline-dot.timeline-dot-sightseeing { border-color: #059669; color: #059669; background: #ecfdf5; }
+.timeline-dot.timeline-dot-meal      { border-color: #d97706; color: #d97706; background: #fffbeb; }
+.timeline-dot.timeline-dot-rest      { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+.timeline-dot.timeline-dot-hotel     { border-color: #475569; color: #475569; background: #f8fafc; }
+.timeline-dot.timeline-dot-overnight { border-color: #4338ca; color: #4338ca; background: #eef2ff; }
+.timeline-dot.timeline-dot-return    { border-color: #e11d48; color: #e11d48; background: #fff1f2; }
+
+/* Dedicated Travel Connectors */
+.timeline-travel-connector {
+    position: relative;
+    margin: 0.75rem 0 0.75rem 0;
+    z-index: 2;
+}
+
+.timeline-travel-dot {
+    position: absolute;
+    left: -1.82rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #087fc1;
+    color: #087fc1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    z-index: 3;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.timeline-travel-card {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 0.65rem 0.95rem;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.timeline-travel-card:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+[data-theme="dark"] .timeline-travel-card {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .timeline-travel-card:hover {
+    background: #1e293b;
+}
+
+.travel-flow-strip {
+    font-size: 0.8rem;
+    background: rgba(241, 245, 249, 0.7);
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+[data-theme="dark"] .travel-flow-strip {
+    background: rgba(30, 41, 59, 0.7);
+}
+
+/* =========================================================
+   Feature 2: Daily Travel Overview & Feasibility Indicators
+   ========================================================= */
+.daily-travel-overview {
+    border-radius: 12px;
+    transition: box-shadow 0.2s ease;
+}
+
+.daily-travel-overview:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.badge-feasibility-comfortable {
+    background-color: #ecfdf5 !important;
+    color: #047857 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.badge-feasibility-busy {
+    background-color: #fffbeb !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
+.badge-feasibility-overloaded {
+    background-color: #fff1f2 !important;
+    color: #be123c !important;
+    border: 1px solid #fecdd3 !important;
+}
+
+[data-theme="dark"] .badge-feasibility-comfortable {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .badge-feasibility-busy {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+[data-theme="dark"] .badge-feasibility-overloaded {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+    color: #fb7185 !important;
+    border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.daily-metric-tile {
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.daily-metric-tile:hover {
+    transform: translateY(-2px);
+    background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .daily-metric-tile {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* =========================================================
+   Feature 3: Expandable Activity & Destination Cards
+   ========================================================= */
+.timeline-item.is-collapsed .timeline-body-content {
+    display: none !important;
+}
+
+.timeline-item.is-collapsed .timeline-compact-preview {
+    display: block !important;
+}
+
+.timeline-item .collapse-icon {
+    transition: transform 0.2s ease;
+}
+
+.timeline-item.is-collapsed .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.timeline-compact-preview {
+    padding: 0.2rem 0;
+}
+
+.destination-node-expandable {
+    transition: all 0.2s ease;
+}
+
+.destination-node-expandable.is-collapsed .destination-node-details {
+    display: none !important;
+}
+
 /* Map Container */
 #mapContainer {
     height: 540px;

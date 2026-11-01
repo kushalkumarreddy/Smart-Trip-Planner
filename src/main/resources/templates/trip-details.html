@@ -27,7 +27,7 @@
         @media print {
             nav.navbar, footer, .btn, .dropdown, #mapColumn, .round-trip-card-header button, 
             .smart-stops-dropbox-card, .ai-itinerary-caption, .timeline-item-actions,
-            .modal, #reorderLiveAnnouncer, .alert {
+            .modal, #reorderLiveAnnouncer, .alert, .day-nav-wrapper {
                 display: none !important;
             }
             #itineraryColumn {
@@ -53,6 +53,90 @@
             .timeline-dot {
                 background: #555 !important;
             }
+        }
+
+        /* Day navigation bar */
+        .day-nav-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+        .day-nav-tabs {
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+        .day-nav-btn {
+            border-radius: 9999px !important;
+            padding: 0.45rem 0.95rem !important;
+            font-size: 0.82rem !important;
+            font-weight: 600;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .day-nav-btn.active {
+            background-color: #087fc1 !important;
+            border-color: #087fc1 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(8, 127, 193, 0.35);
+        }
+
+        /* Itinerary Card modern enhancements */
+        .timeline-item {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            outline: none;
+        }
+        .timeline-item:focus-visible {
+            outline: 2px solid #087fc1;
+            border-radius: 12px;
+        }
+        .timeline-item:hover .timeline-content {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 42, 67, 0.09) !important;
+            border-color: #087fc1 !important;
+        }
+        .timeline-item.active-marker-highlight .timeline-content {
+            border-color: #087fc1 !important;
+            background-color: #f0f7fc !important;
+            box-shadow: 0 0 0 3px rgba(8, 127, 193, 0.22), 0 8px 24px rgba(16, 42, 67, 0.1) !important;
+        }
+        [data-theme="dark"] .timeline-item.active-marker-highlight .timeline-content {
+            border-color: #38bdf8 !important;
+            background-color: rgba(56, 189, 248, 0.08) !important;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22) !important;
+        }
+        .marker-hover-pulse {
+            transform: scale(1.3) !important;
+            transition: transform 0.18s ease-in-out;
+            z-index: 1000 !important;
+            filter: drop-shadow(0 4px 10px rgba(8, 127, 193, 0.6));
+        }
+        .gmaps-action-btn {
+            font-weight: 600;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 0.25rem 0.55rem;
+            transition: all 0.18s ease;
+        }
+        .gmaps-action-btn:hover {
+            background-color: #087fc1 !important;
+            border-color: #087fc1 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+        }
+        .action-icon-btn {
+            transition: all 0.15s ease;
+        }
+        .action-icon-btn:hover {
+            background-color: #e5eaf0 !important;
+            transform: scale(1.08);
+        }
+        [data-theme="dark"] .action-icon-btn:hover {
+            background-color: #334155 !important;
         }
     </style>
 </head>
@@ -693,46 +777,56 @@
                         <div>
                             <div class="d-flex align-items-center justify-content-between gap-2">
                                 <span class="fw-semibold text-dark destination-node-name" th:text="${dest.name}">Destination</span>
-                                <!-- Delete stop button (min 1 destination required) -->
-                                <button th:if="${trip.destinations.size() > 1}" type="button" class="btn btn-link btn-sm p-0 text-muted" 
-                                        style="font-size: 0.85rem;" th:aria-label="${'Remove ' + dest.name + ' from itinerary'}" title="Remove stop"
-                                        th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}" th:data-dest-name="${dest.name}"
-                                        onclick="event.stopPropagation(); removeDestinationStop(this.dataset.tripId, this.dataset.destId, this.dataset.destName)">
-                                    <i class="bi bi-x-circle text-danger" aria-hidden="true"></i>
-                                </button>
+                                <div class="d-flex align-items-center gap-1">
+                                    <!-- Toggle expand/collapse button for destination stop node (Feature 3) -->
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                                            title="Expand or collapse destination details"
+                                            onclick="event.stopPropagation(); toggleDestNodeCollapse(this)">
+                                        <i class="bi bi-chevron-up" style="font-size: 0.8rem;"></i>
+                                    </button>
+                                    <!-- Delete stop button (min 1 destination required) -->
+                                    <button th:if="${trip.destinations.size() > 1}" type="button" class="btn btn-link btn-sm p-0 text-muted" 
+                                            style="font-size: 0.85rem;" th:aria-label="${'Remove ' + dest.name + ' from itinerary'}" title="Remove stop"
+                                            th:data-trip-id="${trip.id}" th:data-dest-id="${dest.id}" th:data-dest-name="${dest.name}"
+                                            onclick="event.stopPropagation(); removeDestinationStop(this.dataset.tripId, this.dataset.destId, this.dataset.destName)">
+                                        <i class="bi bi-x-circle text-danger" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Stay Duration Badge & Edit Days Action (Requirement 1) -->
-                            <div class="small d-flex align-items-center gap-1 mt-1 flex-wrap" style="font-size: 0.74rem;">
-                                <span class="stay-badge-pill">
-                                    <i class="bi bi-clock-history"></i>
-                                    <span th:text="${(dest.stayDurationDays != null ? dest.stayDurationDays : 1) + ' Day' + ((dest.stayDurationDays != null and dest.stayDurationDays > 1) ? 's' : '') + (dest.stayDurationNights != null and dest.stayDurationNights > 0 ? ', ' + dest.stayDurationNights + ' Night' + (dest.stayDurationNights > 1 ? 's' : '') : '')}">1 Day</span>
-                                </span>
-                                <span th:if="${dest.arrivalDate != null and dest.departureDate != null}" class="text-muted small">
-                                    (<span th:text="${dest.arrivalDate + ' to ' + dest.departureDate}"></span>)
-                                </span>
-                                <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
-                                        title="Configure stay duration in days and nights"
-                                        th:data-dest-id="${dest.id}"
-                                        th:data-dest-name="${dest.name}"
-                                        th:data-days="${dest.stayDurationDays != null ? dest.stayDurationDays : 1}"
-                                        th:data-nights="${dest.stayDurationNights != null ? dest.stayDurationNights : 0}"
-                                        onclick="event.stopPropagation(); openEditDurationModal(this)">
-                                    <i class="bi bi-calendar-event me-1"></i>Edit Days
-                                </button>
-                            </div>
+                            <div class="destination-node-details">
+                                <!-- Stay Duration Badge & Edit Days Action (Requirement 1) -->
+                                <div class="small d-flex align-items-center gap-1 mt-1 flex-wrap" style="font-size: 0.74rem;">
+                                    <span class="stay-badge-pill">
+                                        <i class="bi bi-clock-history"></i>
+                                        <span th:text="${(dest.stayDurationDays != null ? dest.stayDurationDays : 1) + ' Day' + ((dest.stayDurationDays != null and dest.stayDurationDays > 1) ? 's' : '') + (dest.stayDurationNights != null and dest.stayDurationNights > 0 ? ', ' + dest.stayDurationNights + ' Night' + (dest.stayDurationNights > 1 ? 's' : '') : '')}">1 Day</span>
+                                    </span>
+                                    <span th:if="${dest.arrivalDate != null and dest.departureDate != null}" class="text-muted small">
+                                        (<span th:text="${dest.arrivalDate + ' to ' + dest.departureDate}"></span>)
+                                    </span>
+                                    <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
+                                            title="Configure stay duration in days and nights"
+                                            th:data-dest-id="${dest.id}"
+                                            th:data-dest-name="${dest.name}"
+                                            th:data-days="${dest.stayDurationDays != null ? dest.stayDurationDays : 1}"
+                                            th:data-nights="${dest.stayDurationNights != null ? dest.stayDurationNights : 0}"
+                                            onclick="event.stopPropagation(); openEditDurationModal(this)">
+                                        <i class="bi bi-calendar-event me-1"></i>Edit Days
+                                    </button>
+                                </div>
 
-                            <!-- Map-based Accommodation Stay per destination -->
-                            <div class="small text-muted d-flex align-items-center gap-1 mt-1" style="font-size: 0.76rem;">
-                                <i class="bi bi-building text-primary"></i>
-                                <span th:if="${dest.hotelName != null and !dest.hotelName.empty}" class="text-dark fw-semibold" th:text="${dest.hotelName}">Hotel</span>
-                                <span th:if="${dest.hotelName == null or dest.hotelName.empty}" class="text-muted fst-italic">No stay pinned</span>
-                                <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
-                                        title="Select accommodation on map"
-                                        th:data-dest-id="${dest.id}"
-                                        onclick="event.stopPropagation(); openAccommodationModal(this.dataset.destId)">
-                                    <i class="bi bi-geo-alt me-1"></i><span th:text="${dest.hotelName != null ? 'Edit Stay' : 'Pin Stay on Map'}">Stay</span>
-                                </button>
+                                <!-- Map-based Accommodation Stay per destination -->
+                                <div class="small text-muted d-flex align-items-center gap-1 mt-1" style="font-size: 0.76rem;">
+                                    <i class="bi bi-building text-primary"></i>
+                                    <span th:if="${dest.hotelName != null and !dest.hotelName.empty}" class="text-dark fw-semibold" th:text="${dest.hotelName}">Hotel</span>
+                                    <span th:if="${dest.hotelName == null or dest.hotelName.empty}" class="text-muted fst-italic">No stay pinned</span>
+                                    <button type="button" class="btn btn-outline-forest btn-sm py-0 px-2 ms-1" style="font-size: 0.72rem;"
+                                            title="Select accommodation on map"
+                                            th:data-dest-id="${dest.id}"
+                                            onclick="event.stopPropagation(); openAccommodationModal(this.dataset.destId)">
+                                        <i class="bi bi-geo-alt me-1"></i><span th:text="${dest.hotelName != null ? 'Edit Stay' : 'Pin Stay on Map'}">Stay</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -757,15 +851,18 @@
         </div>
 
 
-        <!-- Controls: View Mode Switcher for Desktop / Tablet / Mobile -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0">Itinerary &amp; Interactive Route Map</h4>
-            <div class="btn-group" role="group">
-                <button type="button" id="btnViewSplit" class="btn btn-outline-forest btn-sm active" onclick="setViewMode('split')">
-                    <i class="bi bi-layout-split me-1"></i> Split View
+        <!-- Controls: View Mode Switcher (Itinerary + Map (DEFAULT), Itinerary Only, Map Only) -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+            <div>
+                <h4 class="fw-bold mb-1">Itinerary &amp; Interactive Route Map</h4>
+                <p class="text-muted small mb-0">Follow your journey day-by-day with real-time route geometry and interactive map synchronization</p>
+            </div>
+            <div class="btn-group shadow-xs" role="group" aria-label="Layout view switcher">
+                <button type="button" id="btnViewItineraryMap" class="btn btn-outline-forest btn-sm active" onclick="setViewMode('itinerary-map')">
+                    <i class="bi bi-layout-text-window-reverse me-1"></i> Itinerary + Map
                 </button>
-                <button type="button" id="btnViewList" class="btn btn-outline-forest btn-sm" onclick="setViewMode('list')">
-                    <i class="bi bi-list-task me-1"></i> Timeline Only
+                <button type="button" id="btnViewItinerary" class="btn btn-outline-forest btn-sm" onclick="setViewMode('itinerary')">
+                    <i class="bi bi-card-checklist me-1"></i> Itinerary Only
                 </button>
                 <button type="button" id="btnViewMap" class="btn btn-outline-forest btn-sm" onclick="setViewMode('map')">
                     <i class="bi bi-map me-1"></i> Map Only
@@ -773,12 +870,44 @@
             </div>
         </div>
 
-        <!-- DUAL COLUMN SPLIT WORKSPACE: Left Timeline, Right Interactive Map (Requirement 3 & Responsive) -->
-        <div class="row">
+        <!-- Full-Width Workspace Row: Itinerary First, Map Below (Requirement 1) -->
+        <div class="row g-4">
 
-            <!-- Left Panel: Itinerary Timeline -->
-            <div id="itineraryColumn" class="col-lg-7 mb-4">
-                <div th:each="day : ${trip.dayItineraries}" class="card card-modern p-4 mb-4">
+            <!-- Panel 1: Itinerary Timeline Column (Full Width, on Top) -->
+            <div id="itineraryColumn" class="col-12 mb-2">
+
+                <!-- Day Navigation Bar: Tabs for Quick Multi-Day Navigation & Map Synchronization (Requirement 4) -->
+                <div th:if="${trip.dayItineraries != null and !trip.dayItineraries.isEmpty()}" class="day-nav-wrapper mb-4">
+                    <div class="card card-modern p-2 p-md-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar-range text-primary fs-5"></i>
+                                <span class="fw-bold text-dark">Day Navigation</span>
+                                <span class="badge bg-light text-secondary border small" th:text="${trip.dayItineraries.size() + ' Days'}"></span>
+                            </div>
+                            <div class="small text-muted d-none d-sm-block">
+                                <i class="bi bi-info-circle me-1"></i>Click a day to focus schedule and synchronize map route
+                            </div>
+                        </div>
+                        <div class="day-nav-tabs d-flex flex-wrap gap-2" id="dayNavContainer">
+                            <button type="button" class="btn btn-sm btn-forest day-nav-btn active" data-day="all" onclick="selectItineraryDay('all', this)">
+                                <i class="bi bi-globe me-1"></i> All Days
+                                <span class="badge rounded-pill bg-white text-dark ms-1" th:text="${trip.sightseeingPlacesCount != null and trip.sightseeingPlacesCount > 0 ? (trip.sightseeingPlacesCount + ' spots') : 'Overview'}">Overview</span>
+                            </button>
+                            <th:block th:each="day : ${trip.dayItineraries}">
+                                <button type="button" class="btn btn-sm btn-outline-forest day-nav-btn" 
+                                        th:data-day="${day.dayNumber}"
+                                        onclick="selectItineraryDay(this.dataset.day, this)">
+                                    <span class="fw-bold">Day <span th:text="${day.dayNumber}"></span></span>
+                                    <span th:if="${day.destinationName != null and !day.destinationName.isEmpty()}" class="d-none d-md-inline text-truncate" style="max-width: 130px;" th:text="' • ' + ${day.destinationName}"></span>
+                                    <span class="badge rounded-pill bg-light text-dark border ms-1" th:text="${(day.items != null ? day.items.size() : 0) + ' stops'}"></span>
+                                </button>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:each="day : ${trip.dayItineraries}" class="card card-modern p-4 mb-4 day-itinerary-card" th:id="${'day-card-' + day.dayNumber}" th:data-day="${day.dayNumber}">
                     
                     <!-- Day Header & Single-Day Regeneration Dropdown (Requirement 4) -->
                     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom pb-3 mb-3 gap-2">
@@ -820,48 +949,128 @@
                         </div>
                     </div>
 
-                    <!-- Daily Summary Stats -->
-                    <div class="p-2 mb-3 rounded-3 d-flex flex-wrap justify-content-around text-center small text-muted daily-summary-stats" style="background: var(--warm-sand-light); border: 1px solid var(--border-color);">
-                        <div>
-                            <span>Travel Time:</span><br>
-                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.travelTimeMinutes)}"></strong>
-                        </div>
-                        <div>
-                            <span>Sightseeing:</span><br>
-                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.sightseeingTimeMinutes)}"></strong>
-                        </div>
-                        <div>
-                            <span>Breaks &amp; Buffers:</span><br>
-                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.breakTimeMinutes)}"></strong>
-                        </div>
-                        <div>
-                            <span>Total Active:</span><br>
-                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong>
-                        </div>
-                        <div th:if="${day.unallocatedTimeMinutes != null and day.unallocatedTimeMinutes > 0}">
-                            <span>Free / Leisure:</span><br>
-                            <strong class="text-dark" th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.unallocatedTimeMinutes)}"></strong>
-                        </div>
-                    </div>
+                    <!-- Daily Travel Overview Card (Feature 2) -->
+                    <div class="daily-travel-overview card border p-3 p-md-4 mb-4 rounded-3 shadow-xs" style="background: #ffffff; border-color: #e2e8f0;">
+                        <!-- Top Row: Day Destination & Time Window & Feasibility Badge -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="text-uppercase fw-bold text-primary tracking-wide small" style="letter-spacing: 0.05em;">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>Day <span th:text="${day.dayNumber}">1</span> | <span th:text="${day.destinationName != null ? day.destinationName : (trip.destinations != null and !trip.destinations.isEmpty() ? trip.destinations[0].name : trip.startLocation)}">HYDERABAD</span>
+                                    </span>
+                                    <span class="badge bg-light text-dark border fw-semibold">
+                                        <i class="bi bi-clock me-1 text-primary"></i><span th:text="${day.plannedTimeWindow}">8:00 AM – 8:30 PM</span>
+                                    </span>
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    <span th:text="${day.feasibilityDescription}"></span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <!-- Feasibility Indicator Badge -->
+                                <span class="badge px-3 py-2 fw-bold d-inline-flex align-items-center gap-1 shadow-xs"
+                                      th:classappend="${day.feasibilityBadgeClass}"
+                                      style="font-size: 0.8rem; border-radius: 9999px;">
+                                    <i class="bi bi-check-circle-fill" th:if="${day.feasibilityState == 'Comfortable'}"></i>
+                                    <i class="bi bi-hourglass-split" th:if="${day.feasibilityState == 'Busy'}"></i>
+                                    <i class="bi bi-exclamation-triangle-fill" th:if="${day.feasibilityState == 'Overloaded'}"></i>
+                                    <span th:text="${day.feasibilityState}">Comfortable</span>
+                                </span>
 
-                    <!-- Feasibility & Crowding / Driving Limit Warning (Priority 5) -->
-                    <div th:if="${(day.warningMessage != null and !#strings.isEmpty(day.warningMessage)) or (day.totalDurationMinutes != null and day.totalDurationMinutes > 600)}" class="day-crowding-warning">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <div>
-                            <strong>Feasibility Notice:</strong> 
-                            <span th:if="${day.warningMessage != null and !#strings.isEmpty(day.warningMessage)}" th:text="${day.warningMessage}"></span>
-                            <span th:if="${day.warningMessage == null or #strings.isEmpty(day.warningMessage)}">
-                                Day <span th:text="${day.dayNumber}"></span> looks crowded. Your planned activities require approximately 
-                                <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong> (excluding traffic delays).
-                                Consider moving one attraction to another day.
-                            </span>
-                            <div th:if="${day.warningMessage != null and #strings.contains(day.warningMessage, 'No verified sightseeing')}" class="mt-2">
-                                <button type="button" class="btn btn-primary btn-sm px-3"
+                                <!-- Expand / Collapse All for this Day (Feature 3) -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 day-toggle-all-btn"
                                         th:data-day="${day.dayNumber}"
-                                        th:data-dest="${day.destinationName != null ? day.destinationName : trip.startLocation}"
-                                        onclick="openNearbyPlacesExplorer(this.dataset.day, this.dataset.dest)">
-                                    <i class="bi bi-compass me-1"></i> Explore Nearby Attractions &amp; Surrounding Towns
+                                        onclick="toggleDayExpandAll(this.dataset.day, this)"
+                                        title="Expand or collapse all activity cards for this day">
+                                    <i class="bi bi-arrows-collapse me-1"></i><span>Collapse All</span>
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- 6-Metric Overview Grid -->
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-pin-map text-primary me-1"></i>Planned Stops</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.plannedStopsCount + ' stops'}">5 stops</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-speedometer2 text-info me-1"></i>Road Distance</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.formattedDistance}">85 km</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-car-front text-primary me-1"></i>Travel Time</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.formattedTravelTime}">2 hr 30 min</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-camera text-success me-1"></i>Sightseeing</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.formattedSightseeingTime}">4 hr</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-cup-hot text-warning me-1"></i>Breaks &amp; Food</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.formattedBreakTime}">1 hr 30 min</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-2">
+                                <div class="daily-metric-tile p-2 rounded-2 border bg-light h-100">
+                                    <div class="text-muted small text-truncate"><i class="bi bi-sun text-secondary me-1"></i>Free Leisure</div>
+                                    <div class="fw-bold fs-6 text-dark mt-1" th:text="${day.formattedFreeTime}">1 hr</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Time Distribution Progress Bar -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+                                <span class="fw-semibold">Daily Time Distribution</span>
+                                <span>Total Active: <strong class="text-dark" th:text="${day.formattedTotalActiveTime}"></strong></span>
+                            </div>
+                            <div class="daily-distribution-bar progress" style="height: 10px; border-radius: 9999px; background: #e2e8f0; overflow: hidden;">
+                                <div class="progress-bar" role="progressbar" th:style="'width: ' + ${day.travelPercentage} + '%; background-color: #087fc1;'" title="Travel"></div>
+                                <div class="progress-bar" role="progressbar" th:style="'width: ' + ${day.sightseeingPercentage} + '%; background-color: #10b981;'" title="Sightseeing"></div>
+                                <div class="progress-bar" role="progressbar" th:style="'width: ' + ${day.breakPercentage} + '%; background-color: #f59e0b;'" title="Meals & Breaks"></div>
+                                <div class="progress-bar" role="progressbar" th:style="'width: ' + ${day.freeTimePercentage} + '%; background-color: #94a3b8;'" title="Free Time"></div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between small text-muted mt-1 px-1">
+                                <span class="d-inline-flex align-items-center gap-1"><span class="legend-dot" style="background:#087fc1;"></span>Travel: <strong class="text-dark" th:text="${day.travelPercentage + '%'}"></strong></span>
+                                <span class="d-inline-flex align-items-center gap-1"><span class="legend-dot" style="background:#10b981;"></span>Sightseeing: <strong class="text-dark" th:text="${day.sightseeingPercentage + '%'}"></strong></span>
+                                <span class="d-inline-flex align-items-center gap-1"><span class="legend-dot" style="background:#f59e0b;"></span>Breaks: <strong class="text-dark" th:text="${day.breakPercentage + '%'}"></strong></span>
+                                <span class="d-inline-flex align-items-center gap-1"><span class="legend-dot" style="background:#94a3b8;"></span>Free Time: <strong class="text-dark" th:text="${day.freeTimePercentage + '%'}"></strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Overloaded Resolution Banner (shown when Overloaded) -->
+                        <div th:if="${day.feasibilityState == 'Overloaded'}" class="overloaded-resolution-banner alert alert-danger p-2 p-md-3 mt-3 mb-0 rounded-2">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger mt-1"></i>
+                                <div class="w-100">
+                                    <div class="fw-bold text-danger">Schedule Overloaded Notice</div>
+                                    <div class="small text-dark mt-1">
+                                        This day exceeds realistic daytime limits. Problematic or tight stops:
+                                        <strong th:each="prob, pStat : ${day.problematicActivities}" th:text="${prob + (pStat.last ? '' : ', ')}"></strong>.
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <button type="button" class="btn btn-sm btn-danger px-3"
+                                                th:data-day="${day.dayNumber}"
+                                                onclick="suggestMoveOverloadedStop(this.dataset.day)">
+                                            <i class="bi bi-arrow-left-right me-1"></i> Move Stop to Another Day
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-3 bg-white"
+                                                th:data-trip-id="${trip.id}"
+                                                th:data-day="${day.dayNumber}"
+                                                onclick="autoBalanceDayPace(this.dataset.tripId, this.dataset.day)">
+                                            <i class="bi bi-magic me-1"></i> Auto-Balance Pace
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -869,22 +1078,63 @@
                     <!-- Timeline Items -->
                     <div class="timeline-container">
                         <th:block th:each="item, itemStat : ${day.items}">
-                            <!-- Timeline Transition / Travel Caption Between Consecutive Activities (Issue 2) -->
+                            <!-- Dedicated Connected Vertical Travel Timeline Connector (Feature 1) -->
                             <div th:if="${!itemStat.first and item.transitionSegments != null and !item.transitionSegments.isEmpty()}"
-                                 class="timeline-transition-block my-2"
-                                 style="position: relative; z-index: 2; margin-left: 0.25rem;">
-                                <div class="d-flex flex-wrap align-items-center gap-2">
-                                    <span th:each="seg : ${item.transitionSegments}"
-                                          class="badge timeline-transition-badge d-inline-flex align-items-center gap-1 shadow-xs"
-                                          th:classappend="${seg.type == 'CONFLICT' ? 'bg-danger-subtle text-danger border border-danger' : 
-                                                          (seg.type == 'FREE_TIME' ? 'bg-warning-subtle text-warning-emphasis border border-warning' : 
-                                                          (seg.type == 'BUFFER' ? 'bg-info-subtle text-info-emphasis border border-info' : 
-                                                          (seg.type == 'HOTEL_TRANSFER' ? 'bg-primary-subtle text-primary border border-primary' : 
-                                                          'bg-light text-secondary border')))}">
-                                        <i th:class="${'bi ' + seg.icon}"></i>
-                                        <span th:text="${seg.text != null ? seg.text.replace('🚗 ', '').replace('🚶 ', '').replace('🚌 ', '').replace('🚲 ', '').replace('🏨 ', '').replace('🕒 ', '').replace('🌤 ', '').replace('⚠️ ', '') : ''}"></span>
-                                    </span>
-                                </div>
+                                 class="timeline-travel-connector">
+                                <th:block th:each="seg : ${item.transitionSegments}">
+                                    <!-- Dedicated Travel Segment -->
+                                    <div th:if="${seg.type == 'TRAVEL' or seg.type == 'WALK' or seg.type == 'TRANSIT' or seg.type == 'BIKE' or seg.type == 'HOTEL_TRANSFER'}"
+                                         class="d-flex align-items-center mb-2">
+                                        <div class="timeline-travel-dot" th:title="${seg.modeLabel}">
+                                            <i th:class="${'bi ' + seg.modeIcon}"></i>
+                                        </div>
+                                        <div class="timeline-travel-card w-100 shadow-xs ms-1">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1" style="font-size: 0.76rem;">
+                                                        <i th:class="${'bi ' + seg.modeIcon + ' me-1'}"></i>
+                                                        <span th:text="${seg.modeLabel}">Travel to next stop</span>
+                                                    </span>
+                                                    <span th:if="${seg.formattedDistance != null and !seg.formattedDistance.isEmpty()}" class="badge bg-white text-secondary border" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-signpost me-1 text-primary"></i><span th:text="${seg.formattedDistance}"></span>
+                                                    </span>
+                                                    <span class="badge bg-white text-secondary border" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-clock me-1 text-primary"></i><span th:text="${seg.formattedDuration}"></span>
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span th:if="${seg.hasConflict}" class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${seg.bufferLabel}"></span>
+                                                    </span>
+                                                    <span th:if="${!seg.hasConflict and seg.bufferMinutes != null and seg.bufferMinutes > 0}" class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-shield-check me-1"></i><span th:text="${seg.bufferLabel}"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <!-- Chronological Travel Hop Flow -->
+                                            <div class="travel-flow-strip text-muted small">
+                                                <span class="text-dark fw-semibold"><i class="bi bi-box-arrow-right me-1 text-primary"></i>Departure: <span th:text="${seg.departureTime}">8:00 AM</span></span>
+                                                <i class="bi bi-arrow-right text-muted mx-1"></i>
+                                                <span><span th:text="${seg.formattedDuration}">45 min</span> travel</span>
+                                                <i class="bi bi-arrow-right text-muted mx-1"></i>
+                                                <span class="text-dark fw-semibold"><i class="bi bi-geo-alt me-1 text-success"></i>Expected Arrival: <span th:text="${seg.expectedArrivalTime}">8:45 AM</span></span>
+                                                <i class="bi bi-arrow-right text-muted mx-1"></i>
+                                                <span class="text-secondary"><i class="bi bi-play-circle me-1 text-primary"></i>Next Activity: <span th:text="${seg.nextActivityStartTime}">9:00 AM</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Standalone Buffer / Free Time / Conflict badges -->
+                                    <div th:if="${seg.type == 'FREE_TIME' or seg.type == 'BUFFER' or seg.type == 'CONFLICT'}" class="my-1 ms-2">
+                                        <span class="badge timeline-transition-badge d-inline-flex align-items-center gap-1 shadow-xs"
+                                              th:classappend="${seg.type == 'CONFLICT' ? 'bg-danger-subtle text-danger border border-danger' : 
+                                                              (seg.type == 'FREE_TIME' ? 'bg-warning-subtle text-warning-emphasis border border-warning' : 
+                                                              'bg-info-subtle text-info-emphasis border border-info')}">
+                                            <i th:class="${'bi ' + seg.icon}"></i>
+                                            <span th:text="${seg.formattedText}"></span>
+                                        </span>
+                                    </div>
+                                </th:block>
                             </div>
 
                             <div class="timeline-item"
@@ -894,57 +1144,101 @@
                                  th:data-lat="${item.latitude}"
                                  th:data-lng="${item.longitude}"
                                  th:data-activity="${item.activity}"
+                                 th:data-location="${item.location}"
                                  onclick="focusActivityOnMap(this)"
-                                 title="Click to view on interactive map"
+                                 onmouseenter="hoverActivityCard(this, true)"
+                                 onmouseleave="hoverActivityCard(this, false)"
+                                 title="Click to focus on interactive map"
+                                 tabindex="0"
+                                 role="region"
+                                 aria-label="Itinerary Activity Card"
                                  style="cursor: pointer;">
                             
+                            <!-- 9 Distinct Activity Types Timeline Dot (Feature 1) -->
                             <div class="timeline-dot" 
-                                 th:classappend="${(item.visited != null and item.visited) ? 'visited' : (item.activityType == 'MEAL' ? 'meal' : (item.activityType == 'HOTEL' ? 'hotel' : ''))}">
-                                 <i class="bi bi-check" th:if="${item.visited != null and item.visited}"></i>
-                                <i class="bi bi-cup-hot" th:if="${(item.visited == null or !item.visited) and item.activityType == 'MEAL'}"></i>
-                                <i class="bi bi-building" th:if="${(item.visited == null or !item.visited) and item.activityType == 'HOTEL'}"></i>
-                                <i class="bi bi-car-front" th:if="${(item.visited == null or !item.visited) and item.activityType == 'ARRIVAL'}"></i>
-                                <i class="bi bi-geo-alt" th:if="${(item.visited == null or !item.visited) and item.activityType == 'SIGHTSEEING'}"></i>
-                                <i class="bi bi-compass" th:if="${(item.visited == null or !item.visited) and item.activityType == 'DEPARTURE'}"></i>
+                                 th:classappend="${(item.visited != null and item.visited) ? 'visited' : item.timelineColorClass}"
+                                 th:title="${item.timelineTypeLabel}">
+                                <i class="bi bi-check" th:if="${item.visited != null and item.visited}"></i>
+                                <i th:if="${item.visited == null or !item.visited}" th:class="${'bi ' + item.timelineIcon}"></i>
                             </div>
 
                             <div class="timeline-content" th:classappend="${(item.visited != null and item.visited) ? 'is-visited' : ''}">
-                                <div class="d-flex justify-content-between align-items-start mb-1 timeline-header-row">
-                                    <div class="d-flex flex-wrap align-items-center gap-1 timeline-title-wrap">
-                                        <span class="badge-sand timeline-time-badge" 
-                                              th:text="${(itemStat.first or itemStat.last or item.endTime == null or item.endTime == '' or item.startTime == item.endTime) ? item.startTime : (item.startTime + ' - ' + item.endTime)}"></span>
+                                <!-- Card Header: Activity Number, Category, Timings, Duration, Lock, Actions -->
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-2 border-bottom timeline-header-row">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <!-- Sequence Number Badge -->
+                                        <span class="badge bg-primary text-white fw-bold px-2 py-1 shadow-xs" style="font-size: 0.75rem;" title="Stop number in day">
+                                            #<span th:text="${itemStat.index + 1}">1</span>
+                                        </span>
+
+                                        <!-- Category Pill with Icon -->
+                                        <span class="badge bg-light text-secondary border px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                                            <i th:class="${'bi ' + item.timelineIcon}"></i>
+                                            <span th:text="${item.timelineTypeLabel}">Sightseeing</span>
+                                        </span>
+
+                                        <!-- Start Time - End Time Badge -->
+                                        <span class="badge-sand timeline-time-badge d-inline-flex align-items-center gap-1"
+                                              th:title="'Scheduled time: ' + ${(itemStat.first or itemStat.last or item.endTime == null or item.endTime == '' or item.startTime == item.endTime) ? item.startTime : (item.startTime + ' – ' + item.endTime)}">
+                                            <i class="bi bi-clock text-primary"></i>
+                                            <span th:text="${(itemStat.first or itemStat.last or item.endTime == null or item.endTime == '' or item.startTime == item.endTime) ? item.startTime : (item.startTime + ' – ' + item.endTime)}"></span>
+                                        </span>
+
+                                        <!-- Visit Duration Badge -->
+                                        <span th:if="${item.durationMinutes != null and item.durationMinutes > 0}"
+                                              class="badge bg-light text-secondary border px-2 py-1"
+                                              style="font-size: 0.72rem;"
+                                              th:title="'Estimated visit duration: ' + ${item.formattedDuration}">
+                                            <i class="bi bi-hourglass-split me-1 text-primary"></i>
+                                            <span th:text="${item.formattedDuration}"></span>
+                                        </span>
+
                                         <!-- Locked Badge -->
                                         <span th:if="${item.locked != null and item.locked}" class="badge bg-warning text-dark py-1 px-2" style="font-size: 0.7rem;" title="Locked from regeneration">
                                             <i class="bi bi-lock-fill me-1"></i>Locked
                                         </span>
-                                        <span class="fw-bold place-title text-dark" th:text="${item.activity}"></span>
                                     </div>
 
-                                    <!-- Item Action Controls (Lock, Move, Edit, Delete, Visited Switch) -->
-                                    <div class="d-flex align-items-center gap-1 timeline-item-actions">
+                                    <!-- Actions Toolbar -->
+                                    <div class="d-flex align-items-center gap-1 timeline-item-actions" onclick="event.stopPropagation()">
+                                        <!-- Google Maps Link Button (Requirement 3) -->
+                                        <th:block th:with="hasCoords=${item.latitude != null and item.latitude != 0.0 and item.longitude != null and item.longitude != 0.0},
+                                                           hasLoc=${item.location != null and !#strings.isEmpty(item.location)},
+                                                           gmapsQuery=${hasCoords ? (item.latitude + ',' + item.longitude) : (hasLoc ? item.location : item.activity)}">
+                                            <a th:if="${hasCoords or hasLoc}"
+                                               th:href="${'https://www.google.com/maps/search/?api=1&query=' + #uris.escapeQueryParam(gmapsQuery)}"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="btn btn-outline-primary btn-sm px-2 py-1 gmaps-action-btn"
+                                               title="View this place on Google Maps (opens in new tab)"
+                                               onclick="event.stopPropagation();">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i><span class="d-none d-sm-inline">Google Maps</span>
+                                            </a>
+                                        </th:block>
+
                                         <!-- Visited Switch -->
-                                        <div th:if="${item.placeId != null}" class="form-check form-switch me-1 mb-0">
+                                        <div th:if="${item.placeId != null}" class="form-check form-switch me-1 mb-0" title="Mark as visited">
                                             <input class="form-check-input visited-toggle" type="checkbox" role="switch"
                                                    th:id="'check-' + ${item.placeId}"
                                                    th:checked="${item.visited}"
                                                    th:data-place-id="${item.placeId}"
                                                    onchange="togglePlaceVisitedStatus(this.dataset.placeId, this)">
-                                            <label class="form-check-label small text-muted" th:for="'check-' + ${item.placeId}">Visited</label>
+                                            <label class="form-check-label small text-muted d-none d-lg-inline" th:for="'check-' + ${item.placeId}">Visited</label>
                                         </div>
 
                                         <!-- Lock / Unlock Toggle -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border" 
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn" 
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
-                                                th:title="${(item.locked != null and item.locked) ? 'Activity is locked (preserved during single-day regeneration)' : 'Lock activity'}"
+                                                th:title="${(item.locked != null and item.locked) ? 'Activity is locked (preserved during regeneration)' : 'Lock activity'}"
                                                 th:data-trip-id="${trip.id}" th:data-item-id="${item.id}"
                                                 onclick="event.stopPropagation(); toggleItemLock(this.dataset.tripId, this.dataset.itemId)">
                                             <i th:class="${(item.locked != null and item.locked) ? 'bi bi-lock-fill text-warning' : 'bi bi-unlock text-muted'}"></i>
                                         </button>
 
-                                        <!-- Move Activity Earlier (Up) -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                        <!-- Move Up (Alt+ArrowUp) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn"
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
-                                                title="Move activity earlier"
+                                                title="Move activity earlier (Alt+Up)"
                                                 th:data-trip-id="${trip.id}"
                                                 th:data-day="${day.dayNumber}"
                                                 th:data-item-id="${item.id}"
@@ -953,10 +1247,10 @@
                                             <i class="bi bi-arrow-up text-secondary"></i>
                                         </button>
 
-                                        <!-- Move Activity Later (Down) -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                        <!-- Move Down (Alt+ArrowDown) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn"
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
-                                                title="Move activity later"
+                                                title="Move activity later (Alt+Down)"
                                                 th:data-trip-id="${trip.id}"
                                                 th:data-day="${day.dayNumber}"
                                                 th:data-item-id="${item.id}"
@@ -965,8 +1259,8 @@
                                             <i class="bi bi-arrow-down text-secondary"></i>
                                         </button>
 
-                                        <!-- Move Activity to Another Day (Requirement 2) -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                        <!-- Move to Another Day -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn"
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                                 title="Move activity to another day"
                                                 th:data-item-id="${item.id}"
@@ -976,8 +1270,8 @@
                                             <i class="bi bi-arrow-left-right text-success"></i>
                                         </button>
 
-                                        <!-- Edit Item Button -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                        <!-- Edit Activity -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn"
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                                 title="Edit activity"
                                                 th:data-item-id="${item.id}"
@@ -992,35 +1286,73 @@
                                             <i class="bi bi-pencil-square text-primary"></i>
                                         </button>
 
-                                        <!-- Delete Item Button -->
-                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border"
+                                        <!-- Delete Activity -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn"
                                                 style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                                 title="Delete activity"
                                                 th:data-trip-id="${trip.id}" th:data-item-id="${item.id}"
                                                 onclick="event.stopPropagation(); deleteActivityItem(this.dataset.tripId, this.dataset.itemId)">
                                             <i class="bi bi-trash text-danger"></i>
                                         </button>
+
+                                        <!-- Collapse / Expand Activity Card Button (Feature 3) -->
+                                        <button type="button" class="btn btn-light btn-sm p-1 rounded-circle border action-icon-btn card-collapse-btn ms-1"
+                                                style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                                title="Collapse or expand card details"
+                                                onclick="event.stopPropagation(); toggleActivityCardCollapse(this)">
+                                            <i class="bi bi-chevron-up collapse-icon"></i>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="text-muted small mb-1">
-                                    <i class="bi bi-geo-alt me-1"></i> <span th:text="${item.location}"></span>
-                                    <span th:if="${item.travelDistanceKm > 0}">
-                                        &bull; <span th:text="${item.travelDistanceKm + ' km transit'}"></span>
-                                    </span>
-                                    <span th:if="${item.proximityTier != null and item.proximityTier != 'IN_DESTINATION'}"
-                                          class="badge ms-1"
-                                          th:classappend="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'bg-primary-subtle text-primary border border-primary' : 
-                                                          (item.proximityTier == 'NEARBY_TOWN' ? 'bg-info-subtle text-info-emphasis border border-info' : 
-                                                          'bg-secondary-subtle text-secondary border')}"
-                                          style="font-size: 0.72rem; font-weight: 500;">
-                                        <i class="bi bi-signpost-2 me-1"></i>
-                                        <span th:text="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'Nearby Attraction' : (item.proximityTier == 'NEARBY_TOWN' ? 'Nearby Town' : 'Regional Stop')}"></span>
-                                        <span th:if="${item.townOrArea != null and !item.townOrArea.isEmpty()}" th:text="' • ' + ${item.townOrArea}"></span>
-                                    </span>
+                                <!-- Compact Glanceable Preview (Shown when collapsed - Feature 3) -->
+                                <div class="timeline-compact-preview d-none">
+                                    <div class="d-flex align-items-center justify-content-between text-muted small py-1">
+                                        <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 70%;">
+                                            <strong class="text-dark text-truncate" th:text="${item.activity}"></strong>
+                                            <span th:if="${item.location != null and !item.location.isEmpty()}" class="d-none d-md-inline text-muted text-truncate" th:text="'• ' + ${item.location}"></span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-light text-secondary border" th:text="${item.formattedTimeSpan}"></span>
+                                            <span th:if="${item.durationMinutes != null and item.durationMinutes > 0}" class="badge bg-light text-secondary border d-none d-sm-inline" th:text="${item.formattedDuration}"></span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <p th:if="${item.notes}" class="small text-muted mb-0" th:text="${item.notes}"></p>
+                                <!-- Activity Body -->
+                                <div class="timeline-body-content">
+                                    <h5 class="fw-bold place-title text-dark mb-1" th:text="${item.activity}"></h5>
+
+                                    <!-- Location, Road Distance & Travel Duration from Previous Stop -->
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small mb-2">
+                                        <span th:if="${item.location != null and !item.location.isEmpty()}" class="d-inline-flex align-items-center fw-medium text-dark">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                            <span th:text="${item.location}"></span>
+                                        </span>
+
+                                        <span th:if="${item.travelDistanceKm != null and item.travelDistanceKm > 0}" class="badge bg-light text-secondary border">
+                                            <i class="bi bi-signpost-split me-1 text-primary"></i>
+                                            <span th:text="${item.travelDistanceKm + ' km'}"></span>
+                                            <span th:if="${item.travelTimeMinutes != null and item.travelTimeMinutes > 0}"
+                                                  th:text="' • ' + ${T(com.example.tripplanner.util.TimeUtils).formatDuration(item.travelTimeMinutes)} + ' travel'"></span>
+                                        </span>
+
+                                        <!-- Proximity Tier Badge -->
+                                        <span th:if="${item.proximityTier != null and item.proximityTier != 'IN_DESTINATION'}"
+                                              class="badge"
+                                              th:classappend="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'bg-primary-subtle text-primary border border-primary' : 
+                                                              (item.proximityTier == 'NEARBY_TOWN' ? 'bg-info-subtle text-info-emphasis border border-info' : 
+                                                              'bg-secondary-subtle text-secondary border')}"
+                                              style="font-size: 0.72rem; font-weight: 500;">
+                                            <i class="bi bi-signpost-2 me-1"></i>
+                                            <span th:text="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'Nearby Attraction' : (item.proximityTier == 'NEARBY_TOWN' ? 'Nearby Town' : 'Regional Stop')}"></span>
+                                            <span th:if="${item.townOrArea != null and !item.townOrArea.isEmpty()}" th:text="' • ' + ${item.townOrArea}"></span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Description, Verified Opening Hours, Conflict Warnings -->
+                                    <p th:if="${item.notes != null and !item.notes.isEmpty()}" class="small text-muted mb-0 lh-base" th:text="${item.notes}"></p>
+                                </div>
                             </div>
                         </div>
                         </th:block>
@@ -1046,14 +1378,21 @@
                 </div>
             </div>
 
-            <!-- Right Panel: Interactive Google Map / Leaflet Map (Requirement 3 & Responsive) -->
-            <div id="mapColumn" class="col-lg-5 mb-4">
-                <div class="card card-modern p-3 sticky-top" style="top: 85px; z-index: 1020;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold mb-0">
-                            <i class="bi bi-map-fill text-success me-2"></i> Interactive Route Map
-                        </h6>
-                        <span class="badge-sage small">Road Network Engine</span>
+            <!-- Panel 2: Interactive Route Map Column (Full Width, Below Itinerary - Requirement 1 & 5) -->
+            <div id="mapColumn" class="col-12 mb-4">
+                <div class="card card-modern p-3 p-md-4 mb-4" id="mapCard">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom pb-2 mb-3 gap-2">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">
+                                <i class="bi bi-map-fill text-primary me-2"></i> Interactive Route &amp; Destination Map
+                            </h5>
+                            <span class="text-muted small">Live geographic routing, sequence pins, and verified destination coordinates</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i class="bi bi-geo-alt-fill me-1"></i>Road Network Engine
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Multi-Day Itinerary Map Selector (Requirement 5) -->
@@ -1965,6 +2304,28 @@
             initQuickUndoCheck();
             loadVersionHistoryCount();
             loadSmartStopsAlongRoute();
+
+            // Restore saved layout mode or default to itinerary-map (Requirement 1)
+            let savedLayout = "itinerary-map";
+            try {
+                savedLayout = sessionStorage.getItem("voyagecraft_layout_mode") || "itinerary-map";
+            } catch(e) {}
+            setViewMode(savedLayout);
+
+            // Bind keyboard accessible reordering (Alt+ArrowUp / Alt+ArrowDown - Requirement 6)
+            document.addEventListener('keydown', (e) => {
+                if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    const focusedCard = document.activeElement ? document.activeElement.closest('.timeline-item') : null;
+                    if (focusedCard) {
+                        e.preventDefault();
+                        const tripId = focusedCard.dataset.tripId || (tripData ? tripData.id : null);
+                        const day = focusedCard.dataset.day;
+                        const itemId = focusedCard.dataset.itemId;
+                        const direction = (e.key === 'ArrowUp') ? 'UP' : 'DOWN';
+                        moveActivityStep(tripId, day, itemId, direction);
+                    }
+                }
+            });
         });
 
         // Guest Trip Save & Discard Handlers (Requirement 3)
@@ -2040,7 +2401,46 @@
         window._routeBoundsGroup = null;
         window._activeMapDay = 'all';
 
-        function selectMapDay(day, btn) {
+        function selectItineraryDay(day, btn) {
+            window._activeItineraryDay = String(day);
+            document.querySelectorAll(".day-nav-btn").forEach(b => {
+                b.classList.remove("active", "btn-forest");
+                b.classList.add("btn-outline-forest");
+            });
+            if (btn) {
+                btn.classList.add("active", "btn-forest");
+                btn.classList.remove("btn-outline-forest");
+            } else {
+                const targetBtn = document.querySelector(`.day-nav-btn[data-day="${day}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add("active", "btn-forest");
+                    targetBtn.classList.remove("btn-outline-forest");
+                }
+            }
+
+            // Filter day cards in itinerary
+            const dayCards = document.querySelectorAll(".day-itinerary-card");
+            if (day === 'all') {
+                dayCards.forEach(c => {
+                    c.style.display = 'block';
+                });
+            } else {
+                dayCards.forEach(c => {
+                    if (c.dataset.day === String(day)) {
+                        c.style.display = 'block';
+                        c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        c.style.display = 'none';
+                    }
+                });
+            }
+
+            // Synchronize with map selector and Leaflet map
+            const mapDayBtn = document.querySelector(`.map-day-filter-btn[data-day="${day}"]`);
+            selectMapDay(day, mapDayBtn, false);
+        }
+
+        function selectMapDay(day, btn, syncItinerary = true) {
             window._activeMapDay = String(day);
             document.querySelectorAll(".map-day-filter-btn").forEach(b => {
                 b.classList.remove("active", "btn-forest");
@@ -2049,7 +2449,34 @@
             if (btn) {
                 btn.classList.add("active", "btn-forest");
                 btn.classList.remove("btn-outline-forest");
+            } else {
+                const targetBtn = document.querySelector(`.map-day-filter-btn[data-day="${day}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add("active", "btn-forest");
+                    targetBtn.classList.remove("btn-outline-forest");
+                }
             }
+
+            if (syncItinerary) {
+                const dayNavBtn = document.querySelector(`.day-nav-btn[data-day="${day}"]`);
+                document.querySelectorAll(".day-nav-btn").forEach(b => {
+                    b.classList.remove("active", "btn-forest");
+                    b.classList.add("btn-outline-forest");
+                });
+                if (dayNavBtn) {
+                    dayNavBtn.classList.add("active", "btn-forest");
+                    dayNavBtn.classList.remove("btn-outline-forest");
+                }
+                const dayCards = document.querySelectorAll(".day-itinerary-card");
+                if (day === 'all') {
+                    dayCards.forEach(c => c.style.display = 'block');
+                } else {
+                    dayCards.forEach(c => {
+                        c.style.display = (c.dataset.day === String(day)) ? 'block' : 'none';
+                    });
+                }
+            }
+
             initTripWorkspaceMap(tripData, String(day));
         }
 
@@ -2096,9 +2523,20 @@
                     popupAnchor: [0, -20]
                 });
 
+                const originGmaps = (originLat && originLng)
+                    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(originLat)},${encodeURIComponent(originLng)}`
+                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trip.startLocation || 'Start Location')}`;
+
                 const originMarker = L.marker([originLat, originLng], { icon: originIcon })
                     .addTo(map)
-                    .bindPopup(`<strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}`);
+                    .bindPopup(`
+                        <div style="min-width: 170px; font-family: inherit;">
+                            <strong>Origin:</strong> ${escapeHtml(trip.startLocation || 'Start Location')}
+                            <a href="${originGmaps}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-1 w-100 mt-2 d-flex align-items-center justify-content-center gap-1">
+                                <i class="bi bi-geo-alt-fill text-danger"></i> View on Google Maps
+                            </a>
+                        </div>
+                    `);
                 boundsGroup.addLayer(originMarker);
 
                 // Add Destination markers
@@ -2118,12 +2556,19 @@
                             popupAnchor: [0, -18]
                         });
 
+                        const gmapsUrl = (dLat && dLng && !isNaN(dLat) && !isNaN(dLng) && dLat !== 0 && dLng !== 0)
+                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dLat)},${encodeURIComponent(dLng)}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name)}`;
+
                         const popupContent = `
-                            <div style="min-width: 170px;">
+                            <div style="min-width: 180px; max-width: 260px; font-family: inherit;">
                                 <div class="fw-bold fs-6 text-dark">${escapeHtml(d.name)}</div>
                                 <div class="text-muted small mb-1">Stop ${idx + 1} of ${trip.destinations.length}</div>
                                 ${d.hotelName ? `<div class="small text-primary"><i class="bi bi-building me-1"></i>${escapeHtml(d.hotelName)}</div>` : '<div class="small text-muted fst-italic">No hotel stay pinned</div>'}
                                 ${d.distanceFromPrevious ? `<div class="small text-muted mt-1">🛣️ ${d.distanceFromPrevious} km from prev stop</div>` : ''}
+                                <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-1 w-100 mt-2 d-flex align-items-center justify-content-center gap-1">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i> View on Google Maps
+                                </a>
                             </div>
                         `;
 
@@ -2218,19 +2663,28 @@
                             popupAnchor: [0, -18]
                         });
 
+                        const gmapsUrl = (iLat && iLng && !isNaN(iLat) && !isNaN(iLng) && iLat !== 0 && iLng !== 0)
+                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(iLat)},${encodeURIComponent(iLng)}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location || item.activity)}`;
+
                         const popupHtml = `
-                            <div style="min-width: 200px;">
+                            <div style="min-width: 210px; max-width: 280px; font-family: inherit;">
                                 <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
-                                    <span class="badge bg-secondary text-white small" style="font-size: 0.65rem;">Day ${targetDayNum} • #${idx + 1}</span>
-                                    <span class="badge bg-light text-dark border small" style="font-size: 0.65rem;">${escapeHtml(item.category || item.activityType || 'Activity')}</span>
+                                    <span class="badge bg-primary text-white" style="font-size: 0.68rem;">Day ${targetDayNum} • #${idx + 1}</span>
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">${escapeHtml(item.category || item.activityType || 'Activity')}</span>
                                 </div>
-                                <div class="fw-bold text-dark fs-6">${escapeHtml(item.activity)}</div>
-                                <div class="small text-muted mb-1"><i class="bi bi-clock me-1 text-primary"></i>${item.startTime} - ${item.endTime}</div>
-                                <div class="small text-muted mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>${escapeHtml(item.location || '')}</div>
-                                ${item.notes ? `<div class="small text-muted border-top pt-1 mb-2 fst-italic">${escapeHtml(item.notes)}</div>` : ''}
-                                <button type="button" class="btn btn-forest btn-sm w-100 py-1" onclick="highlightTimelineActivity('${itemKey}')">
-                                    <i class="bi bi-list-task me-1"></i>View in Timeline
-                                </button>
+                                <div class="fw-bold text-dark fs-6 mb-1">${escapeHtml(item.activity)}</div>
+                                ${item.location ? `<div class="small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${escapeHtml(item.location)}</div>` : ''}
+                                <div class="small text-muted mb-2"><i class="bi bi-clock me-1 text-primary"></i>${escapeHtml(item.startTime || '')} - ${escapeHtml(item.endTime || '')}</div>
+                                ${item.notes ? `<div class="small text-muted border-top pt-1 mb-2 lh-sm">${escapeHtml(item.notes)}</div>` : ''}
+                                <div class="d-flex flex-column gap-1 mt-2">
+                                    <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-1 d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i> View on Google Maps
+                                    </a>
+                                    <button type="button" class="btn btn-forest btn-sm py-1" onclick="highlightTimelineActivity('${itemKey}')">
+                                        <i class="bi bi-list-task me-1"></i> Focus in Itinerary
+                                    </button>
+                                </div>
                             </div>
                         `;
 
@@ -2278,7 +2732,7 @@
             }, 300);
         }
 
-        // Bidirectional Timeline Activity Click -> Centers Map & Opens Marker Popup
+        // Bidirectional Timeline Activity Click -> Centers Map, Opens Popup & Scrolls to Map if necessary
         function focusActivityOnMap(element) {
             if (!element) return;
             const day = element.dataset.day;
@@ -2286,12 +2740,16 @@
             const lat = parseFloat(element.dataset.lat);
             const lng = parseFloat(element.dataset.lng);
 
+            // Highlight timeline card
+            document.querySelectorAll(".timeline-item").forEach(item => item.classList.remove("active-marker-highlight"));
+            element.classList.add("active-marker-highlight");
+
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
 
             // Switch map to that day if needed
             if (window._activeMapDay !== String(day)) {
                 const dayBtn = document.querySelector(`.map-day-filter-btn[data-day="${day}"]`);
-                selectMapDay(String(day), dayBtn);
+                selectMapDay(String(day), dayBtn, false);
             }
 
             // Center map on marker and open popup
@@ -2305,14 +2763,41 @@
                 }
             }, 100);
 
-            // Highlight timeline card
-            document.querySelectorAll(".timeline-item").forEach(item => item.classList.remove("active-marker-highlight"));
-            element.classList.add("active-marker-highlight");
+            // Auto-scroll to map if below viewport
+            const mapCol = document.getElementById("mapColumn");
+            if (mapCol && mapCol.style.display !== "none") {
+                const mapContainer = document.getElementById("mapContainer");
+                if (mapContainer) {
+                    const rect = mapContainer.getBoundingClientRect();
+                    if (rect.top > window.innerHeight - 100 || rect.bottom < 80) {
+                        mapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
+        }
+
+        // Hover effect on activity card pulses corresponding map marker
+        function hoverActivityCard(element, isHovering) {
+            if (!element) return;
+            const itemId = String(element.dataset.itemId);
+            const marker = window._tripMarkersByItemId ? window._tripMarkersByItemId[itemId] : null;
+            if (marker && marker._icon) {
+                if (isHovering) {
+                    marker._icon.classList.add("marker-hover-pulse");
+                } else {
+                    marker._icon.classList.remove("marker-hover-pulse");
+                }
+            }
         }
 
         // Highlight timeline item from map marker click
         function highlightTimelineActivity(itemId) {
             if (!itemId) return;
+            // If in Map Only mode, switch back to Itinerary + Map so the card can be seen
+            const itinCol = document.getElementById("itineraryColumn");
+            if (itinCol && itinCol.style.display === "none") {
+                setViewMode("itinerary-map");
+            }
             const targetEl = document.getElementById("timeline-item-" + itemId);
             if (targetEl) {
                 document.querySelectorAll(".timeline-item").forEach(item => item.classList.remove("active-marker-highlight"));
@@ -2597,34 +3082,71 @@
             }
         }
 
-        // View Mode Switcher: Split / Timeline Only / Map Only
+        // View Mode Switcher: Itinerary + Map (DEFAULT) / Itinerary Only / Map Only (Requirement 1)
         function setViewMode(mode) {
             const itinCol = document.getElementById("itineraryColumn");
             const mapCol = document.getElementById("mapColumn");
-            document.querySelectorAll("#btnViewSplit, #btnViewList, #btnViewMap").forEach(b => b.classList.remove("active"));
+            const btnItinMap = document.getElementById("btnViewItineraryMap") || document.getElementById("btnViewSplit");
+            const btnItin = document.getElementById("btnViewItinerary") || document.getElementById("btnViewList");
+            const btnMap = document.getElementById("btnViewMap");
 
-            if (mode === "split") {
-                itinCol.className = "col-lg-7 mb-4";
-                mapCol.className = "col-lg-5 mb-4";
-                itinCol.style.display = "block";
-                mapCol.style.display = "block";
-                document.getElementById("btnViewSplit").classList.add("active");
-            } else if (mode === "list") {
-                itinCol.className = "col-12 mb-4";
-                itinCol.style.display = "block";
-                mapCol.style.display = "none";
-                document.getElementById("btnViewList").classList.add("active");
-            } else if (mode === "map") {
-                mapCol.className = "col-12 mb-4";
-                mapCol.style.display = "block";
-                itinCol.style.display = "none";
-                document.getElementById("btnViewMap").classList.add("active");
+            document.querySelectorAll("#btnViewItineraryMap, #btnViewItinerary, #btnViewMap, #btnViewSplit, #btnViewList").forEach(b => {
+                if (b) b.classList.remove("active");
+            });
+
+            // Normalize mode values
+            if (mode === "split" || mode === "itinerary-map") {
+                mode = "itinerary-map";
+            } else if (mode === "list" || mode === "itinerary") {
+                mode = "itinerary";
+            } else if (mode !== "map") {
+                mode = "itinerary-map";
             }
 
-            // Refresh map rendering on view change
+            if (mode === "itinerary-map") {
+                if (itinCol) {
+                    itinCol.className = "col-12 mb-2";
+                    itinCol.style.display = "block";
+                }
+                if (mapCol) {
+                    mapCol.className = "col-12 mb-4";
+                    mapCol.style.display = "block";
+                }
+                if (btnItinMap) btnItinMap.classList.add("active");
+            } else if (mode === "itinerary") {
+                if (itinCol) {
+                    itinCol.className = "col-12 mb-4";
+                    itinCol.style.display = "block";
+                }
+                if (mapCol) {
+                    mapCol.style.display = "none";
+                }
+                if (btnItin) btnItin.classList.add("active");
+            } else if (mode === "map") {
+                if (itinCol) {
+                    itinCol.style.display = "none";
+                }
+                if (mapCol) {
+                    mapCol.className = "col-12 mb-4";
+                    mapCol.style.display = "block";
+                }
+                if (btnMap) btnMap.classList.add("active");
+            }
+
+            // Persist user preference for current session
+            try {
+                sessionStorage.setItem("voyagecraft_layout_mode", mode);
+            } catch(e) {}
+
+            // Refresh Leaflet map rendering on view change
             setTimeout(() => {
                 if (window._currentLeafletMap) {
                     window._currentLeafletMap.invalidateSize();
+                    if (window._routeBoundsGroup && window._routeBoundsGroup.getLayers().length > 0) {
+                        try {
+                            window._currentLeafletMap.fitBounds(window._routeBoundsGroup.getBounds(), { padding: [40, 40], maxZoom: 15 });
+                        } catch(e) {}
+                    }
                 }
             }, 200);
         }
@@ -2795,6 +3317,123 @@
             } catch (err) {
                 console.error("Save activity edit error:", err);
                 alert("Could not update activity: " + err.message);
+            }
+        }
+
+        // =========================================================
+        // Feature 3: Expandable Destination & Activity Cards Handlers
+        // =========================================================
+        function toggleActivityCardCollapse(btn) {
+            const item = btn.closest('.timeline-item');
+            if (!item) return;
+            item.classList.toggle('is-collapsed');
+            const icon = btn.querySelector('.collapse-icon');
+            if (icon) {
+                if (item.classList.contains('is-collapsed')) {
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                    btn.setAttribute('title', 'Expand card details');
+                } else {
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                    btn.setAttribute('title', 'Collapse card details');
+                }
+            }
+        }
+
+        function toggleDayExpandAll(dayNumber, btn) {
+            const dayCard = document.getElementById('day-card-' + dayNumber);
+            if (!dayCard) return;
+            const items = dayCard.querySelectorAll('.timeline-item');
+            if (!items || items.length === 0) return;
+
+            let hasExpanded = false;
+            items.forEach(item => {
+                if (!item.classList.contains('is-collapsed')) {
+                    hasExpanded = true;
+                }
+            });
+
+            if (hasExpanded) {
+                items.forEach(item => {
+                    item.classList.add('is-collapsed');
+                    const icon = item.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.classList.remove('bi-chevron-up');
+                        icon.classList.add('bi-chevron-down');
+                    }
+                });
+                btn.innerHTML = '<i class="bi bi-arrows-expand me-1"></i><span>Expand All</span>';
+                btn.setAttribute('title', 'Expand all activity cards for this day');
+            } else {
+                items.forEach(item => {
+                    item.classList.remove('is-collapsed');
+                    const icon = item.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-up');
+                    }
+                });
+                btn.innerHTML = '<i class="bi bi-arrows-collapse me-1"></i><span>Collapse All</span>';
+                btn.setAttribute('title', 'Collapse all activity cards for this day');
+            }
+        }
+
+        function toggleDestNodeCollapse(btn) {
+            const node = btn.closest('.draggable-destination-node');
+            if (!node) return;
+            node.classList.toggle('is-collapsed');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('bi-chevron-up');
+                icon.classList.toggle('bi-chevron-down');
+            }
+        }
+
+        // =========================================================
+        // Feature 2: Overloaded Schedule Resolution Handlers
+        // =========================================================
+        function suggestMoveOverloadedStop(dayNumber) {
+            const dayCard = document.getElementById('day-card-' + dayNumber);
+            if (!dayCard) return;
+            const items = dayCard.querySelectorAll('.timeline-item');
+            let candidateBtn = null;
+            items.forEach(it => {
+                const moveBtn = it.querySelector('[title="Move activity to another day"]');
+                if (moveBtn) {
+                    candidateBtn = moveBtn;
+                }
+            });
+            if (candidateBtn) {
+                openMoveActivityModal(candidateBtn);
+            } else {
+                alert("Please select an activity from the timeline to move to another day.");
+            }
+        }
+
+        async function autoBalanceDayPace(tripId, dayNumber) {
+            if (!confirm(`Auto-balance Day ${dayNumber} pace? This will optimize start/end intervals and travel buffers without deleting any activities.`)) {
+                return;
+            }
+            try {
+                const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+                const effectiveTripId = isGuest ? 0 : (tripId || (tripData ? tripData.id : 0));
+                
+                const res = await fetch(`/api/trips/${effectiveTripId}/recalculate`, {
+                    method: 'POST'
+                });
+                if (!res.ok) {
+                    window.location.reload();
+                    return;
+                }
+                const updated = await res.json();
+                if (isGuest && updated) {
+                    try { localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(updated)); } catch(e){}
+                }
+                window.location.reload();
+            } catch (err) {
+                console.error("Auto balance error:", err);
+                window.location.reload();
             }
         }
 
@@ -3783,40 +4422,7 @@
             }
         }
 
-        // =========================================================
-        // Itinerary Activity Lock, Edit, Delete, Add Handlers
-        // =========================================================
 
-        async function toggleItemLock(tripId, itemId) {
-            try {
-                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
-                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}/lock`, {
-                    method: 'POST'
-                });
-                if (!res.ok) throw new Error("Lock toggle failed");
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert("Could not update item lock state.");
-            }
-        }
-
-        async function moveActivityStep(tripId, dayNumber, itemId, direction) {
-            try {
-                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
-                const res = await fetch(`/api/trips/${effectiveTripId}/days/${dayNumber}/activities/${itemId}/move?direction=${direction}`, {
-                    method: 'POST'
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.message || "Failed to move activity.");
-                }
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert("Could not reorder activity: " + err.message);
-            }
-        }
 
         function initActivityDragAndDrop() {
             document.querySelectorAll(".timeline-container").forEach(container => {
@@ -3908,63 +4514,6 @@
                 return String(hour).padStart(2, '0') + ':' + min;
             }
             return "08:00";
-        }
-
-        function openEditActivityModal(btn) {
-            const d = btn.dataset;
-            document.getElementById("editItemId").value = d.itemId;
-            document.getElementById("editActivityTitle").value = d.activity || "";
-            document.getElementById("editActivityLocation").value = d.location || "";
-            document.getElementById("editActivityStart").value = convertTo24Hour(d.start);
-            document.getElementById("editActivityEnd").value = convertTo24Hour(d.end);
-            document.getElementById("editActivityNotes").value = d.notes || "";
-            document.getElementById("editActivityLocked").checked = (d.locked === "true" || d.locked === true);
-
-            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("editActivityModal"));
-            modal.show();
-        }
-
-        async function handleSaveEditedActivity(e) {
-            e.preventDefault();
-            const itemId = document.getElementById("editItemId").value;
-            const payload = {
-                activity: document.getElementById("editActivityTitle").value.trim(),
-                location: document.getElementById("editActivityLocation").value.trim(),
-                startTime: document.getElementById("editActivityStart").value,
-                endTime: document.getElementById("editActivityEnd").value,
-                notes: document.getElementById("editActivityNotes").value.trim(),
-                locked: document.getElementById("editActivityLocked").checked
-            };
-
-            try {
-                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripData ? tripData.id : 0);
-                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!res.ok) throw new Error("Update activity failed");
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert("Failed to update activity.");
-            }
-        }
-
-        async function deleteActivityItem(tripId, itemId) {
-            if (!confirm("Are you sure you want to delete this activity from your itinerary?")) return;
-
-            try {
-                const effectiveTripId = (tripData && (tripData.isGuest || !tripData.id || tripData.id === 0)) ? 0 : (tripId || (tripData ? tripData.id : 0));
-                const res = await fetch(`/api/trips/${effectiveTripId}/itinerary-items/${itemId}`, {
-                    method: 'DELETE'
-                });
-                if (!res.ok) throw new Error("Delete failed");
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert("Could not delete activity.");
-            }
         }
 
         function openAddActivityModal(tripId, dayNumber) {
@@ -4083,6 +4632,15 @@
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function formatDurationJs(totalMinutes) {
+            if (!totalMinutes || totalMinutes <= 0) return '0 min';
+            const hrs = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            if (hrs === 0) return `${mins} min`;
+            if (mins === 0) return `${hrs} hr`;
+            return `${hrs} hr ${mins} min`;
         }
 
         // =========================================================
@@ -4328,7 +4886,7 @@
                     if (stop.detourMinutes === 0 || stop.detourMinutes < 1) {
                         detourHtml = `<span class="smart-stop-detour-badge"><i class="bi bi-lightning-charge me-1"></i>Direct highway (< 1 min)</span>`;
                     } else {
-                        detourHtml = `<span class="smart-stop-detour-badge"><i class="bi bi-clock-history me-1"></i>+${stop.detourMinutes} min (+${stop.detourDistanceKm} km)</span>`;
+                        detourHtml = `<span class="smart-stop-detour-badge"><i class="bi bi-clock-history me-1"></i>+${formatDurationJs(stop.detourMinutes)} (+${stop.detourDistanceKm} km)</span>`;
                     }
                 } else if (stop.detourUnavailableReason) {
                     detourHtml = `<span class="smart-stop-detour-badge unavailable" title="${escapeHtml(stop.detourUnavailableReason)}"><i class="bi bi-dash-circle me-1"></i>Detour uncalc</span>`;
@@ -4459,7 +5017,7 @@
 
                 let detourInfo = '';
                 if (stop.detourCalculated) {
-                    detourInfo = `<div class="small text-success mt-1 fw-semibold"><i class="bi bi-clock me-1"></i>+${stop.detourMinutes} min detour (+${stop.detourDistanceKm} km)</div>`;
+                    detourInfo = `<div class="small text-success mt-1 fw-semibold"><i class="bi bi-clock me-1"></i>+${formatDurationJs(stop.detourMinutes)} detour (+${stop.detourDistanceKm} km)</div>`;
                 }
 
                 const popupHtml = `
@@ -4521,7 +5079,7 @@
 
             let detourText = 'Along road route corridor';
             if (stop.detourCalculated) {
-                detourText = stop.detourMinutes < 1 ? 'Direct along route (< 1 min detour)' : `+${stop.detourMinutes} min road detour (+${stop.detourDistanceKm} km)`;
+                detourText = stop.detourMinutes < 1 ? 'Direct along route (< 1 min detour)' : `+${formatDurationJs(stop.detourMinutes)} road detour (+${stop.detourDistanceKm} km)`;
             }
             document.getElementById("addStopPlaceDetour").textContent = detourText;
 
@@ -4962,7 +5520,7 @@
                     <div>
                         <span class="fw-bold text-dark small">Driving Time Delta:</span>
                         <span class="fw-semibold ms-1 ${diff.travelTimeDiffMinutes > 0 ? 'text-danger' : (diff.travelTimeDiffMinutes < 0 ? 'text-success' : 'text-muted')}">
-                            ${diff.travelTimeDiffMinutes > 0 ? '+' : ''}${diff.travelTimeDiffMinutes} mins
+                            ${diff.travelTimeDiffMinutes > 0 ? '+' : (diff.travelTimeDiffMinutes < 0 ? '-' : '')}${formatDurationJs(Math.abs(diff.travelTimeDiffMinutes))}
                         </span>
                     </div>
                 </div>

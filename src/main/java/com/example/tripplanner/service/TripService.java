@@ -2084,6 +2084,14 @@ public class TripService {
         return dayDtos;
     }
 
+    public void refreshTripTransitions(TripResponseDto tripDto) {
+        if (tripDto == null || tripDto.getDayItineraries() == null) return;
+        String mode = tripDto.getTransportMode() != null ? tripDto.getTransportMode() : "CAR";
+        for (DayItineraryDto day : tripDto.getDayItineraries()) {
+            itineraryService.populateDayTransitions(day, mode);
+        }
+    }
+
     private TripResponseDto buildTripResponseDto(Trip trip, RouteSummaryDto routeSummary, List<DayItineraryDto> dayItineraries) {
         return buildTripResponseDto(trip, routeSummary, dayItineraries, null);
     }
@@ -2129,7 +2137,7 @@ public class TripService {
         } else {
             dto.setTotalDistanceKm(0.0);
             dto.setTotalTravelTimeMinutes(0);
-            dto.setFormattedTotalTravelTime("0m");
+            dto.setFormattedTotalTravelTime("0 min");
         }
 
         // Map Destinations

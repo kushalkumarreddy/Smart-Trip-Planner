@@ -478,9 +478,10 @@ public class ItineraryService {
                 String notes = place.getDescription() != null ? place.getDescription() : "";
                 if (place.getProximityTier() != null && !"IN_DESTINATION".equalsIgnoreCase(place.getProximityTier())
                         && place.getDistanceFromDestinationKm() != null && place.getDistanceFromDestinationKm() > 1.0) {
-                    String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%d min drive)",
+                    int driveMins = place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins;
+                    String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%s drive)",
                             town, place.getDistanceFromDestinationKm(), currentCityName,
-                            place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins);
+                            TimeUtils.formatDuration(driveMins));
                     notes = notes.isEmpty() ? distanceInfo : (distanceInfo + " • " + notes);
                 }
                 String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
@@ -924,9 +925,10 @@ public class ItineraryService {
             String notes = place.getDescription() != null ? place.getDescription() : "";
             if (place.getProximityTier() != null && !"IN_DESTINATION".equalsIgnoreCase(place.getProximityTier())
                     && place.getDistanceFromDestinationKm() != null && place.getDistanceFromDestinationKm() > 1.0) {
-                String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%d min drive)",
+                int driveMins = place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins;
+                String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%s drive)",
                         town, place.getDistanceFromDestinationKm(), destName,
-                        place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins);
+                        TimeUtils.formatDuration(driveMins));
                 notes = notes.isEmpty() ? distanceInfo : (distanceInfo + " • " + notes);
             }
             String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
@@ -1674,52 +1676,89 @@ public class ItineraryService {
                 travelText = "Travel to next stop · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
             }
 
-            // Add travel segment if travel takes time or distance
-            if (travelMins > 0 || distKm > 0.1) {
+            // Calculate Departure, Expected Arrival, Next Activity Start, and Buffer/Conflict
+            LocalTime depTime = TimeUtils.parseTime(prev.getEndTime());
+            LocalTime nextStartTime = TimeUtils.parseTime(curr.getStartTime());
+            LocalTime arrivalTime = depTime.plusMinutes(travelMins);
+
+            String depTimeFormatted = TimeUtils.formatAmPm(depTime);
+            String arrivalTimeFormatted = TimeUtils.formatAmPm(arrivalTime);
+            String nextStartFormatted = TimeUtils.formatAmPm(nextStartTime);
+
+            int bufferMins = 0;
+            boolean hasTimingConflict = false;
+            String conflictMsg = null;
+
+            if (nextStartTime.isAfter(arrivalTime)) {
+                bufferMins = (int) ChronoUnit.MINUTES.between(arrivalTime, nextStartTime);
+            } else if (nextStartTime.isBefore(arrivalTime)) {
+                int lateMins = (int) ChronoUnit.MINUTES.between(nextStartTime, arrivalTime);
+                hasTimingConflict = true;
+                conflictMsg = "Arrival (" + arrivalTimeFormatted + ") is " + TimeUtils.formatDuration(lateMins) + " after scheduled start (" + nextStartFormatted + ")";
+            }
+
+            // Add dedicated travel connector segment
+            if (travelMins > 0 || distKm > 0.05 || i > 0) {
                 TimelineTransitionDto travelSeg = new TimelineTransitionDto(travelIcon, travelText, travelType, distKm, travelMins);
                 travelSeg.setFromLocation(prev.getLocation() != null ? prev.getLocation() : prev.getActivity());
                 travelSeg.setToLocation(curr.getLocation() != null ? curr.getLocation() : curr.getActivity());
+                travelSeg.setDepartureTime(depTimeFormatted);
+                travelSeg.setExpectedArrivalTime(arrivalTimeFormatted);
+                travelSeg.setNextActivityStartTime(nextStartFormatted);
+                travelSeg.setBufferMinutes(bufferMins);
+                travelSeg.setMode(modeNorm);
+                travelSeg.setModeIcon(travelIcon);
+                travelSeg.setModeLabel(
+                        "WALK".equals(travelType) ? "Walk to next attraction" :
+                        "TRANSIT".equals(travelType) ? "Public transport" :
+                        "BIKE".equals(travelType) ? "Bicycle ride" :
+                        "HOTEL_TRANSFER".equals(travelType) ? "Transfer to accommodation" :
+                        "Travel to next destination"
+                );
+                if (bufferMins > 0) {
+                    travelSeg.setBufferLabel(TimeUtils.formatDuration(bufferMins) + " buffer before next activity");
+                } else if (hasTimingConflict) {
+                    travelSeg.setBufferLabel(conflictMsg);
+                    travelSeg.setHasConflict(true);
+                    travelSeg.setConflictMessage(conflictMsg);
+                } else {
+                    travelSeg.setBufferLabel("Direct arrival at next activity");
+                }
                 segments.add(travelSeg);
             }
 
             // 3. Time Gap Analysis (Arrival buffer vs Free time)
-            try {
-                LocalTime endA = TimeUtils.parseTime(prev.getEndTime());
-                LocalTime startB = TimeUtils.parseTime(curr.getStartTime());
-                int rawGap = 0;
-                if (startB.isAfter(endA)) {
-                    rawGap = (int) ChronoUnit.MINUTES.between(endA, startB);
-                } else if (startB.isBefore(endA)) {
-                    rawGap = (int) ChronoUnit.MINUTES.between(endA, LocalTime.MAX) + 1 + (int) ChronoUnit.MINUTES.between(LocalTime.MIN, startB);
-                }
-
-                if (rawGap > 0) {
-                    int gapAfterTravel = rawGap - travelMins;
-                    if (gapAfterTravel >= 10 && gapAfterTravel <= 25) {
-                        TimelineTransitionDto bufferSeg = new TimelineTransitionDto(
-                                "bi-clock",
-                                "Arrival buffer · " + TimeUtils.formatDuration(gapAfterTravel),
-                                "BUFFER",
-                                0.0,
-                                gapAfterTravel
-                        );
-                        segments.add(bufferSeg);
-                    } else if (gapAfterTravel > 25) {
-                        String freeTimeStr = TimeUtils.formatDuration(gapAfterTravel);
-                        TimelineTransitionDto freeSeg = new TimelineTransitionDto(
-                                "bi-sun",
-                                "Free time · " + freeTimeStr,
-                                "FREE_TIME",
-                                0.0,
-                                gapAfterTravel
-                        );
-                        segments.add(freeSeg);
-                    }
-                }
-            } catch (Exception ignored) {
+            if (bufferMins >= 10 && bufferMins <= 25) {
+                TimelineTransitionDto bufferSeg = new TimelineTransitionDto(
+                        "bi-clock",
+                        "Arrival buffer · " + TimeUtils.formatDuration(bufferMins),
+                        "BUFFER",
+                        0.0,
+                        bufferMins
+                );
+                segments.add(bufferSeg);
+            } else if (bufferMins > 25) {
+                TimelineTransitionDto freeSeg = new TimelineTransitionDto(
+                        "bi-sun",
+                        "Free time · " + TimeUtils.formatDuration(bufferMins),
+                        "FREE_TIME",
+                        0.0,
+                        bufferMins
+                );
+                segments.add(freeSeg);
             }
 
-            // 4. Schedule Conflict Check (Opening hours)
+            // 4. Schedule Conflict Check (Opening hours & Timing conflict)
+            if (hasTimingConflict) {
+                TimelineTransitionDto timingConflictSeg = new TimelineTransitionDto(
+                        "bi-exclamation-triangle",
+                        "Schedule conflict · " + conflictMsg,
+                        "CONFLICT",
+                        0.0,
+                        0
+                );
+                segments.add(timingConflictSeg);
+            }
             if (curr.getNotes() != null && (curr.getNotes().contains("⚠️ Closed") || curr.getNotes().contains("⚠️ Schedule conflict") || curr.getNotes().contains("closes before arrival"))) {
                 TimelineTransitionDto conflictSeg = new TimelineTransitionDto(
                         "bi-exclamation-triangle",
