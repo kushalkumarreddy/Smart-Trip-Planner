@@ -45,6 +45,19 @@ public class WebController {
         return "index";
     }
 
+    @GetMapping("/explore")
+    public String explorePage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        boolean isLoggedIn = (userDetails != null);
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        if (isLoggedIn) {
+            model.addAttribute("userEmail", userDetails.getUsername());
+            model.addAttribute("user", userService.getUserByEmail(userDetails.getUsername()));
+        }
+        model.addAttribute("featuredDestinations", recommendationService.getFeaturedDestinations(null, null));
+        model.addAttribute("categories", recommendationService.getAvailableCategories());
+        return "explore";
+    }
+
     @GetMapping("/login")
     public String loginPage(@RequestParam(value = "error", required = false) String error,
                             @RequestParam(value = "logout", required = false) String logout,

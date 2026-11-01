@@ -1023,6 +1023,8 @@ public class TripService {
         item.setLatitude(pLat);
         item.setLongitude(pLng);
         item.setCategory(newItem.getCategory() != null ? newItem.getCategory() : "Experience");
+        item.setProximityTier(newItem.getProximityTier());
+        item.setTownOrArea(newItem.getTownOrArea());
 
         itineraryItemRepository.save(item);
 
@@ -1855,6 +1857,8 @@ public class TripService {
         dto.setLatitude(it.getLatitude());
         dto.setLongitude(it.getLongitude());
         dto.setCategory(it.getCategory());
+        dto.setProximityTier(it.getProximityTier());
+        dto.setTownOrArea(it.getTownOrArea());
         if (it.getPlace() != null) dto.setPlaceId(it.getPlace().getId());
     }
 
@@ -1920,6 +1924,9 @@ public class TripService {
         item.setLatitude(itemDto.getLatitude());
         item.setLongitude(itemDto.getLongitude());
         item.setCategory(itemDto.getCategory());
+        item.setTransitionCaption(itemDto.getTransitionCaption());
+        item.setProximityTier(itemDto.getProximityTier());
+        item.setTownOrArea(itemDto.getTownOrArea());
     }
 
     private List<DayItineraryDto> buildDayItinerariesFromEntities(List<ItineraryItem> items, Trip trip, List<Destination> destinations) {
@@ -1953,6 +1960,7 @@ public class TripService {
                     : "Day " + dayNumber + " • Explore " + destName;
 
             DayItineraryDto dayDto = new DayItineraryDto(dayNumber, dayDate, title);
+            dayDto.setDestinationName(destName);
             List<ItineraryItemDto> itemDtos = new ArrayList<>();
 
             double dayDistance = 0.0;
@@ -1994,6 +2002,9 @@ public class TripService {
                 dto.setLatitude(it.getLatitude());
                 dto.setLongitude(it.getLongitude());
                 dto.setCategory(it.getCategory());
+                dto.setTransitionCaption(it.getTransitionCaption());
+                dto.setProximityTier(it.getProximityTier());
+                dto.setTownOrArea(it.getTownOrArea());
                 if ((dto.getLatitude() == null || dto.getLatitude() == 0.0) && d != null) {
                     dto.setLatitude(d.getLatitude());
                     dto.setLongitude(d.getLongitude());
@@ -2058,6 +2069,13 @@ public class TripService {
             } else {
                 dayDto.setStatus("Balanced");
             }
+
+            if (totalPlaces == 0 && (dayDto.getWarningMessage() == null || dayDto.getWarningMessage().isEmpty())) {
+                dayDto.setStatus("No attractions discovered");
+                dayDto.setWarningMessage("No verified sightseeing attractions could be discovered for " + destName + ". You can customize or add activities using the button below.");
+            }
+
+            itineraryService.populateDayTransitions(dayDto, trip.getTransportMode());
 
             dayDtos.add(dayDto);
         }

@@ -317,7 +317,7 @@ public class RouteService {
                 "SHORTEST_DISTANCE",
                 "Shortest Road Distance",
                 shortestSavingsKm > 0
-                        ? String.format(Locale.US, "Reduces driving distance by %.1f km (%s min less road travel) while covering all destinations.", shortestSavingsKm, shortestSavingsMins)
+                        ? String.format(Locale.US, "Reduces driving distance by %.1f km (%s less road travel) while covering all destinations.", shortestSavingsKm, TimeUtils.formatDuration(shortestSavingsMins))
                         : "Streamlined highway sequence minimizing total mileage.",
                 shortestFullPath,
                 shortestDist,
@@ -382,8 +382,8 @@ public class RouteService {
             summary.setPotentialSavingsKm(shortestSavingsKm);
             summary.setPotentialSavingsMinutes(shortestSavingsMins);
             summary.setOptimizationMessage(String.format(Locale.US,
-                    "Alternative route: %.1f km shorter, approximately %d minutes less driving, and still includes your %d must-visit destinations.",
-                    shortestSavingsKm, shortestSavingsMins, destinations.size()));
+                    "Alternative route: %.1f km shorter, approximately %s less driving, and still includes your %d must-visit destinations.",
+                    shortestSavingsKm, TimeUtils.formatDuration(shortestSavingsMins), destinations.size()));
         } else {
             summary.setOptimizationRecommended(false);
             summary.setRecommendedOrder(summary.getOriginalOrder());

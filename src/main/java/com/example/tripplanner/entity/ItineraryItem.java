@@ -68,6 +68,15 @@ public class ItineraryItem {
     @Column(name = "category", length = 100)
     private String category;
 
+    @Column(name = "transition_caption", length = 500)
+    private String transitionCaption;
+
+    @Column(name = "proximity_tier", length = 50)
+    private String proximityTier;
+
+    @Column(name = "town_or_area", length = 150)
+    private String townOrArea;
+
     public ItineraryItem() {
     }
 
@@ -238,5 +247,29 @@ public class ItineraryItem {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getTransitionCaption() {
+        return transitionCaption;
+    }
+
+    public void setTransitionCaption(String transitionCaption) {
+        this.transitionCaption = transitionCaption;
+    }
+
+    public String getProximityTier() {
+        return proximityTier;
+    }
+
+    public void setProximityTier(String proximityTier) {
+        this.proximityTier = proximityTier;
+    }
+
+    public String getTownOrArea() {
+        return townOrArea;
+    }
+
+    public void setTownOrArea(String townOrArea) {
+        this.townOrArea = townOrArea;
     }
 }

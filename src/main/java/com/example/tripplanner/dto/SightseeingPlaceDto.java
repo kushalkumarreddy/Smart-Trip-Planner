@@ -22,6 +22,11 @@ public class SightseeingPlaceDto {
     private Boolean visited;
     private Boolean addedToItinerary;
     private Double matchScore;
+    private String proximityTier; // IN_DESTINATION, NEARBY_ATTRACTION, NEARBY_TOWN, REGIONAL_OPTIONAL
+    private String townOrArea;
+    private Double distanceFromDestinationKm;
+    private String verificationStatus; // VERIFIED_ATTRACTION, CURATED_CATALOG, OFFICIAL_LANDMARK
+    private String source;
 
     public SightseeingPlaceDto() {
     }
@@ -184,5 +189,45 @@ public class SightseeingPlaceDto {
 
     public void setMatchScore(Double matchScore) {
         this.matchScore = matchScore;
+    }
+
+    public String getProximityTier() {
+        return proximityTier;
+    }
+
+    public void setProximityTier(String proximityTier) {
+        this.proximityTier = proximityTier;
+    }
+
+    public String getTownOrArea() {
+        return townOrArea;
+    }
+
+    public void setTownOrArea(String townOrArea) {
+        this.townOrArea = townOrArea;
+    }
+
+    public Double getDistanceFromDestinationKm() {
+        return distanceFromDestinationKm;
+    }
+
+    public void setDistanceFromDestinationKm(Double distanceFromDestinationKm) {
+        this.distanceFromDestinationKm = distanceFromDestinationKm;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

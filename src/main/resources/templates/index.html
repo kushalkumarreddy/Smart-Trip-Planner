@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoyageCraft — Every journey, thoughtfully planned.</title>
+    <title>VoyageCraft — Your Journey. Beautifully Planned.</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -39,6 +39,9 @@
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/create-trip}">Plan a Trip</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/explore}">Explore</a>
+                    </li>
                     <li class="nav-item" th:if="${isLoggedIn}">
                         <a class="nav-link" th:href="@{/dashboard}">My Journeys</a>
                     </li>
@@ -48,7 +51,7 @@
                     <div class="dropdown me-1">
                         <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
                             <i class="bi bi-circle-half theme-icon-active"></i>
-                            <span class="d-none d-md-inline theme-name-active">Auto</span>
+                            <span class="d-none d-md-inline theme-name-active ms-1">Auto</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
                             <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
@@ -74,28 +77,28 @@
         </div>
     </nav>
 
-    <!-- Large Scenic Hero Section (Requirement 1) -->
+    <!-- Large Scenic Hero Section (Requirement 1 & 3) -->
     <section class="scenic-hero text-center">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 col-xl-9">
                     <span class="badge-sage d-inline-flex align-items-center gap-1 mb-3">
-                        <i class="bi bi-tree-fill"></i> Intelligent Travel Explorer &amp; Route Engine
+                        <i class="bi bi-compass"></i> AI Smart Travel Planner &amp; Route Optimizer
                     </span>
-                    <h1 class="scenic-hero-title mb-3">Every journey, thoughtfully planned.</h1>
+                    <h1 class="scenic-hero-title mb-3">Your Journey. Beautifully Planned.</h1>
                     <p class="scenic-hero-subtitle mb-4">
-                        Discover scenic routes, calculate real driving road distances, optimize multi-stop sequences, and generate realistic daily itineraries tailored to your travel style.
+                        Discover scenic routes, calculate real driving road distances, insert intermediate stops, and generate realistic daily itineraries tailored to your travel style.
                     </p>
 
                     <!-- Prominent Trip Planner Bar -->
-                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 960px;">
+                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 980px;">
                         <form id="heroPlannerForm" onsubmit="handleHeroQuickPlan(event)">
                             <div class="row g-2 align-items-center">
                                 <div class="col-lg-3 col-md-6">
                                     <div class="planner-input-group">
                                         <label for="heroStartLoc"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Starting Location</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroStartLoc" placeholder="Search your starting location" required autocomplete="off">
+                                            <input type="text" id="heroStartLoc" placeholder="e.g. Hyderabad" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -103,43 +106,57 @@
                                     <div class="planner-input-group">
                                         <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroDestLoc" placeholder="Where do you want to go?" required autocomplete="off">
+                                            <input type="text" id="heroDestLoc" placeholder="e.g. Bengaluru" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="planner-input-group">
-                                        <label for="heroStartDate"><i class="bi bi-calendar3 text-muted me-1"></i>Start Date</label>
+                                        <label for="heroStartDate"><i class="bi bi-calendar3 me-1"></i>Start Date</label>
                                         <input type="date" id="heroStartDate" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="planner-input-group">
-                                        <label for="heroStartTime"><i class="bi bi-clock text-muted me-1"></i>Start Time</label>
+                                        <label for="heroStartTime"><i class="bi bi-clock me-1"></i>Start Time</label>
                                         <input type="time" id="heroStartTime" value="08:00" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-12">
                                     <button type="submit" class="btn btn-forest w-100 py-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm">
-                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan trip</span>
+                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan Trip</span>
                                     </button>
                                 </div>
                             </div>
-                            <!-- Optional Intermediate Stops Container (Requirement 3: Hyderabad -> Add a stop -> Kurnool -> Bengaluru) -->
+
+                            <!-- Optional Intermediate Stops Container (Hyderabad -> Add a stop -> Kurnool -> Bengaluru) -->
                             <div id="heroStopsContainer" class="mt-1"></div>
-                            <div class="mt-2 text-start">
-                                <button type="button" class="btn btn-sm btn-link text-decoration-none text-forest p-0 fw-semibold" id="heroAddStopBtn" onclick="addHeroStop()">
-                                    <i class="bi bi-plus-circle me-1"></i>+ Add a stop
+
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <button type="button" class="btn btn-sm btn-link text-decoration-none text-primary p-0 fw-semibold" id="heroAddStopBtn" onclick="addHeroStop()">
+                                    <i class="bi bi-plus-circle me-1"></i> + Add a stop along the way
                                 </button>
+                                <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+                                    <span class="small text-muted">Travel Mode:</span>
+                                    <select id="heroTransportMode" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="CAR" selected>🚗 Driving / Car</option>
+                                        <option value="BIKE">🏍️ Motorcycle</option>
+                                        <option value="PUBLIC_TRANSPORT">🚌 Public Transit</option>
+                                        <option value="WALKING">🚶 Walking</option>
+                                    </select>
+                                </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Optional AI Trip-Planning Entry Point -->
-                    <div class="ai-planner-card text-start mx-auto" style="max-width: 900px;">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
-                            <span class="small text-muted">Describe your trip in plain words</span>
+                    <!-- AI Trip-Planning Entry Point (Clearly Separated) -->
+                    <div class="ai-planner-card text-start mx-auto" style="max-width: 980px;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
+                                <span class="small fw-semibold text-dark">Plan with Natural Language</span>
+                            </div>
+                            <span class="text-muted extra-small d-none d-sm-inline">Instant Multi-City Route Extraction</span>
                         </div>
                         <form onsubmit="handleHeroAiSearch(event)">
                             <div class="input-group">
@@ -172,7 +189,7 @@
         </div>
     </section>
 
-    <!-- Destination Discovery Section: Famous Indian Places (Requirement 2) -->
+    <!-- Destination Discovery Section: Famous Indian Places -->
     <section class="py-5 bg-white border-bottom" id="discoverSection">
         <div class="container">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
@@ -182,15 +199,15 @@
                     </span>
                     <h2 class="fw-bold mb-1">Explore Famous Indian Destinations</h2>
                     <p class="text-muted small mb-0">
-                        Discover 20+ verified iconic Indian places across mountains, heritage forts, backwaters, and cultural wonders.
+                        Discover 20+ verified iconic Indian destinations across mountains, heritage citadels, backwaters, and cultural wonders.
                     </p>
                 </div>
                 <div class="mt-3 mt-md-0 d-flex gap-2">
                     <input type="text" id="destinationSearchInput" class="form-control form-control-sm" 
                            placeholder="Search places (e.g. Taj Mahal, Coorg)..." style="max-width: 260px;" 
                            oninput="filterIndianDestinations()">
-                    <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm text-nowrap">
-                        <i class="bi bi-sliders me-1"></i> Custom Trip
+                    <a th:href="@{/explore}" class="btn btn-outline-forest btn-sm text-nowrap">
+                        <i class="bi bi-grid me-1"></i> View All
                     </a>
                 </div>
             </div>
@@ -253,19 +270,65 @@
         </div>
     </section>
 
-    <!-- Core Features Section -->
-    <section class="py-5" style="background-color: var(--warm-sand-light);">
+    <!-- How VoyageCraft Works -->
+    <section class="py-5" style="background-color: var(--bg-main);">
         <div class="container">
             <div class="text-center mb-5">
-                <span class="badge-sage mb-2 d-inline-block">Intelligent Routing</span>
-                <h2 class="fw-bold mt-1">Engineered for Real Road Travel</h2>
-                <p class="text-muted small">No impossible timelines, phantom coordinates, or unnecessary backtracking.</p>
+                <span class="badge-sage mb-2 d-inline-block">Simple &bull; Accurate &bull; Autonomous</span>
+                <h2 class="fw-bold mt-1">How VoyageCraft Works</h2>
+                <p class="text-muted small" style="max-width: 600px; margin: 0 auto;">From high-level itinerary ideas to turn-by-turn driving realities in seconds.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon blue mx-auto mb-3">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">1. Define Route &amp; Stops</h5>
+                        <p class="text-muted small mb-0">
+                            Enter your starting point, final destination, and insert intermediate stops along the highway with real autocomplete.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon green mx-auto mb-3">
+                            <i class="bi bi-diagram-3-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">2. Optimize &amp; Schedule</h5>
+                        <p class="text-muted small mb-0">
+                            Attractions are grouped geographically to eliminate backtracking, respecting verified opening hours, visit times, and meal breaks.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-modern h-100 p-4 text-center">
+                        <div class="metric-icon purple mx-auto mb-3">
+                            <i class="bi bi-map-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">3. Interactive Navigation</h5>
+                        <p class="text-muted small mb-0">
+                            Explore daily timelines with explanatory travel segments, live Leaflet route geometry, and crew collaboration.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Section -->
+    <section class="py-5 bg-white border-top border-bottom">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="badge-sage mb-2 d-inline-block">Engineered for Reality</span>
+                <h2 class="fw-bold mt-1">Real Road Travel Intelligence</h2>
+                <p class="text-muted small">No impossible timelines, phantom coordinates, or straight-line distance approximations.</p>
             </div>
 
             <div class="row g-4">
                 <div class="col-md-6 col-lg-3">
                     <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon forest mx-auto mb-3">
+                        <div class="metric-icon blue mx-auto mb-3">
                             <i class="bi bi-search"></i>
                         </div>
                         <h5 class="fw-bold">Places Autocomplete</h5>
@@ -280,9 +343,9 @@
                         <div class="metric-icon sand mx-auto mb-3">
                             <i class="bi bi-speedometer2"></i>
                         </div>
-                        <h5 class="fw-bold">Accurate Highway Distances</h5>
+                        <h5 class="fw-bold">Accurate Highway Geometry</h5>
                         <p class="text-muted small mb-0">
-                            Real driving mileage and transit times powered by verified highway networks and OSRM turn-by-turn geometry.
+                            Real driving mileage and transit times calculated using highway networks and turn-by-turn road geometry.
                         </p>
                     </div>
                 </div>
@@ -294,7 +357,7 @@
                         </div>
                         <h5 class="fw-bold">Smart Route Optimization</h5>
                         <p class="text-muted small mb-0">
-                            Transparent side-by-side comparison of original vs recommended routes with calculated distance and time savings.
+                            Transparent side-by-side comparison of original vs recommended stop sequences with calculated savings.
                         </p>
                     </div>
                 </div>
@@ -314,13 +377,34 @@
         </div>
     </section>
 
+    <!-- Strong Final Call to Action -->
+    <section class="py-5 text-center text-white" style="background: linear-gradient(135deg, var(--deep-navy) 0%, #173B60 60%, var(--primary-blue) 100%);">
+        <div class="container py-4">
+            <span class="badge bg-white bg-opacity-15 text-white mb-3 px-3 py-2 rounded-pill small fw-semibold">
+                Start Exploring Today
+            </span>
+            <h2 class="display-6 fw-bold text-white mb-3">Ready to craft your next unforgettable journey?</h2>
+            <p class="text-white-50 lead mb-4" style="max-width: 650px; margin: 0 auto;">
+                Experience travel planning built for real road realities, authentic landmarks, and time-balanced daily schedules.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a th:href="@{/create-trip}" class="btn btn-light text-primary fw-bold px-4 py-2 shadow-sm">
+                    <i class="bi bi-compass me-1"></i> Plan a Custom Trip
+                </a>
+                <a th:href="@{/explore}" class="btn btn-outline-light fw-semibold px-4 py-2">
+                    <i class="bi bi-grid me-1"></i> Explore Indian Destinations
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
-    <footer class="py-4">
+    <footer class="py-4 bg-white border-top">
         <div class="container text-center">
             <p class="mb-1 text-muted small">
-                <i class="bi bi-stars text-warning me-1"></i> Made with the help of AI &bull; VoyageCraft Smart Travel Planner
+                <i class="bi bi-compass text-primary me-1"></i> VoyageCraft &bull; AI Smart Travel Planner &amp; Route Optimizer
             </p>
-            <p class="mb-0 text-muted extra-small" style="font-size: 0.78rem;">Every journey, thoughtfully planned.</p>
+            <p class="mb-0 text-muted extra-small" style="font-size: 0.78rem;">Your Journey. Beautifully Planned.</p>
         </div>
     </footer>
 
@@ -371,6 +455,7 @@
             const dest = document.getElementById('heroDestLoc').value.trim();
             const startDate = document.getElementById('heroStartDate').value;
             const startTime = (document.getElementById('heroStartTime')?.value || '08:00').trim();
+            const mode = (document.getElementById('heroTransportMode')?.value || 'CAR');
 
             if (!start) {
                 alert('Please enter a starting location.');
@@ -416,6 +501,7 @@
             url += '&dest=' + encodeURIComponent(dest);
             if (startDate) url += '&startDate=' + encodeURIComponent(startDate);
             if (startTime) url += '&startTime=' + encodeURIComponent(startTime);
+            if (mode) url += '&mode=' + encodeURIComponent(mode);
             window.location.href = url;
         }
 
@@ -433,7 +519,7 @@
             }
         }
 
-        // Indian Destination Discovery Filtering (Requirement 2)
+        // Indian Destination Discovery Filtering
         let currentSelectedCategory = 'ALL';
 
         function selectIndianCategory(category, btn) {

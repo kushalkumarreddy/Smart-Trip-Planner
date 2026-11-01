@@ -24,6 +24,10 @@ public class ItineraryItemDto {
     private Double latitude;
     private Double longitude;
     private String category;
+    private String transitionCaption;
+    private java.util.List<TimelineTransitionDto> transitionSegments = new java.util.ArrayList<>();
+    private String proximityTier; // IN_DESTINATION, NEARBY_ATTRACTION, NEARBY_TOWN, REGIONAL_OPTIONAL
+    private String townOrArea;
 
     public ItineraryItemDto() {
     }
@@ -186,5 +190,40 @@ public class ItineraryItemDto {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getTransitionCaption() {
+        return transitionCaption;
+    }
+
+    public void setTransitionCaption(String transitionCaption) {
+        this.transitionCaption = transitionCaption;
+    }
+
+    public java.util.List<TimelineTransitionDto> getTransitionSegments() {
+        if (transitionSegments == null) {
+            transitionSegments = new java.util.ArrayList<>();
+        }
+        return transitionSegments;
+    }
+
+    public void setTransitionSegments(java.util.List<TimelineTransitionDto> transitionSegments) {
+        this.transitionSegments = transitionSegments;
+    }
+
+    public String getProximityTier() {
+        return proximityTier;
+    }
+
+    public void setProximityTier(String proximityTier) {
+        this.proximityTier = proximityTier;
+    }
+
+    public String getTownOrArea() {
+        return townOrArea;
+    }
+
+    public void setTownOrArea(String townOrArea) {
+        this.townOrArea = townOrArea;
     }
 }

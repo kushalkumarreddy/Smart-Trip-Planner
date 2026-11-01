@@ -1,5 +1,7 @@
 package com.example.tripplanner.controller;
 
+import com.example.tripplanner.dto.SightseeingPlaceDto;
+import com.example.tripplanner.service.RecommendationService;
 import com.example.tripplanner.service.TripService;
 import com.example.tripplanner.service.UserService;
 import com.example.tripplanner.util.GeoUtils;
@@ -16,15 +18,35 @@ public class PlacesApiController {
 
     private final TripService tripService;
     private final com.example.tripplanner.service.GoogleMapsService googleMapsService;
-
+    private final RecommendationService recommendationService;
     private final UserService userService;
 
     public PlacesApiController(TripService tripService,
                                com.example.tripplanner.service.GoogleMapsService googleMapsService,
+                               RecommendationService recommendationService,
                                UserService userService) {
         this.tripService = tripService;
         this.googleMapsService = googleMapsService;
+        this.recommendationService = recommendationService;
         this.userService = userService;
+    }
+
+    /**
+     * Intelligent nearby places discovery endpoint supporting progressive search radii
+     * (e.g. 10 km, 25 km, 50 km, 100 km) and category filtering.
+     */
+    @GetMapping("/nearby")
+    public ResponseEntity<List<SightseeingPlaceDto>> getNearbyPlaces(
+            @RequestParam("destination") String destination,
+            @RequestParam(value = "radiusKm", defaultValue = "50") int radiusKm,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "sortBy", defaultValue = "popularity") String sortBy) {
+        if (destination == null || destination.trim().isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        List<SightseeingPlaceDto> places = recommendationService.getNearbyPlacesWithProgressiveRadius(
+                destination.trim(), radiusKm, category, sortBy, null);
+        return ResponseEntity.ok(places);
     }
 
     @PutMapping("/{id}/visited")

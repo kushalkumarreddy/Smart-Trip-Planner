@@ -30,25 +30,44 @@
             <a class="navbar-brand" th:href="@{/}">
                 <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
-            <div class="d-flex align-items-center gap-2">
-                <!-- Theme Selector Dropdown -->
-                <div class="dropdown me-1">
-                    <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
-                        <i class="bi bi-circle-half theme-icon-active"></i>
-                        <span class="d-none d-md-inline theme-name-active">Auto</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('dark')"><i class="bi bi-moon-stars-fill text-info"></i> Dark</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
-                    </ul>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/create-trip}">Plan a Trip</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/explore}">Explore</a>
+                    </li>
+                    <li class="nav-item" th:if="${isLoggedIn}">
+                        <a class="nav-link" th:href="@{/dashboard}">My Journeys</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Theme Selector Dropdown -->
+                    <div class="dropdown me-1">
+                        <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
+                            <i class="bi bi-circle-half theme-icon-active"></i>
+                            <span class="d-none d-md-inline theme-name-active ms-1">Auto</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('dark')"><i class="bi bi-moon-stars-fill text-info"></i> Dark</button></li>
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
+                        </ul>
+                    </div>
+                    <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
+                        <i class="bi bi-speedometer2 me-1"></i> My Journeys
+                    </a>
+                    <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-outline-forest btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </a>
                 </div>
-                <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-outline-forest btn-sm">
-                    <i class="bi bi-speedometer2 me-1"></i> My Journeys
-                </a>
-                <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-outline-forest btn-sm">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
-                </a>
             </div>
         </div>
     </nav>

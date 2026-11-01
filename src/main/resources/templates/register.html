@@ -28,11 +28,22 @@
                 <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
             <div class="d-flex align-items-center gap-2">
+                <ul class="navbar-nav d-none d-md-flex flex-row gap-3 me-2">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/create-trip}">Plan a Trip</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/explore}">Explore</a>
+                    </li>
+                </ul>
                 <!-- Theme Selector Dropdown -->
                 <div class="dropdown me-1">
                     <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
                         <i class="bi bi-circle-half theme-icon-active"></i>
-                        <span class="d-none d-md-inline theme-name-active">Auto</span>
+                        <span class="d-none d-md-inline theme-name-active ms-1">Auto</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
                         <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>

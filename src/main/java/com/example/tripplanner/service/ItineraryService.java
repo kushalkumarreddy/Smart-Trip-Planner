@@ -3,6 +3,7 @@ package com.example.tripplanner.service;
 import com.example.tripplanner.dto.DayItineraryDto;
 import com.example.tripplanner.dto.ItineraryItemDto;
 import com.example.tripplanner.dto.SightseeingPlaceDto;
+import com.example.tripplanner.dto.TimelineTransitionDto;
 import com.example.tripplanner.entity.Destination;
 import com.example.tripplanner.entity.ItineraryItem;
 import com.example.tripplanner.entity.Place;
@@ -148,6 +149,7 @@ public class ItineraryService {
             }
 
             DayItineraryDto dayDto = new DayItineraryDto(dayNumber, currentDate, dayTitle);
+            dayDto.setDestinationName(currentCityName);
             List<ItineraryItemDto> items = new ArrayList<>();
 
             String currentTime24 = dailyStart;
@@ -298,13 +300,53 @@ public class ItineraryService {
                 // Moderate drive day (2-4 hours) -> 2-3 sightseeing stops
                 maxPlacesToday = 3;
             } else {
-                // Normal sightseeing day (full city day) -> aim for 3-6 meaningful activities
-                maxPlacesToday = Math.min(6, Math.max(3, (dayLimitMinutes - 120) / 90));
+                // Normal sightseeing day (full city day) -> aim for 3-5 meaningful activities
+                maxPlacesToday = Math.min(4, Math.max(3, (dayLimitMinutes - 120) / 120));
             }
 
             // Schedule attractions for this day
             List<SightseeingPlaceDto> poolPlaces = getOrGeneratePlacesForCity(currentDest, currentCityName);
-            List<SightseeingPlaceDto> availableCandidates = new ArrayList<>(poolPlaces);
+            List<SightseeingPlaceDto> availableCandidates = new ArrayList<>();
+            for (SightseeingPlaceDto p : poolPlaces) {
+                String pKey = normalizePlaceKey(p.getName());
+                if (!pKey.isEmpty() && !tripScheduledPlaceKeys.contains(pKey)) {
+                    availableCandidates.add(p);
+                }
+            }
+
+            // If available candidates are fewer than required today, fetch more from recommendationService
+            if (availableCandidates.size() < maxPlacesToday && recommendationService != null) {
+                List<String> preferredInterests = (trip != null && trip.getPreferredInterests() != null && !trip.getPreferredInterests().isEmpty())
+                        ? Arrays.asList(trip.getPreferredInterests().split(",")) : Collections.emptyList();
+                List<SightseeingPlaceDto> more = recommendationService.getRecommendedPlaces(currentCityName, preferredInterests, "popularity", null);
+                if (more != null) {
+                    for (SightseeingPlaceDto m : more) {
+                        String mKey = normalizePlaceKey(m.getName());
+                        if (!mKey.isEmpty() && !tripScheduledPlaceKeys.contains(mKey)) {
+                            boolean exists = availableCandidates.stream().anyMatch(c -> normalizePlaceKey(c.getName()).equals(mKey));
+                            if (!exists) {
+                                availableCandidates.add(m);
+                            }
+                        }
+                    }
+                }
+                // If still fewer than required today, expand search to nearby towns within 65 km
+                if (availableCandidates.size() < maxPlacesToday) {
+                    List<SightseeingPlaceDto> nearbyTowns = recommendationService.getNearbyPlacesWithProgressiveRadius(
+                            currentCityName, 65, null, "popularity", preferredInterests);
+                    if (nearbyTowns != null) {
+                        for (SightseeingPlaceDto m : nearbyTowns) {
+                            String mKey = normalizePlaceKey(m.getName());
+                            if (!mKey.isEmpty() && !tripScheduledPlaceKeys.contains(mKey)) {
+                                boolean exists = availableCandidates.stream().anyMatch(c -> normalizePlaceKey(c.getName()).equals(mKey));
+                                if (!exists) {
+                                    availableCandidates.add(m);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             int placesScheduledToday = 0;
             double lastPlaceLat = cityCoords[0];
             double lastPlaceLng = cityCoords[1];
@@ -410,7 +452,18 @@ public class ItineraryService {
                 visitItem.setStartTime(TimeUtils.formatAmPm(actStart));
                 visitItem.setEndTime(TimeUtils.formatAmPm(actEnd));
                 visitItem.setActivity("Visit " + place.getName());
-                visitItem.setLocation(place.getName() + ", " + currentCityName);
+
+                String town = (place.getTownOrArea() != null && !place.getTownOrArea().trim().isEmpty())
+                        ? place.getTownOrArea().trim() : currentCityName;
+                visitItem.setTownOrArea(town);
+                visitItem.setProximityTier(place.getProximityTier() != null ? place.getProximityTier() : "IN_DESTINATION");
+
+                if (town != null && !town.equalsIgnoreCase(currentCityName)) {
+                    visitItem.setLocation(place.getName() + " (" + town + ")");
+                } else {
+                    visitItem.setLocation(place.getName() + ", " + currentCityName);
+                }
+
                 visitItem.setActivityType("SIGHTSEEING");
                 visitItem.setPlaceId(place.getId());
                 visitItem.setTravelDistanceKm(placeDist);
@@ -423,6 +476,13 @@ public class ItineraryService {
                 visitItem.setCategory(place.getCategory() != null ? place.getCategory() : "Historical");
 
                 String notes = place.getDescription() != null ? place.getDescription() : "";
+                if (place.getProximityTier() != null && !"IN_DESTINATION".equalsIgnoreCase(place.getProximityTier())
+                        && place.getDistanceFromDestinationKm() != null && place.getDistanceFromDestinationKm() > 1.0) {
+                    String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%d min drive)",
+                            town, place.getDistanceFromDestinationKm(), currentCityName,
+                            place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins);
+                    notes = notes.isEmpty() ? distanceInfo : (distanceInfo + " • " + notes);
+                }
                 String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
                 if (conflict != null) {
                     notes = (notes.isEmpty() ? "" : notes + " • ") + "⚠️ " + conflict;
@@ -627,6 +687,13 @@ public class ItineraryService {
                 dayDto.setStatus("Balanced");
             }
 
+            if (totalPlacesCount == 0 && (dayDto.getWarningMessage() == null || dayDto.getWarningMessage().isEmpty())) {
+                dayDto.setStatus("No attractions discovered");
+                dayDto.setWarningMessage("No verified sightseeing attractions could be discovered for " + currentCityName + ". You can customize or add activities using the button below.");
+            }
+
+            populateDayTransitions(dayDto, transportMode);
+
             dayItineraries.add(dayDto);
         }
 
@@ -655,6 +722,7 @@ public class ItineraryService {
 
         String dayTitle = "Day " + dayNumber + " • Refreshed Itinerary in " + destName;
         DayItineraryDto dayDto = new DayItineraryDto(dayNumber, targetDate, dayTitle);
+        dayDto.setDestinationName(destName);
         List<ItineraryItemDto> items = new ArrayList<>();
 
         String currentTime24 = dailyStart;
@@ -720,6 +788,30 @@ public class ItineraryService {
                 }
                 if (!isUsed) {
                     filtered.add(c);
+                }
+            }
+        }
+        if (filtered.size() < 5 && recommendationService != null) {
+            List<SightseeingPlaceDto> nearbyTowns = recommendationService.getNearbyPlacesWithProgressiveRadius(
+                    destName, 65, categoryFilter, "popularity", null);
+            if (nearbyTowns != null) {
+                for (SightseeingPlaceDto c : nearbyTowns) {
+                    String cKey = normalizePlaceKey(c.getName());
+                    boolean isUsed = false;
+                    if (alreadyUsedPlaceNames != null) {
+                        for (String used : alreadyUsedPlaceNames) {
+                            if (!cKey.isEmpty() && normalizePlaceKey(used).equals(cKey)) {
+                                isUsed = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!isUsed) {
+                        boolean already = filtered.stream().anyMatch(f -> normalizePlaceKey(f.getName()).equals(cKey));
+                        if (!already) {
+                            filtered.add(c);
+                        }
+                    }
                 }
             }
         }
@@ -807,7 +899,18 @@ public class ItineraryService {
             visitItem.setStartTime(TimeUtils.formatAmPm(actStart));
             visitItem.setEndTime(TimeUtils.formatAmPm(actEnd));
             visitItem.setActivity("Visit " + place.getName());
-            visitItem.setLocation(place.getName() + ", " + destName);
+
+            String town = (place.getTownOrArea() != null && !place.getTownOrArea().trim().isEmpty())
+                    ? place.getTownOrArea().trim() : destName;
+            visitItem.setTownOrArea(town);
+            visitItem.setProximityTier(place.getProximityTier() != null ? place.getProximityTier() : "IN_DESTINATION");
+
+            if (town != null && !town.equalsIgnoreCase(destName)) {
+                visitItem.setLocation(place.getName() + " (" + town + ")");
+            } else {
+                visitItem.setLocation(place.getName() + ", " + destName);
+            }
+
             visitItem.setActivityType("SIGHTSEEING");
             visitItem.setTravelDistanceKm(placeDist);
             visitItem.setTravelTimeMinutes(transitMins);
@@ -819,6 +922,13 @@ public class ItineraryService {
             visitItem.setCategory(place.getCategory() != null ? place.getCategory() : "Sightseeing");
 
             String notes = place.getDescription() != null ? place.getDescription() : "";
+            if (place.getProximityTier() != null && !"IN_DESTINATION".equalsIgnoreCase(place.getProximityTier())
+                    && place.getDistanceFromDestinationKm() != null && place.getDistanceFromDestinationKm() > 1.0) {
+                String distanceInfo = String.format(Locale.US, "📍 Nearby attraction in %s • %.1f km from %s (~%d min drive)",
+                        town, place.getDistanceFromDestinationKm(), destName,
+                        place.getEstimatedTravelTimeMinutes() != null ? place.getEstimatedTravelTimeMinutes() : transitMins);
+                notes = notes.isEmpty() ? distanceInfo : (distanceInfo + " • " + notes);
+            }
             String conflict = checkOpeningHoursConflict(actStart, actEnd, place.getOpeningHours());
             if (conflict != null) {
                 notes = (notes.isEmpty() ? "" : notes + " • ") + "⚠️ " + conflict;
@@ -987,11 +1097,24 @@ public class ItineraryService {
             }
         }
 
-        // If dest has fewer than 4 places, supplement with other verified catalog places for this city
-        if (dtos.size() < 4 && recommendationService != null) {
+        // If dest has fewer than 16 places, supplement with other verified catalog places for this city
+        if (dtos.size() < 16 && recommendationService != null) {
             List<SightseeingPlaceDto> more = recommendationService.getRecommendedPlaces(cityName, null, "popularity", null);
             if (more != null) {
                 for (SightseeingPlaceDto m : more) {
+                    String mKey = normalizePlaceKey(m.getName());
+                    boolean exists = dtos.stream().anyMatch(d -> normalizePlaceKey(d.getName()).equals(mKey));
+                    if (!exists) {
+                        dtos.add(m);
+                    }
+                }
+            }
+        }
+        // If still fewer than 16 places, supplement with nearby surrounding places
+        if (dtos.size() < 16 && recommendationService != null) {
+            List<SightseeingPlaceDto> nearby = recommendationService.getNearbyPlacesWithProgressiveRadius(cityName, 65, null, "popularity", null);
+            if (nearby != null) {
+                for (SightseeingPlaceDto m : nearby) {
                     String mKey = normalizePlaceKey(m.getName());
                     boolean exists = dtos.stream().anyMatch(d -> normalizePlaceKey(d.getName()).equals(mKey));
                     if (!exists) {
@@ -1031,13 +1154,16 @@ public class ItineraryService {
             String actStart = TimeUtils.roundUpTime24(TimeUtils.addMinutes(currentTime24, estTransit), TimeUtils.DEFAULT_INTERVAL_MINUTES);
             String actEnd = TimeUtils.addMinutes(actStart, visitDur);
 
-            // If it exceeds daily end time, skip
-            if (dailyEnd != null && TimeUtils.parseTime(actEnd).isAfter(TimeUtils.parseTime(dailyEnd))) {
+            // If activity starts after daily end time, skip
+            if (dailyEnd != null && TimeUtils.parseTime(actStart).isAfter(TimeUtils.parseTime(dailyEnd))) {
                 continue;
             }
 
             // Proximity score with opening hours check
             double score = dist;
+            if (dailyEnd != null && TimeUtils.parseTime(actEnd).isAfter(TimeUtils.parseTime(dailyEnd))) {
+                score += 25.0; // Penalize places extending beyond daily boundary
+            }
             String conflict = checkOpeningHoursConflict(actStart, actEnd, candidate.getOpeningHours());
             if (conflict != null && conflict.contains("opens at")) {
                 score += 50.0; // Penalize closed places so open attractions are picked first
@@ -1131,6 +1257,7 @@ public class ItineraryService {
 
         String dayTitle = "Day " + dayNumber + " • " + cityName + " Schedule";
         DayItineraryDto dayDto = new DayItineraryDto(dayNumber, dayDate, dayTitle);
+        dayDto.setDestinationName(cityName);
 
         List<ItineraryItemDto> recalculated = new ArrayList<>();
         String currentTime24 = dailyStart;
@@ -1460,7 +1587,160 @@ public class ItineraryService {
             dayDto.setStatus("Balanced");
         }
 
+        if (totalPlacesCount == 0 && (dayDto.getWarningMessage() == null || dayDto.getWarningMessage().isEmpty())) {
+            dayDto.setStatus("No attractions discovered");
+            dayDto.setWarningMessage("No verified sightseeing attractions could be discovered for " + cityName + ". You can customize or add activities using the button below.");
+        }
+
+        populateDayTransitions(dayDto, transportMode);
+
         return dayDto;
+    }
+
+    public void populateDayTransitions(DayItineraryDto dayDto, String transportMode) {
+        if (dayDto == null || dayDto.getItems() == null || dayDto.getItems().size() <= 1) {
+            return;
+        }
+
+        List<ItineraryItemDto> items = dayDto.getItems();
+        for (int i = 1; i < items.size(); i++) {
+            ItineraryItemDto prev = items.get(i - 1);
+            ItineraryItemDto curr = items.get(i);
+
+            List<TimelineTransitionDto> segments = new ArrayList<>();
+
+            // 1. Determine Distance and Transit Duration
+            double lat1 = (prev.getLatitude() != null && prev.getLatitude() != 0.0) ? prev.getLatitude() : 0.0;
+            double lon1 = (prev.getLongitude() != null && prev.getLongitude() != 0.0) ? prev.getLongitude() : 0.0;
+            double lat2 = (curr.getLatitude() != null && curr.getLatitude() != 0.0) ? curr.getLatitude() : 0.0;
+            double lon2 = (curr.getLongitude() != null && curr.getLongitude() != 0.0) ? curr.getLongitude() : 0.0;
+
+            Double distKm = curr.getTravelDistanceKm();
+            Integer travelMins = curr.getTravelTimeMinutes();
+
+            if ((distKm == null || distKm <= 0.0 || travelMins == null || travelMins <= 0) &&
+                    lat1 != 0.0 && lon1 != 0.0 && lat2 != 0.0 && lon2 != 0.0) {
+                if (googleMapsService != null) {
+                    GoogleMapsService.RouteCalculationResult leg = googleMapsService.calculateRouteBetweenCoordinates(lat1, lon1, lat2, lon2, transportMode);
+                    if (leg != null && leg.isSuccess()) {
+                        distKm = Math.max(0.5, leg.getDistanceKm());
+                        travelMins = Math.max(5, leg.getDurationMinutes());
+                    }
+                }
+                if (distKm == null || distKm <= 0.0) {
+                    GeoUtils.RoadRouteResult roadLeg = GeoUtils.calculateRealRoadRoute(lat1, lon1, lat2, lon2, transportMode);
+                    distKm = Math.max(0.5, roadLeg.getDistanceKm());
+                    travelMins = Math.max(5, roadLeg.getDurationMinutes());
+                }
+                curr.setTravelDistanceKm(distKm);
+                curr.setTravelTimeMinutes(travelMins);
+            }
+
+            if (distKm == null) distKm = 0.0;
+            if (travelMins == null) travelMins = 0;
+
+            // 2. Determine Transport Mode and Format
+            String modeNorm = (transportMode != null) ? transportMode.trim().toUpperCase() : "CAR";
+            String currType = curr.getActivityType() != null ? curr.getActivityType().toUpperCase() : "SIGHTSEEING";
+
+            String travelIcon;
+            String travelText;
+            String travelType;
+
+            String formattedDist = (distKm >= 1.0)
+                    ? String.format(Locale.US, "%.1f km", distKm)
+                    : String.format(Locale.US, "%d m", Math.round(distKm * 1000));
+            String formattedTravelDuration = TimeUtils.formatDuration(travelMins);
+
+            if ("WALKING".equals(modeNorm)) {
+                travelIcon = "bi-person-walking";
+                travelType = "WALK";
+                travelText = "Walk to next attraction · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
+            } else if ("TRANSIT".equals(modeNorm) || "PUBLIC_TRANSPORT".equals(modeNorm)) {
+                travelIcon = "bi-bus-front";
+                travelType = "TRANSIT";
+                travelText = "Public transport · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
+            } else if ("BICYCLE".equals(modeNorm)) {
+                travelIcon = "bi-bicycle";
+                travelType = "BIKE";
+                travelText = "Bike to next stop · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
+            } else if ("HOTEL".equals(currType) || (curr.getActivity() != null && curr.getActivity().toLowerCase().contains("hotel"))) {
+                travelIcon = "bi-building";
+                travelType = "HOTEL_TRANSFER";
+                travelText = "Transfer to hotel · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
+            } else {
+                travelIcon = "bi-car-front";
+                travelType = "TRAVEL";
+                travelText = "Travel to next stop · " + formattedTravelDuration + (distKm > 0.05 ? " · " + formattedDist : "");
+            }
+
+            // Add travel segment if travel takes time or distance
+            if (travelMins > 0 || distKm > 0.1) {
+                TimelineTransitionDto travelSeg = new TimelineTransitionDto(travelIcon, travelText, travelType, distKm, travelMins);
+                travelSeg.setFromLocation(prev.getLocation() != null ? prev.getLocation() : prev.getActivity());
+                travelSeg.setToLocation(curr.getLocation() != null ? curr.getLocation() : curr.getActivity());
+                segments.add(travelSeg);
+            }
+
+            // 3. Time Gap Analysis (Arrival buffer vs Free time)
+            try {
+                LocalTime endA = TimeUtils.parseTime(prev.getEndTime());
+                LocalTime startB = TimeUtils.parseTime(curr.getStartTime());
+                int rawGap = 0;
+                if (startB.isAfter(endA)) {
+                    rawGap = (int) ChronoUnit.MINUTES.between(endA, startB);
+                } else if (startB.isBefore(endA)) {
+                    rawGap = (int) ChronoUnit.MINUTES.between(endA, LocalTime.MAX) + 1 + (int) ChronoUnit.MINUTES.between(LocalTime.MIN, startB);
+                }
+
+                if (rawGap > 0) {
+                    int gapAfterTravel = rawGap - travelMins;
+                    if (gapAfterTravel >= 10 && gapAfterTravel <= 25) {
+                        TimelineTransitionDto bufferSeg = new TimelineTransitionDto(
+                                "bi-clock",
+                                "Arrival buffer · " + TimeUtils.formatDuration(gapAfterTravel),
+                                "BUFFER",
+                                0.0,
+                                gapAfterTravel
+                        );
+                        segments.add(bufferSeg);
+                    } else if (gapAfterTravel > 25) {
+                        String freeTimeStr = TimeUtils.formatDuration(gapAfterTravel);
+                        TimelineTransitionDto freeSeg = new TimelineTransitionDto(
+                                "bi-sun",
+                                "Free time · " + freeTimeStr,
+                                "FREE_TIME",
+                                0.0,
+                                gapAfterTravel
+                        );
+                        segments.add(freeSeg);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            // 4. Schedule Conflict Check (Opening hours)
+            if (curr.getNotes() != null && (curr.getNotes().contains("⚠️ Closed") || curr.getNotes().contains("⚠️ Schedule conflict") || curr.getNotes().contains("closes before arrival"))) {
+                TimelineTransitionDto conflictSeg = new TimelineTransitionDto(
+                        "bi-exclamation-triangle",
+                        "Schedule conflict · Next attraction closes before arrival",
+                        "CONFLICT",
+                        0.0,
+                        0
+                );
+                segments.add(conflictSeg);
+            }
+
+            curr.setTransitionSegments(segments);
+            if (!segments.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (TimelineTransitionDto s : segments) {
+                    if (sb.length() > 0) sb.append(" | ");
+                    sb.append(s.getText());
+                }
+                curr.setTransitionCaption(sb.toString());
+            }
+        }
     }
 
     public static String normalizePlaceKey(String placeName) {

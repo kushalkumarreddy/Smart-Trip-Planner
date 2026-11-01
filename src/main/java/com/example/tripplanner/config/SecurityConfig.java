@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/places/autocomplete",
                                 "/api/places/reverse-geocode",
                                 "/api/places/photo",
+                                "/api/places/nearby",
                                 "/api/trips/preview-optimize",
                                 "/api/trips/preview-round-trip",
                                 "/api/trips/ai-plan",
@@ -63,6 +64,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
+                                "/explore",
                                 "/login",
                                 "/register",
                                 "/create-trip",
@@ -78,6 +80,7 @@ public class SecurityConfig {
                                 "/api/places/autocomplete",
                                 "/api/places/reverse-geocode",
                                 "/api/places/photo",
+                                "/api/places/nearby",
                                 "/api/trips/guest",
                                 "/api/trips/guest-plan",
                                 "/api/trips/guest/**",

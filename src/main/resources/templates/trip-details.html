@@ -60,32 +60,51 @@
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container">
+        <div class="container-fluid px-lg-4">
             <a class="navbar-brand" th:href="@{/}">
                 <i class="bi bi-compass-fill"></i> VoyageCraft
             </a>
-            <div class="d-flex align-items-center gap-2">
-                <!-- Theme Selector Dropdown -->
-                <div class="dropdown me-1">
-                    <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
-                        <i class="bi bi-circle-half theme-icon-active"></i>
-                        <span class="d-none d-md-inline theme-name-active">Auto</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('dark')"><i class="bi bi-moon-stars-fill text-info"></i> Dark</button></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
-                    </ul>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/create-trip}">Plan a Trip</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/explore}">Explore</a>
+                    </li>
+                    <li class="nav-item" th:if="${isLoggedIn}">
+                        <a class="nav-link" th:href="@{/dashboard}">My Journeys</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Theme Selector Dropdown -->
+                    <div class="dropdown me-1">
+                        <button class="theme-selector-btn dropdown-toggle" type="button" id="themeDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Theme">
+                            <i class="bi bi-circle-half theme-icon-active"></i>
+                            <span class="d-none d-md-inline theme-name-active ms-1">Auto</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="themeDropdownBtn">
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('light')"><i class="bi bi-sun-fill text-warning"></i> Light</button></li>
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('dark')"><i class="bi bi-moon-stars-fill text-info"></i> Dark</button></li>
+                            <li><button class="dropdown-item d-flex align-items-center gap-2 small" type="button" onclick="themeManager.setTheme('system')"><i class="bi bi-display text-muted"></i> System Auto</button></li>
+                        </ul>
+                    </div>
+                    <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i> New Trip
+                    </a>
+                    <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-sand btn-sm">
+                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                    </a>
+                    <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-sand btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </a>
                 </div>
-                <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i> New Trip
-                </a>
-                <a th:if="${isLoggedIn}" th:href="@{/dashboard}" class="btn btn-sand btn-sm">
-                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                </a>
-                <a th:if="${!isLoggedIn}" th:href="@{/login}" class="btn btn-sand btn-sm">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
-                </a>
             </div>
         </div>
     </nav>
@@ -559,7 +578,7 @@
                 </div>
                 <div class="savings-highlight py-1 px-3">
                     <i class="bi bi-arrow-down-circle-fill"></i>
-                    <span>Save <strong th:text="${trip.routeSummary.potentialSavingsKm + ' km'}"></strong> &amp; <strong th:text="${trip.routeSummary.potentialSavingsMinutes + ' mins'}"></strong> of driving</span>
+                    <span>Save <strong th:text="${trip.routeSummary.potentialSavingsKm + ' km'}"></strong> &amp; <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(trip.routeSummary.potentialSavingsMinutes)}"></strong> of driving</span>
                 </div>
             </div>
 
@@ -775,6 +794,15 @@
                                 <i class="bi bi-speedometer2 me-1"></i> <span th:text="${day.totalDistanceKm + ' km'}"></span>
                             </span>
 
+                            <!-- Nearby Places Explorer Action Button -->
+                            <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1"
+                                    th:data-day="${day.dayNumber}"
+                                    th:data-dest="${day.destinationName != null ? day.destinationName : (trip.destinations != null and !trip.destinations.isEmpty() ? trip.destinations[0].name : trip.startLocation)}"
+                                    onclick="openNearbyPlacesExplorer(this.dataset.day, this.dataset.dest)"
+                                    title="Explore authentic attractions in this destination and surrounding towns">
+                                <i class="bi bi-compass me-1"></i> Nearby Places
+                            </button>
+
                             <!-- Single Day Regeneration Dropdown Action (Requirement 4) -->
                             <div class="dropdown">
                                 <button class="btn btn-sand btn-sm dropdown-toggle px-3" type="button" data-bs-toggle="dropdown">
@@ -827,21 +855,48 @@
                                 <strong th:text="${T(com.example.tripplanner.util.TimeUtils).formatDuration(day.totalDurationMinutes)}"></strong> (excluding traffic delays).
                                 Consider moving one attraction to another day.
                             </span>
+                            <div th:if="${day.warningMessage != null and #strings.contains(day.warningMessage, 'No verified sightseeing')}" class="mt-2">
+                                <button type="button" class="btn btn-primary btn-sm px-3"
+                                        th:data-day="${day.dayNumber}"
+                                        th:data-dest="${day.destinationName != null ? day.destinationName : trip.startLocation}"
+                                        onclick="openNearbyPlacesExplorer(this.dataset.day, this.dataset.dest)">
+                                    <i class="bi bi-compass me-1"></i> Explore Nearby Attractions &amp; Surrounding Towns
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Timeline Items -->
                     <div class="timeline-container">
-                        <div th:each="item, itemStat : ${day.items}" class="timeline-item"
-                             th:id="${'timeline-item-' + (item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index))}"
-                             th:data-item-id="${item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index)}"
-                             th:data-day="${day.dayNumber}"
-                             th:data-lat="${item.latitude}"
-                             th:data-lng="${item.longitude}"
-                             th:data-activity="${item.activity}"
-                             onclick="focusActivityOnMap(this)"
-                             title="Click to view on interactive map"
-                             style="cursor: pointer;">
+                        <th:block th:each="item, itemStat : ${day.items}">
+                            <!-- Timeline Transition / Travel Caption Between Consecutive Activities (Issue 2) -->
+                            <div th:if="${!itemStat.first and item.transitionSegments != null and !item.transitionSegments.isEmpty()}"
+                                 class="timeline-transition-block my-2"
+                                 style="position: relative; z-index: 2; margin-left: 0.25rem;">
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span th:each="seg : ${item.transitionSegments}"
+                                          class="badge timeline-transition-badge d-inline-flex align-items-center gap-1 shadow-xs"
+                                          th:classappend="${seg.type == 'CONFLICT' ? 'bg-danger-subtle text-danger border border-danger' : 
+                                                          (seg.type == 'FREE_TIME' ? 'bg-warning-subtle text-warning-emphasis border border-warning' : 
+                                                          (seg.type == 'BUFFER' ? 'bg-info-subtle text-info-emphasis border border-info' : 
+                                                          (seg.type == 'HOTEL_TRANSFER' ? 'bg-primary-subtle text-primary border border-primary' : 
+                                                          'bg-light text-secondary border')))}">
+                                        <i th:class="${'bi ' + seg.icon}"></i>
+                                        <span th:text="${seg.text != null ? seg.text.replace('🚗 ', '').replace('🚶 ', '').replace('🚌 ', '').replace('🚲 ', '').replace('🏨 ', '').replace('🕒 ', '').replace('🌤 ', '').replace('⚠️ ', '') : ''}"></span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item"
+                                 th:id="${'timeline-item-' + (item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index))}"
+                                 th:data-item-id="${item.id != null ? item.id : (day.dayNumber + '-' + itemStat.index)}"
+                                 th:data-day="${day.dayNumber}"
+                                 th:data-lat="${item.latitude}"
+                                 th:data-lng="${item.longitude}"
+                                 th:data-activity="${item.activity}"
+                                 onclick="focusActivityOnMap(this)"
+                                 title="Click to view on interactive map"
+                                 style="cursor: pointer;">
                             
                             <div class="timeline-dot" 
                                  th:classappend="${(item.visited != null and item.visited) ? 'visited' : (item.activityType == 'MEAL' ? 'meal' : (item.activityType == 'HOTEL' ? 'hotel' : ''))}">
@@ -953,11 +1008,22 @@
                                     <span th:if="${item.travelDistanceKm > 0}">
                                         &bull; <span th:text="${item.travelDistanceKm + ' km transit'}"></span>
                                     </span>
+                                    <span th:if="${item.proximityTier != null and item.proximityTier != 'IN_DESTINATION'}"
+                                          class="badge ms-1"
+                                          th:classappend="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'bg-primary-subtle text-primary border border-primary' : 
+                                                          (item.proximityTier == 'NEARBY_TOWN' ? 'bg-info-subtle text-info-emphasis border border-info' : 
+                                                          'bg-secondary-subtle text-secondary border')}"
+                                          style="font-size: 0.72rem; font-weight: 500;">
+                                        <i class="bi bi-signpost-2 me-1"></i>
+                                        <span th:text="${item.proximityTier == 'NEARBY_ATTRACTION' ? 'Nearby Attraction' : (item.proximityTier == 'NEARBY_TOWN' ? 'Nearby Town' : 'Regional Stop')}"></span>
+                                        <span th:if="${item.townOrArea != null and !item.townOrArea.isEmpty()}" th:text="' • ' + ${item.townOrArea}"></span>
+                                    </span>
                                 </div>
 
                                 <p th:if="${item.notes}" class="small text-muted mb-0" th:text="${item.notes}"></p>
                             </div>
                         </div>
+                        </th:block>
                     </div>
 
                     <!-- Add Activity to Day Action Button -->
@@ -1426,6 +1492,94 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3c. Nearby Places & Surrounding Area Explorer Modal -->
+    <div class="modal fade" id="nearbyPlacesModal" tabindex="-1" aria-labelledby="nearbyPlacesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom py-3 px-4" style="background: var(--bg-surface-secondary, #F7F9FC);">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-primary text-white" style="font-size: 0.75rem; letter-spacing: 0.5px;">DAY <span id="nearbyModalDayLabel">1</span> DISCOVERY</span>
+                            <span class="badge bg-light text-secondary border" style="font-size: 0.75rem;"><i class="bi bi-shield-check text-success me-1"></i>Verified Catalog</span>
+                        </div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="nearbyPlacesModalLabel">
+                            <i class="bi bi-compass-fill text-primary me-2"></i>Nearby Places &amp; Surrounding Area Explorer
+                        </h5>
+                        <p class="text-muted small mb-0 mt-1">
+                            Discover authentic attractions, temples, nature spots &amp; day trips around <strong id="nearbyModalDestName" class="text-dark">Destination</strong>.
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <!-- Explorer Filter Bar -->
+                    <div class="p-3 rounded-3 mb-3" style="background: #FFFFFF; border: 1px solid var(--border-color, #E5EAF0);">
+                        <!-- Search & Radius Filter -->
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="nearbyPlacesSearchInput" class="form-control border-start-0" 
+                                           placeholder="Search by name, temple, waterfalls, beach..." oninput="handleNearbySearchInput(this.value)">
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <span class="small text-muted me-2 fw-semibold">Radius:</span>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Search Radius">
+                                    <button type="button" class="btn btn-outline-secondary nearby-radius-pill" data-radius="10" onclick="setNearbyRadius(10)">10 km</button>
+                                    <button type="button" class="btn btn-outline-secondary nearby-radius-pill" data-radius="25" onclick="setNearbyRadius(25)">25 km</button>
+                                    <button type="button" class="btn btn-outline-primary active nearby-radius-pill" data-radius="50" onclick="setNearbyRadius(50)">50 km</button>
+                                    <button type="button" class="btn btn-outline-secondary nearby-radius-pill" data-radius="100" onclick="setNearbyRadius(100)">100 km</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Filter Pills -->
+                        <div class="d-flex flex-wrap gap-1 align-items-center pt-2 border-top">
+                            <span class="small text-muted me-1 fw-semibold"><i class="bi bi-filter me-1"></i>Category:</span>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-primary" data-category="ALL" onclick="setNearbyCategory('ALL')">All</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Historical" onclick="setNearbyCategory('Historical')">Historical</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Temples" onclick="setNearbyCategory('Temples')">Temples</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Nature" onclick="setNearbyCategory('Nature')">Nature</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Waterfalls" onclick="setNearbyCategory('Waterfalls')">Waterfalls</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Museums" onclick="setNearbyCategory('Museums')">Museums</button>
+                            <button type="button" class="btn btn-xs rounded-pill nearby-category-pill btn-light border" data-category="Photography" onclick="setNearbyCategory('Photography')">Viewpoints &amp; Beaches</button>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="nearbyPlacesLoading" class="text-center py-5 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading places...</span>
+                        </div>
+                        <p class="text-muted small mt-2">Discovering authentic attractions &amp; nearby areas...</p>
+                    </div>
+
+                    <!-- Places Container -->
+                    <div id="nearbyPlacesContainer" class="d-flex flex-column gap-3">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <!-- Empty State Fallback -->
+                    <div id="nearbyPlacesEmpty" class="text-center py-5 d-none">
+                        <i class="bi bi-geo-alt text-muted" style="font-size: 2.5rem;"></i>
+                        <h6 class="fw-bold text-dark mt-2">No attractions matched your filter</h6>
+                        <p class="text-muted small empty-message">Try expanding your search radius to 50 km or 100 km to discover surrounding towns.</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-1" onclick="setNearbyRadius(100)">
+                            <i class="bi bi-arrows-angle-expand me-1"></i> Expand Search to 100 km
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top py-2 px-4 d-flex justify-content-between align-items-center">
+                    <span class="small text-muted" id="nearbyPlacesResultsCount">0 places available</span>
+                    <button type="button" class="btn btn-sand btn-sm px-3" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2641,6 +2795,339 @@
             } catch (err) {
                 console.error("Save activity edit error:", err);
                 alert("Could not update activity: " + err.message);
+            }
+        }
+
+        // =========================================================================
+        // NEARBY PLACES & SURROUNDING AREA EXPLORER
+        // =========================================================================
+        let currentNearbyDay = 1;
+        let currentNearbyDest = '';
+        let currentNearbyRadius = 50;
+        let currentNearbyCategory = 'ALL';
+        let currentNearbySearchQuery = '';
+        let currentNearbyPlacesData = [];
+
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="_csrf"]');
+            if (meta && meta.content) return meta.content;
+            const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+        function getCsrfHeader() {
+            const meta = document.querySelector('meta[name="_csrf_header"]');
+            return (meta && meta.content) ? meta.content : 'X-XSRF-TOKEN';
+        }
+
+        function openNearbyPlacesExplorer(dayNumber, destName) {
+            currentNearbyDay = dayNumber ? parseInt(dayNumber, 10) : 1;
+            currentNearbyDest = (destName && destName.trim()) ? destName.trim() : ((tripData && tripData.startLocation) || 'Destination');
+            currentNearbyRadius = 50;
+            currentNearbyCategory = 'ALL';
+            currentNearbySearchQuery = '';
+
+            const destTitleEl = document.getElementById('nearbyModalDestName');
+            if (destTitleEl) destTitleEl.textContent = currentNearbyDest;
+            const dayLabelEl = document.getElementById('nearbyModalDayLabel');
+            if (dayLabelEl) dayLabelEl.textContent = currentNearbyDay;
+
+            const searchInput = document.getElementById('nearbyPlacesSearchInput');
+            if (searchInput) searchInput.value = '';
+
+            // Update radius pills
+            document.querySelectorAll('.nearby-radius-pill').forEach(btn => {
+                const r = parseInt(btn.dataset.radius, 10);
+                if (r === currentNearbyRadius) {
+                    btn.classList.add('btn-outline-primary', 'active');
+                    btn.classList.remove('btn-outline-secondary');
+                } else {
+                    btn.classList.remove('btn-outline-primary', 'active');
+                    btn.classList.add('btn-outline-secondary');
+                }
+            });
+
+            // Update category pills
+            document.querySelectorAll('.nearby-category-pill').forEach(btn => {
+                if (btn.dataset.category === currentNearbyCategory) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-light', 'border');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-light', 'border');
+                }
+            });
+
+            const modalEl = document.getElementById('nearbyPlacesModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+
+            fetchNearbyPlaces();
+        }
+
+        function setNearbyRadius(radiusKm) {
+            currentNearbyRadius = radiusKm;
+            document.querySelectorAll('.nearby-radius-pill').forEach(btn => {
+                const r = parseInt(btn.dataset.radius, 10);
+                if (r === currentNearbyRadius) {
+                    btn.classList.add('btn-outline-primary', 'active');
+                    btn.classList.remove('btn-outline-secondary');
+                } else {
+                    btn.classList.remove('btn-outline-primary', 'active');
+                    btn.classList.add('btn-outline-secondary');
+                }
+            });
+            fetchNearbyPlaces();
+        }
+
+        function setNearbyCategory(category) {
+            currentNearbyCategory = category;
+            document.querySelectorAll('.nearby-category-pill').forEach(btn => {
+                if (btn.dataset.category === currentNearbyCategory) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-light', 'border');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-light', 'border');
+                }
+            });
+            fetchNearbyPlaces();
+        }
+
+        function handleNearbySearchInput(val) {
+            currentNearbySearchQuery = (val || '').trim().toLowerCase();
+            renderNearbyPlaces(currentNearbyPlacesData);
+        }
+
+        async function fetchNearbyPlaces() {
+            const container = document.getElementById('nearbyPlacesContainer');
+            const loading = document.getElementById('nearbyPlacesLoading');
+            const empty = document.getElementById('nearbyPlacesEmpty');
+            const countEl = document.getElementById('nearbyPlacesResultsCount');
+
+            if (loading) loading.classList.remove('d-none');
+            if (empty) empty.classList.add('d-none');
+            if (container) container.innerHTML = '';
+            if (countEl) countEl.textContent = 'Searching places...';
+
+            try {
+                const url = `/api/places/nearby?destination=${encodeURIComponent(currentNearbyDest)}&radiusKm=${currentNearbyRadius}&category=${encodeURIComponent(currentNearbyCategory)}&sortBy=popularity`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Failed to load nearby attractions');
+                currentNearbyPlacesData = await res.json();
+                renderNearbyPlaces(currentNearbyPlacesData);
+            } catch (err) {
+                console.error('Error fetching nearby places:', err);
+                if (loading) loading.classList.add('d-none');
+                if (empty) {
+                    empty.classList.remove('d-none');
+                    empty.querySelector('.empty-message').textContent = 'Unable to fetch nearby places at this time. Please try another radius or reload.';
+                }
+                if (countEl) countEl.textContent = '0 places available';
+            }
+        }
+
+        function renderNearbyPlaces(places) {
+            const container = document.getElementById('nearbyPlacesContainer');
+            const loading = document.getElementById('nearbyPlacesLoading');
+            const empty = document.getElementById('nearbyPlacesEmpty');
+            const countEl = document.getElementById('nearbyPlacesResultsCount');
+
+            if (loading) loading.classList.add('d-none');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let filtered = places || [];
+            if (currentNearbySearchQuery) {
+                filtered = filtered.filter(p => {
+                    const name = (p.name || '').toLowerCase();
+                    const desc = (p.description || '').toLowerCase();
+                    const town = (p.townOrArea || '').toLowerCase();
+                    const cat = (p.category || '').toLowerCase();
+                    return name.includes(currentNearbySearchQuery) ||
+                           desc.includes(currentNearbySearchQuery) ||
+                           town.includes(currentNearbySearchQuery) ||
+                           cat.includes(currentNearbySearchQuery);
+                });
+            }
+
+            if (countEl) {
+                countEl.textContent = `${filtered.length} verified attraction${filtered.length === 1 ? '' : 's'} found within ${currentNearbyRadius} km`;
+            }
+
+            if (filtered.length === 0) {
+                if (empty) {
+                    empty.classList.remove('d-none');
+                    empty.querySelector('.empty-message').textContent = currentNearbySearchQuery
+                        ? `No attractions matched "${currentNearbySearchQuery}". Try clearing search or expanding radius.`
+                        : `No verified attractions found within ${currentNearbyRadius} km. Expand your search to 100 km to discover surrounding towns.`;
+                }
+                return;
+            }
+
+            if (empty) empty.classList.add('d-none');
+
+            filtered.forEach((place, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card border rounded-3 p-3 shadow-xs';
+                card.style.background = '#FFFFFF';
+
+                // Proximity badge
+                let tierBadge = '';
+                const tier = (place.proximityTier || 'IN_DESTINATION').toUpperCase();
+                const town = place.townOrArea || currentNearbyDest;
+                const dist = (place.distanceFromDestinationKm !== undefined && place.distanceFromDestinationKm !== null)
+                    ? place.distanceFromDestinationKm
+                    : (place.distanceKm || 0);
+
+                if (tier === 'IN_DESTINATION') {
+                    tierBadge = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-geo-alt-fill me-1"></i>In ${escapeHtml(currentNearbyDest)}</span>`;
+                } else if (tier === 'NEARBY_ATTRACTION') {
+                    tierBadge = `<span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-signpost-2 me-1"></i>Nearby Attraction (${escapeHtml(town)})</span>`;
+                } else if (tier === 'NEARBY_TOWN') {
+                    tierBadge = `<span class="badge bg-info-subtle text-info-emphasis border border-info px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-building me-1"></i>Nearby Town: ${escapeHtml(town)}</span>`;
+                } else {
+                    tierBadge = `<span class="badge bg-secondary-subtle text-secondary border px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-pin-map me-1"></i>Regional Excursion (${escapeHtml(town)})</span>`;
+                }
+
+                const travelTimeStr = (place.estimatedTravelTimeMinutes && place.estimatedTravelTimeMinutes >= 60)
+                    ? `${Math.floor(place.estimatedTravelTimeMinutes / 60)} hr ${place.estimatedTravelTimeMinutes % 60} min`
+                    : `${place.estimatedTravelTimeMinutes || 15} min`;
+
+                const ratingStr = place.rating ? place.rating.toFixed(1) : '4.5';
+                const reviewsCount = place.reviewCount ? place.reviewCount.toLocaleString() : '1,000+';
+
+                card.innerHTML = `
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                ${tierBadge}
+                                <span class="badge bg-light text-secondary border" style="font-size:0.75rem;">${escapeHtml(place.category || 'Sightseeing')}</span>
+                                <span class="small text-warning fw-semibold"><i class="bi bi-star-fill me-1"></i>${ratingStr}</span>
+                                <span class="small text-muted">(${reviewsCount} reviews)</span>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1" style="font-size:1.05rem;">${escapeHtml(place.name)}</h6>
+                            <div class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt me-1 text-primary"></i>${escapeHtml(town)} &bull; 
+                                <i class="bi bi-speedometer2 me-1"></i><strong>${dist.toFixed(1)} km</strong> from destination &bull; 
+                                <i class="bi bi-car-front me-1"></i>~${travelTimeStr} drive
+                            </div>
+                            <p class="small text-muted mb-2" style="line-height:1.45;">${escapeHtml(place.description || '')}</p>
+                            ${place.openingHours ? `<div class="small text-secondary mb-2"><i class="bi bi-clock me-1 text-primary"></i>Hours: ${escapeHtml(place.openingHours)}</div>` : ''}
+                        </div>
+                        <div class="d-flex flex-row flex-sm-column gap-2 align-self-stretch align-self-sm-auto justify-content-end" style="min-width: 140px;">
+                            <button type="button" class="btn btn-primary btn-sm fw-semibold w-100 py-1" onclick="addNearbyPlaceToDay(${idx})" title="Add directly into Day ${currentNearbyDay} schedule">
+                                <i class="bi bi-plus-lg me-1"></i> Add to Day ${currentNearbyDay}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-1" onclick="viewNearbyPlaceOnMap(${idx})" title="Pan and view on map">
+                                <i class="bi bi-map me-1"></i> View on Map
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        async function addNearbyPlaceToDay(idx) {
+            const place = currentNearbyPlacesData[idx];
+            if (!place) return;
+
+            const isGuest = Boolean(tripData && (tripData.isGuest || !tripData.id || tripData.id === 0));
+            const effectiveTripId = isGuest ? 0 : tripData.id;
+
+            const payload = {
+                dayNumber: currentNearbyDay,
+                activity: 'Visit ' + place.name,
+                location: (place.townOrArea && place.townOrArea.toLowerCase() !== currentNearbyDest.toLowerCase())
+                    ? (place.name + ' (' + place.townOrArea + ')')
+                    : (place.name + ', ' + currentNearbyDest),
+                activityType: 'SIGHTSEEING',
+                latitude: place.latitude,
+                longitude: place.longitude,
+                durationMinutes: place.estimatedVisitDurationMinutes || 90,
+                category: place.category || 'Historical',
+                rating: place.rating || 4.5,
+                proximityTier: place.proximityTier || 'IN_DESTINATION',
+                townOrArea: place.townOrArea || currentNearbyDest,
+                notes: place.description || '',
+                locked: true
+            };
+
+            const url = isGuest
+                ? `/api/trips/guest/days/${currentNearbyDay}/activities`
+                : `/api/trips/${effectiveTripId}/days/${currentNearbyDay}/itinerary-items`;
+
+            const csrfToken = getCsrfToken();
+            const csrfHeader = getCsrfHeader();
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (csrfToken) headers[csrfHeader] = csrfToken;
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const modalEl = document.getElementById('nearbyPlacesModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    }
+                    if (typeof showToast === 'function') {
+                        showToast(`Added "${place.name}" to Day ${currentNearbyDay} itinerary!`, 'success');
+                    }
+                    setTimeout(() => window.location.reload(), 300);
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    alert(err.message || 'Failed to add place to itinerary.');
+                }
+            } catch (e) {
+                console.error('Failed to add place:', e);
+                alert('Error connecting to server. Please try again.');
+            }
+        }
+
+        function viewNearbyPlaceOnMap(idx) {
+            const place = currentNearbyPlacesData[idx];
+            if (!place || !place.latitude || !place.longitude) return;
+
+            const modalEl = document.getElementById('nearbyPlacesModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+
+            const mapInstance = window._currentLeafletMap || window.map;
+            if (mapInstance) {
+                mapInstance.setView([place.latitude, place.longitude], 13, { animate: true });
+                const town = place.townOrArea || currentNearbyDest;
+                const dist = (place.distanceFromDestinationKm !== undefined && place.distanceFromDestinationKm !== null)
+                    ? place.distanceFromDestinationKm
+                    : (place.distanceKm || 0);
+
+                const popupContent = `
+                    <div style="font-family: inherit; min-width: 180px; padding: 4px;">
+                        <span class="badge bg-primary text-white mb-1" style="font-size:0.7rem;">${escapeHtml(place.proximityTier || 'ATTRACTION')}</span>
+                        <div class="fw-bold text-dark fs-6">${escapeHtml(place.name)}</div>
+                        <div class="small text-muted mt-1"><i class="bi bi-geo-alt"></i> ${escapeHtml(town)} &bull; ${dist.toFixed(1)} km away</div>
+                        <div class="small text-warning mt-1"><i class="bi bi-star-fill"></i> ${place.rating || 4.5} (${(place.reviewCount || 1000).toLocaleString()} reviews)</div>
+                        <div class="mt-2">
+                            <button class="btn btn-primary btn-sm w-100 py-1" style="font-size:0.75rem;" onclick="addNearbyPlaceToDay(${idx})">
+                                + Add to Day ${currentNearbyDay}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                L.popup()
+                    .setLatLng([place.latitude, place.longitude])
+                    .setContent(popupContent)
+                    .openOn(mapInstance);
             }
         }
 

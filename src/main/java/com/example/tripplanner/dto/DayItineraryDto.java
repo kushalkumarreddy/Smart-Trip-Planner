@@ -25,6 +25,7 @@ public class DayItineraryDto {
     private String warningMessage;
     private Integer visitedCount = 0;
     private Integer totalPlacesCount = 0;
+    private String destinationName;
     private List<ItineraryItemDto> items = new ArrayList<>();
 
     public DayItineraryDto() {
@@ -138,6 +139,14 @@ public class DayItineraryDto {
 
     public void setTotalPlacesCount(Integer totalPlacesCount) {
         this.totalPlacesCount = totalPlacesCount;
+    }
+
+    public String getDestinationName() {
+        return destinationName;
+    }
+
+    public void setDestinationName(String destinationName) {
+        this.destinationName = destinationName;
     }
 
     public List<ItineraryItemDto> getItems() {
