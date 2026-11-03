@@ -154,13 +154,13 @@
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
-                                <span class="small fw-semibold text-dark">Plan with Natural Language</span>
+                                <span class="small fw-semibold">Plan with Natural Language</span>
                             </div>
                             <span class="text-muted extra-small d-none d-sm-inline">Instant Multi-City Route Extraction</span>
                         </div>
                         <form onsubmit="handleHeroAiSearch(event)">
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0 text-muted">
+                                <span class="input-group-text border-end-0 text-muted">
                                     <i class="bi bi-chat-quote"></i>
                                 </span>
                                 <input type="text" id="heroPromptInput" class="form-control border-start-0 py-2" 
@@ -190,7 +190,7 @@
     </section>
 
     <!-- Destination Discovery Section: Famous Indian Places -->
-    <section class="py-5 bg-white border-bottom" id="discoverSection">
+    <section class="py-5 frosted-section border-bottom" id="discoverSection">
         <div class="container">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
                 <div>
@@ -237,8 +237,8 @@
                         <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <h5 class="fw-bold mb-0 text-dark" th:text="${dest.name}">Taj Mahal</h5>
-                                    <span class="badge bg-warning bg-opacity-25 text-dark fw-bold border border-warning" style="font-size: 0.75rem;">
+                                    <h5 class="fw-bold mb-0" th:text="${dest.name}">Taj Mahal</h5>
+                                    <span class="badge badge-sage" style="font-size: 0.75rem;">
                                         ★ <span th:text="${dest.rating}">4.9</span>
                                     </span>
                                 </div>
@@ -263,7 +263,7 @@
             <!-- Empty Search State -->
             <div id="noDestinationsAlert" class="text-center py-5 d-none">
                 <i class="bi bi-compass text-muted fs-1 mb-2"></i>
-                <h6 class="fw-bold text-dark">No destinations match your search</h6>
+                <h6 class="fw-bold">No destinations match your search</h6>
                 <p class="text-muted small">Try a different category or search query.</p>
                 <button type="button" class="btn btn-sand btn-sm" onclick="resetDestinationFilters()">Clear Filters</button>
             </div>
@@ -271,7 +271,7 @@
     </section>
 
     <!-- How VoyageCraft Works -->
-    <section class="py-5" style="background-color: var(--bg-main);">
+    <section class="py-5 frosted-section-alt border-bottom">
         <div class="container">
             <div class="text-center mb-5">
                 <span class="badge-sage mb-2 d-inline-block">Simple &bull; Accurate &bull; Autonomous</span>
@@ -317,7 +317,7 @@
     </section>
 
     <!-- Core Features Section -->
-    <section class="py-5 bg-white border-top border-bottom">
+    <section class="py-5 frosted-section border-top border-bottom">
         <div class="container">
             <div class="text-center mb-5">
                 <span class="badge-sage mb-2 d-inline-block">Engineered for Reality</span>
@@ -399,7 +399,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="py-4 bg-white border-top">
+    <footer class="py-4 footer-custom border-top">
         <div class="container text-center">
             <p class="mb-1 text-muted small">
                 <i class="bi bi-compass text-primary me-1"></i> VoyageCraft &bull; AI Smart Travel Planner &amp; Route Optimizer
@@ -470,6 +470,10 @@
                 return;
             }
 
+            if (window.VoyageCraftLoader) {
+                window.VoyageCraftLoader.show({ title: "Initializing Trip Planner" });
+            }
+
             let url = '/create-trip?start=' + encodeURIComponent(start);
 
             // Collect intermediate stops
@@ -512,6 +516,9 @@
         function handleHeroAiSearch(e) {
             e.preventDefault();
             const text = document.getElementById('heroPromptInput').value.trim();
+            if (window.VoyageCraftLoader) {
+                window.VoyageCraftLoader.show({ title: "Analyzing Travel Route" });
+            }
             if (text) {
                 window.location.href = '/create-trip?prompt=' + encodeURIComponent(text);
             } else {

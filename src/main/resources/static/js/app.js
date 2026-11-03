@@ -959,4 +959,258 @@ async function moveActivityItem(tripId, itemId, targetDay) {
 window.updateDestinationDuration = updateDestinationDuration;
 window.moveActivityItem = moveActivityItem;
 
+// =========================================================
+// 13. Premium Interactive Journey Loading Experience Engine
+// =========================================================
+
+const VoyageCraftLoader = {
+    CAPTIONS: [
+        "Mapping your next great escape...",
+        "Finding the roads worth remembering...",
+        "Planning the perfect journey...",
+        "Connecting destinations, one road at a time...",
+        "Calculating your scenic route...",
+        "Finding the best stops along the way...",
+        "Organizing your travel adventures...",
+        "Your next adventure is taking shape...",
+        "Building a journey around your travel style...",
+        "Preparing your personalized itinerary...",
+        "Exploring the best route combinations...",
+        "Almost ready for takeoff... or a road trip!"
+    ],
+    currentIndex: -1,
+    intervalId: null,
+    isSubmitting: false,
+    retryCallback: null,
+
+    getRandomCaption() {
+        if (this.CAPTIONS.length <= 1) return this.CAPTIONS[0];
+        let nextIndex;
+        do {
+            nextIndex = Math.floor(Math.random() * this.CAPTIONS.length);
+        } while (nextIndex === this.currentIndex);
+        this.currentIndex = nextIndex;
+        return this.CAPTIONS[nextIndex];
+    },
+
+    show(options = {}) {
+        this.isSubmitting = true;
+        if (options.onRetry) this.retryCallback = options.onRetry;
+
+        let overlay = document.getElementById("voyagecraftLoadingOverlay");
+        if (!overlay) {
+            overlay = this.createOverlayDom();
+            document.body.appendChild(overlay);
+        }
+
+        const captionEl = document.getElementById("voyageLoadingCaption");
+        const titleEl = document.getElementById("voyageLoadingTitle");
+        const errorStateEl = document.getElementById("voyageLoadingErrorState");
+        const loadingGraphicEl = document.getElementById("voyageLoadingGraphic");
+        const progressEl = document.getElementById("voyageLoadingProgressBar");
+
+        if (titleEl) titleEl.textContent = options.title || "Crafting Your Journey";
+        if (errorStateEl) errorStateEl.classList.add("d-none");
+        if (loadingGraphicEl) loadingGraphicEl.classList.remove("d-none");
+        if (progressEl) progressEl.classList.remove("d-none");
+
+        // Initial non-repeating random caption
+        const initialCaption = this.getRandomCaption();
+        if (captionEl) {
+            captionEl.textContent = initialCaption;
+            captionEl.style.opacity = "1";
+        }
+
+        // Show overlay with smooth fade
+        overlay.classList.remove("d-none");
+        overlay.style.display = "flex";
+        requestAnimationFrame(() => {
+            overlay.classList.add("active");
+        });
+
+        // Start dynamic caption ticker (approx every 2.0s with smooth 0.45s fade transition)
+        this.stopCaptionTicker();
+        this.intervalId = setInterval(() => {
+            if (!captionEl) return;
+            // Fade out
+            captionEl.style.opacity = "0";
+            setTimeout(() => {
+                captionEl.textContent = this.getRandomCaption();
+                // Fade in
+                captionEl.style.opacity = "1";
+            }, 450);
+        }, 2100);
+
+        // Disable all submit buttons on page to prevent duplicate requests
+        document.querySelectorAll('button[type="submit"], #btnSubmitTrip, .btn-submit-action').forEach(btn => {
+            btn.disabled = true;
+        });
+    },
+
+    showSuccess(message, redirectUrl) {
+        this.stopCaptionTicker();
+        const captionEl = document.getElementById("voyageLoadingCaption");
+        const titleEl = document.getElementById("voyageLoadingTitle");
+        const graphicEl = document.getElementById("voyageLoadingGraphic");
+
+        if (titleEl) titleEl.textContent = "Journey Ready!";
+        if (captionEl) {
+            captionEl.textContent = message || "Your personalized itinerary is ready. Opening your workspace...";
+            captionEl.style.opacity = "1";
+        }
+        if (graphicEl) {
+            graphicEl.classList.add("success-pulse");
+        }
+
+        // Keep loader active during page transition so user never sees a blank white screen
+        setTimeout(() => {
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                this.hide();
+            }
+        }, 400);
+    },
+
+    showError(errorMsg, onRetry) {
+        this.stopCaptionTicker();
+        this.isSubmitting = false;
+        if (onRetry) this.retryCallback = onRetry;
+
+        const errorStateEl = document.getElementById("voyageLoadingErrorState");
+        const errorMsgEl = document.getElementById("voyageLoadingErrorMessage");
+        const loadingGraphicEl = document.getElementById("voyageLoadingGraphic");
+        const progressEl = document.getElementById("voyageLoadingProgressBar");
+        const titleEl = document.getElementById("voyageLoadingTitle");
+        const captionEl = document.getElementById("voyageLoadingCaption");
+
+        if (titleEl) titleEl.textContent = "Unable to Plan Journey";
+        if (captionEl) captionEl.style.opacity = "0";
+        if (loadingGraphicEl) loadingGraphicEl.classList.add("d-none");
+        if (progressEl) progressEl.classList.add("d-none");
+
+        if (errorMsgEl) {
+            errorMsgEl.textContent = errorMsg || "A temporary issue occurred while calculating the route. Please review your stops and try again.";
+        }
+        if (errorStateEl) {
+            errorStateEl.classList.remove("d-none");
+        }
+
+        // Re-enable submit buttons
+        document.querySelectorAll('button[type="submit"], #btnSubmitTrip, .btn-submit-action').forEach(btn => {
+            btn.disabled = false;
+        });
+    },
+
+    retry() {
+        if (typeof this.retryCallback === "function") {
+            const cb = this.retryCallback;
+            this.show({ onRetry: cb });
+            cb();
+        } else {
+            this.hide();
+        }
+    },
+
+    hide() {
+        this.stopCaptionTicker();
+        this.isSubmitting = false;
+        const overlay = document.getElementById("voyagecraftLoadingOverlay");
+        if (overlay) {
+            overlay.classList.remove("active");
+            setTimeout(() => {
+                overlay.style.display = "none";
+                overlay.classList.add("d-none");
+            }, 300);
+        }
+        // Re-enable submit buttons and restore label
+        document.querySelectorAll('button[type="submit"], #btnSubmitTrip, .btn-submit-action').forEach(btn => {
+            btn.disabled = false;
+            if (btn.id === 'btnSubmitTrip') {
+                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> <span class="fw-bold fs-6">Generate Trip Plan &amp; Calculate Route</span>';
+            }
+        });
+    },
+
+    stopCaptionTicker() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+    },
+
+    createOverlayDom() {
+        const div = document.createElement("div");
+        div.id = "voyagecraftLoadingOverlay";
+        div.className = "voyagecraft-loading-overlay d-none";
+        div.setAttribute("role", "dialog");
+        div.setAttribute("aria-modal", "true");
+        div.setAttribute("aria-live", "polite");
+        div.innerHTML = `
+            <div class="voyagecraft-loading-backdrop"></div>
+            <div class="voyagecraft-loading-card">
+                <!-- Visual Animation: Scenic Route Map Trail & Pulsing Compass -->
+                <div id="voyageLoadingGraphic" class="voyagecraft-loading-graphic">
+                    <div class="compass-orbit-container">
+                        <div class="compass-orbit-ring"></div>
+                        <div class="compass-core-badge">
+                            <i class="bi bi-compass-fill compass-icon-spin"></i>
+                        </div>
+                    </div>
+                    <div class="route-flight-track">
+                        <span class="route-node-dot start-dot" title="Origin"></span>
+                        <div class="route-track-line">
+                            <div class="route-moving-runner"></div>
+                        </div>
+                        <span class="route-node-dot stop-dot" title="Scenic Stop"></span>
+                        <div class="route-track-line">
+                            <div class="route-moving-runner runner-delayed"></div>
+                        </div>
+                        <span class="route-node-dot end-dot" title="Destination"></span>
+                    </div>
+                </div>
+
+                <h4 id="voyageLoadingTitle" class="voyagecraft-loading-title">Crafting Your Journey</h4>
+
+                <!-- Dynamic Rotating Caption with smooth fade -->
+                <div class="voyagecraft-caption-box">
+                    <p id="voyageLoadingCaption" class="voyagecraft-loading-caption">Mapping your next great escape...</p>
+                </div>
+
+                <!-- Subtle Indeterminate Journey Progress Bar -->
+                <div id="voyageLoadingProgressBar" class="voyagecraft-loading-progressbar">
+                    <div class="voyagecraft-progress-indeterminate"></div>
+                </div>
+
+                <div class="voyagecraft-loading-hint">
+                    <i class="bi bi-shield-check text-success me-1"></i> Analyzing verified highway mileage &amp; destination timings
+                </div>
+
+                <!-- Error State (hidden by default) -->
+                <div id="voyageLoadingErrorState" class="voyagecraft-error-state d-none">
+                    <div class="d-flex align-items-center justify-content-center gap-2 text-danger mb-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                        <span class="fw-bold fs-6">Generation Encountered an Issue</span>
+                    </div>
+                    <p id="voyageLoadingErrorMessage" class="small text-muted mb-3 text-center">
+                        Unable to complete route calculation. Please review your starting location and destinations.
+                    </p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="VoyageCraftLoader.hide()">
+                            <i class="bi bi-arrow-left me-1"></i> Edit Form
+                        </button>
+                        <button type="button" class="btn btn-sm btn-forest px-3" onclick="VoyageCraftLoader.retry()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return div;
+    }
+};
+
+window.VoyageCraftLoader = VoyageCraftLoader;
+
+
 

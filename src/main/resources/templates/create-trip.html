@@ -101,7 +101,7 @@
                 Type what kind of trip you want in plain words. Our AI extracts your exact starting location, destination stops, dates, and travel pace!
             </p>
             <div class="input-group mb-2 shadow-sm">
-                <span class="input-group-text bg-white border-end-0 text-muted">
+                <span class="input-group-text border-end-0 text-muted">
                     <i class="bi bi-chat-quote-fill" style="color: var(--forest-green);"></i>
                 </span>
                 <input type="text" id="aiPromptInput" class="form-control border-start-0 py-2" 
@@ -282,30 +282,30 @@
                 <div>
                     <label class="form-label fw-semibold small">Sightseeing Interests (Select highlights you enjoy)</label>
                     <div class="d-flex flex-wrap gap-2">
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catNat" value="Nature" checked>
-                            <label class="form-check-label small fw-semibold" for="catNat">🌲 Nature &amp; Scenery</label>
-                        </div>
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catWater" value="Waterfalls" checked>
-                            <label class="form-check-label small fw-semibold" for="catWater">🌊 Waterfalls</label>
-                        </div>
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catHist" value="Historical" checked>
-                            <label class="form-check-label small fw-semibold" for="catHist">🏛️ Heritage &amp; History</label>
-                        </div>
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catTemp" value="Temples">
-                            <label class="form-check-label small fw-semibold" for="catTemp">🛕 Temples &amp; Culture</label>
-                        </div>
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catPhoto" value="Photography" checked>
-                            <label class="form-check-label small fw-semibold" for="catPhoto">📷 Photography &amp; Viewpoints</label>
-                        </div>
-                        <div class="form-check form-check-inline border rounded-pill px-3 py-1 bg-white">
-                            <input class="form-check-input interest-check" type="checkbox" id="catAdv" value="Adventure">
-                            <label class="form-check-label small fw-semibold" for="catAdv">🧗 Adventure &amp; Treks</label>
-                        </div>
+                        <label class="interest-chip-pill" for="catNat">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catNat" value="Nature" checked>
+                            <span class="small fw-semibold">🌲 Nature &amp; Scenery</span>
+                        </label>
+                        <label class="interest-chip-pill" for="catWater">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catWater" value="Waterfalls" checked>
+                            <span class="small fw-semibold">🌊 Waterfalls</span>
+                        </label>
+                        <label class="interest-chip-pill" for="catHist">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catHist" value="Historical" checked>
+                            <span class="small fw-semibold">🏛️ Heritage &amp; History</span>
+                        </label>
+                        <label class="interest-chip-pill" for="catTemp">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catTemp" value="Temples">
+                            <span class="small fw-semibold">🛕 Temples &amp; Culture</span>
+                        </label>
+                        <label class="interest-chip-pill" for="catPhoto">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catPhoto" value="Photography" checked>
+                            <span class="small fw-semibold">📷 Photography &amp; Viewpoints</span>
+                        </label>
+                        <label class="interest-chip-pill" for="catAdv">
+                            <input class="form-check-input interest-check m-0" type="checkbox" id="catAdv" value="Adventure">
+                            <span class="small fw-semibold">🧗 Adventure &amp; Treks</span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -970,11 +970,12 @@
         }
 
         async function handleTripSubmit(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
 
-            const btn = document.getElementById('btnSubmitTrip');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Calculating Accurate Road Routes & Schedule...';
+            // Prevent duplicate clicks while request is running
+            if (window.VoyageCraftLoader && window.VoyageCraftLoader.isSubmitting) {
+                return;
+            }
 
             const startLoc = document.getElementById('startLocationInput').value.trim();
             const destInputs = document.querySelectorAll('.destination-input');
@@ -992,36 +993,26 @@
 
             if (!startLoc) {
                 alert("Please specify your journey starting location.");
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                 return;
             }
 
             if (dests.length === 0) {
                 alert("Please specify at least one destination to visit.");
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                 return;
             }
 
             if (dests.length === 1 && dests[0].toLowerCase() === startLoc.toLowerCase()) {
                 alert("Destination cannot be identical to the starting location.");
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                 return;
             }
 
             for (let i = 0; i < dests.length; i++) {
                 if (dests[i].toLowerCase() === startLoc.toLowerCase()) {
                     alert('Stop "' + dests[i] + '" cannot be identical to the starting location.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                     return;
                 }
                 if (i > 0 && dests[i].toLowerCase() === dests[i - 1].toLowerCase()) {
                     alert('Consecutive duplicate stop "' + dests[i] + '" detected. Please remove duplicate consecutive stops.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
                     return;
                 }
             }
@@ -1052,6 +1043,14 @@
                 preferredInterests: interests
             };
 
+            // Trigger premium interactive travel loading overlay immediately
+            if (window.VoyageCraftLoader) {
+                window.VoyageCraftLoader.show({
+                    title: "Crafting Your Journey",
+                    onRetry: () => handleTripSubmit(e)
+                });
+            }
+
             try {
                 const endpoint = isUserLoggedIn ? '/api/trips' : '/api/trips/guest-plan';
                 const response = await fetch(endpoint, {
@@ -1061,30 +1060,104 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to create trip');
+                    let errMsg = 'Failed to generate trip plan';
+                    try {
+                        const errorData = await response.json();
+                        errMsg = errorData.message || errMsg;
+                    } catch(jsonErr) {}
+                    throw new Error(errMsg);
                 }
 
                 const result = await response.json();
                 try {
                     sessionStorage.setItem('voyagecraft_layout_mode', 'itinerary-map');
                 } catch(e) {}
+
+                const redirectUrl = !isUserLoggedIn ? '/trip/guest' : ('/trip/' + result.id);
                 if (!isUserLoggedIn) {
                     try {
                         localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(result));
                         localStorage.setItem('voyagecraft_guest_payload', JSON.stringify(payload));
                     } catch(e) {}
-                    window.location.href = '/trip/guest';
+                }
+
+                // Smooth success transition with no blank screen
+                if (window.VoyageCraftLoader) {
+                    window.VoyageCraftLoader.showSuccess("Journey route calculated! Opening workspace...", redirectUrl);
                 } else {
-                    window.location.href = '/trip/' + result.id;
+                    window.location.href = redirectUrl;
                 }
             } catch (err) {
-                console.error(err);
-                alert("Error generating trip: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-compass fs-5"></i> Generate Trip Plan & Calculate Route';
+                console.error("Trip generation error:", err);
+                if (window.VoyageCraftLoader) {
+                    window.VoyageCraftLoader.showError(err.message, () => handleTripSubmit(e));
+                } else {
+                    alert("Error generating trip: " + err.message);
+                }
             }
         }
     </script>
+
+    <!-- Pre-rendered Premium Interactive Journey Loading Overlay -->
+    <div id="voyagecraftLoadingOverlay" class="voyagecraft-loading-overlay d-none" role="dialog" aria-modal="true" aria-live="polite">
+        <div class="voyagecraft-loading-backdrop"></div>
+        <div class="voyagecraft-loading-card">
+            <!-- Visual Animation: Scenic Route Map Trail & Pulsing Compass -->
+            <div id="voyageLoadingGraphic" class="voyagecraft-loading-graphic">
+                <div class="compass-orbit-container">
+                    <div class="compass-orbit-ring"></div>
+                    <div class="compass-core-badge">
+                        <i class="bi bi-compass-fill compass-icon-spin"></i>
+                    </div>
+                </div>
+                <div class="route-flight-track">
+                    <span class="route-node-dot start-dot" title="Origin"></span>
+                    <div class="route-track-line">
+                        <div class="route-moving-runner"></div>
+                    </div>
+                    <span class="route-node-dot stop-dot" title="Scenic Stop"></span>
+                    <div class="route-track-line">
+                        <div class="route-moving-runner runner-delayed"></div>
+                    </div>
+                    <span class="route-node-dot end-dot" title="Destination"></span>
+                </div>
+            </div>
+
+            <h4 id="voyageLoadingTitle" class="voyagecraft-loading-title">Crafting Your Journey</h4>
+
+            <!-- Dynamic Rotating Caption with smooth fade -->
+            <div class="voyagecraft-caption-box">
+                <p id="voyageLoadingCaption" class="voyagecraft-loading-caption">Mapping your next great escape...</p>
+            </div>
+
+            <!-- Subtle Indeterminate Journey Progress Bar -->
+            <div id="voyageLoadingProgressBar" class="voyagecraft-loading-progressbar">
+                <div class="voyagecraft-progress-indeterminate"></div>
+            </div>
+
+            <div class="voyagecraft-loading-hint">
+                <i class="bi bi-shield-check text-success me-1"></i> Analyzing verified highway mileage &amp; destination timings
+            </div>
+
+            <!-- Error State (hidden by default) -->
+            <div id="voyageLoadingErrorState" class="voyagecraft-error-state d-none">
+                <div class="d-flex align-items-center justify-content-center gap-2 text-danger mb-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    <span class="fw-bold fs-6">Generation Encountered an Issue</span>
+                </div>
+                <p id="voyageLoadingErrorMessage" class="small text-muted mb-3 text-center">
+                    Unable to complete route calculation. Please review your starting location and destinations.
+                </p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="VoyageCraftLoader.hide()">
+                        <i class="bi bi-arrow-left me-1"></i> Edit Form
+                    </button>
+                    <button type="button" class="btn btn-sm btn-forest px-3" onclick="VoyageCraftLoader.retry()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

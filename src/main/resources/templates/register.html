@@ -75,7 +75,7 @@
                         <div class="mb-3">
                             <label for="name" class="form-label fw-semibold small">Full Name</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-person text-muted"></i></span>
+                                <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
                                 <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="John Doe" required>
                             </div>
                             <div class="text-danger small mt-1" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
@@ -84,7 +84,7 @@
                         <div class="mb-3">
                             <label for="email" class="form-label fw-semibold small">Email Address</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+                                <span class="input-group-text"><i class="bi bi-envelope text-muted"></i></span>
                                 <input type="email" id="email" th:field="*{email}" class="form-control" placeholder="name@example.com" required>
                             </div>
                             <div class="text-danger small mt-1" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
@@ -93,7 +93,7 @@
                         <div class="mb-4">
                             <label for="password" class="form-label fw-semibold small">Password</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
+                                <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
                                 <input type="password" id="password" th:field="*{password}" class="form-control" placeholder="Min. 6 characters" required>
                             </div>
                             <div class="text-danger small mt-1" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
@@ -106,7 +106,7 @@
 
                     <div class="text-center mt-3">
                         <span class="text-muted small">Already have an account? </span>
-                        <a th:href="@{/login}" class="fw-semibold text-dark small">Sign In</a>
+                        <a th:href="@{/login}" class="fw-semibold text-primary small">Sign In</a>
                     </div>
                 </div>
             </div>

@@ -78,7 +78,7 @@
     </nav>
 
     <!-- Header Banner -->
-    <header class="py-5 border-bottom" style="background: linear-gradient(180deg, var(--card-bg-subtle) 0%, var(--bg-main) 100%);">
+    <header class="py-5 border-bottom frosted-section">
         <div class="container text-center">
             <span class="badge-sage mb-2 d-inline-flex align-items-center gap-1">
                 <i class="bi bi-compass"></i> Curated Destinations Catalog
@@ -91,7 +91,7 @@
             <!-- Search and Filter Bar -->
             <div class="mx-auto" style="max-width: 650px;">
                 <div class="input-group shadow-sm">
-                    <span class="input-group-text bg-white border-end-0 text-muted">
+                    <span class="input-group-text border-end-0 text-muted">
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" id="exploreSearchInput" class="form-control border-start-0 py-2" 
@@ -133,8 +133,8 @@
                     <div class="p-4 d-flex flex-column flex-grow-1 justify-content-between">
                         <div>
                             <div class="d-flex justify-content-between align-items-start mb-1">
-                                <h5 class="fw-bold mb-0 text-dark" th:text="${dest.name}">Taj Mahal</h5>
-                                <span class="badge bg-warning bg-opacity-25 text-dark fw-bold border border-warning" style="font-size: 0.75rem;">
+                                <h5 class="fw-bold mb-0" th:text="${dest.name}">Taj Mahal</h5>
+                                <span class="badge badge-sage" style="font-size: 0.75rem;">
                                     ★ <span th:text="${dest.rating}">4.9</span>
                                 </span>
                             </div>
@@ -145,7 +145,7 @@
                             
                             <!-- Highlights preview if present -->
                             <div th:if="${dest.highlights != null and !dest.highlights.isEmpty()}" class="d-flex flex-wrap gap-1 mb-3">
-                                <span th:each="h : ${dest.highlights}" class="badge bg-light text-secondary border extra-small" style="font-size: 0.7rem;" th:text="${h}"></span>
+                                <span th:each="h : ${dest.highlights}" class="badge badge-sand extra-small" style="font-size: 0.7rem;" th:text="${h}"></span>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
@@ -172,7 +172,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-4 bg-white border-top">
+    <footer class="py-4 footer-custom border-top">
         <div class="container text-center">
             <p class="mb-1 text-muted small">
                 <i class="bi bi-compass text-primary me-1"></i> VoyageCraft &bull; AI Smart Travel Planner &amp; Route Optimizer
