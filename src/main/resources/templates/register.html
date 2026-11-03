@@ -60,13 +60,13 @@
     <div class="container py-5 my-auto">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
-                <div class="card card-modern p-4 p-md-5">
+                <div class="card card-modern glass-panel-elevated p-4 p-md-5">
                     <div class="text-center mb-4">
-                        <div class="metric-icon forest mx-auto mb-3">
-                            <i class="bi bi-person-plus"></i>
+                        <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3 mx-auto" style="background: rgba(13, 148, 136, 0.12); color: var(--primary-teal); width: 64px; height: 64px;">
+                            <i class="bi bi-person-plus fs-2"></i>
                         </div>
                         <h3 class="fw-bold">Create Account</h3>
-                        <p class="text-muted small">Join VoyageCraft to plan, optimize, and share your dream travel routes</p>
+                        <p class="text-muted small">Join VoyageCraft to plan, optimize, and save your custom travel itineraries</p>
                     </div>
 
                     <div th:if="${errorMessage}" class="alert alert-danger py-2 small" th:text="${errorMessage}"></div>
@@ -99,7 +99,7 @@
                             <div class="text-danger small mt-1" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                         </div>
 
-                        <button type="submit" class="btn btn-forest w-100 py-2 mb-3">
+                        <button type="submit" class="btn btn-forest w-100 py-2 mb-3 fw-semibold">
                             Complete Registration
                         </button>
                     </form>

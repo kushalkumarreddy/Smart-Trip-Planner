@@ -4550,3 +4550,715 @@ footer.bg-white {
     }
 }
 
+
+
+/* =========================================================
+   VOYAGECRAFT — WEBSITE-WIDE LUXURY CONSISTENCY & COMPONENT SUITE
+   Unified Page Banners, Frosted Glass Forms, Rich Cards,
+   Full Pitch-Black Dark Mode & Ivory Sand Light Mode
+   ========================================================= */
+
+/* 1. Unified Page Cinematic Banner (Create Trip, Explore, Dashboard) */
+.page-cinematic-banner {
+    position: relative;
+    background-color: #0B132B;
+    background-image: 
+        linear-gradient(180deg, rgba(11, 19, 43, 0.75) 0%, rgba(15, 23, 42, 0.90) 100%),
+        url('/images/hero-cinematic.jpg');
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: #ffffff;
+    padding: 4.5rem 0 3.25rem;
+    border-bottom: 1px solid rgba(226, 219, 206, 0.3);
+    margin-bottom: 2.25rem;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .page-cinematic-banner {
+    background-color: #000000;
+    background-image: 
+        linear-gradient(180deg, rgba(0, 0, 0, 0.82) 0%, rgba(6, 6, 8, 0.96) 100%),
+        url('/images/hero-cinematic-dark.jpg');
+    border-bottom-color: #262626;
+}
+
+.page-banner-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.18;
+    color: #ffffff;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.page-banner-subtitle {
+    font-size: clamp(0.98rem, 1.6vw, 1.15rem);
+    color: rgba(245, 245, 245, 0.90);
+    max-width: 680px;
+    margin: 0 auto;
+    line-height: 1.6;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 2. Wanderlust Dashboard Banner Upgrade */
+.wanderlust-hero-banner {
+    position: relative;
+    background-color: #0B132B;
+    background-image: 
+        linear-gradient(180deg, rgba(11, 19, 43, 0.78) 0%, rgba(15, 23, 42, 0.92) 100%),
+        url('/images/hero-cinematic.jpg');
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: #ffffff !important;
+    border-radius: var(--radius-xl);
+    padding: 2.6rem 2.2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 16px 40px -10px rgba(11, 19, 43, 0.12);
+    border: 1px solid rgba(226, 219, 206, 0.35);
+    overflow: hidden;
+}
+
+[data-theme="dark"] .wanderlust-hero-banner {
+    background-color: #000000;
+    background-image: 
+        linear-gradient(180deg, rgba(0, 0, 0, 0.82) 0%, rgba(6, 6, 8, 0.96) 100%),
+        url('/images/hero-cinematic-dark.jpg');
+    border: 1px solid #292929;
+    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7);
+}
+
+.wanderlust-badge {
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #F8F6F0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* 3. Luxury Form Step Cards & AI Planner Card */
+.step-card {
+    background: rgba(255, 255, 255, 0.82) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 219, 206, 0.9) !important;
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 12px 32px -8px rgba(11, 19, 43, 0.07);
+    transition: var(--transition);
+}
+
+.step-card:hover {
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 16px 40px -8px rgba(11, 19, 43, 0.1);
+}
+
+[data-theme="dark"] .step-card {
+    background: rgba(16, 16, 16, 0.82) !important;
+    border-color: #292929 !important;
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+    color: #F5F5F5;
+}
+
+[data-theme="dark"] .step-card:hover {
+    border-color: var(--teal-accent) !important;
+    background: rgba(22, 22, 22, 0.9) !important;
+}
+
+.step-num {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.95rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="dark"] .step-num {
+    background: linear-gradient(135deg, #C5A059 0%, #E2B774 100%);
+    color: #000000;
+    box-shadow: 0 4px 14px rgba(197, 160, 89, 0.45);
+}
+
+.ai-planner-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1.5px solid rgba(226, 219, 206, 0.95) !important;
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: 0 16px 40px -10px rgba(11, 19, 43, 0.08);
+    transition: var(--transition);
+}
+
+[data-theme="dark"] .ai-planner-card {
+    background: rgba(18, 18, 18, 0.85) !important;
+    border: 1.5px solid #2E2E2E !important;
+    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8);
+    color: #F5F5F5;
+}
+
+.ai-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.95rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.ai-chip:hover {
+    background: var(--primary-teal-subtle);
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .ai-chip {
+    background: rgba(26, 26, 26, 0.85);
+    border-color: #333333;
+    color: #D4D4D8;
+}
+
+[data-theme="dark"] .ai-chip:hover {
+    background: rgba(13, 148, 136, 0.18);
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+}
+
+/* 4. Form Controls & Inputs Polish */
+.form-control,
+.form-select {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    padding: 0.65rem 0.9rem;
+    transition: var(--transition-fast);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3.5px rgba(13, 148, 136, 0.18);
+    background-color: #ffffff;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #141414 !important;
+    border-color: #2D2D2D !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #181818 !important;
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 0 0 3.5px rgba(57, 198, 178, 0.25) !important;
+    color: #FFFFFF !important;
+}
+
+.input-group-text {
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #161616 !important;
+    border-color: #2D2D2D !important;
+    color: #A1A1AA !important;
+}
+
+/* 5. Destination Cards (Explore & Index) */
+.destination-card {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.destination-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--teal-accent);
+}
+
+[data-theme="dark"] .destination-card {
+    background: rgba(16, 16, 16, 0.85) !important;
+    border-color: #262626 !important;
+    color: #F5F5F5;
+}
+
+[data-theme="dark"] .destination-card:hover {
+    background: rgba(22, 22, 22, 0.95) !important;
+    border-color: var(--teal-accent) !important;
+}
+
+/* 6. Metric Cards */
+.metric-card {
+    background: rgba(255, 255, 255, 0.82) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg);
+    padding: 1.35rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    transition: var(--transition);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--teal-accent) !important;
+}
+
+[data-theme="dark"] .metric-card {
+    background: rgba(16, 16, 16, 0.82) !important;
+    border-color: #262626 !important;
+    color: #F5F5F5;
+}
+
+[data-theme="dark"] .metric-card:hover {
+    background: rgba(22, 22, 22, 0.92) !important;
+    border-color: var(--teal-accent) !important;
+}
+
+[data-theme="dark"] .metric-value {
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .metric-label {
+    color: #A1A1AA !important;
+}
+
+/* 7. Category Filter Pills (Explore & Index) */
+.indian-dest-pill {
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1.5px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.indian-dest-pill:hover {
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+    background: #ffffff;
+    transform: translateY(-1px);
+}
+
+.indian-dest-pill.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="dark"] .indian-dest-pill {
+    background: rgba(20, 20, 20, 0.85);
+    border-color: #2E2E2E;
+    color: #D4D4D8;
+}
+
+[data-theme="dark"] .indian-dest-pill:hover {
+    background: rgba(28, 28, 28, 0.95);
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+}
+
+[data-theme="dark"] .indian-dest-pill.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.5);
+}
+
+/* 8. Map Day Filter Buttons */
+.map-day-filter-btn {
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .map-day-filter-btn.btn-outline-forest {
+    background: #141414 !important;
+    border-color: #2E2E2E !important;
+    color: #D4D4D8 !important;
+}
+
+[data-theme="dark"] .map-day-filter-btn.btn-outline-forest:hover {
+    background: #1F1F1F !important;
+    border-color: var(--teal-accent) !important;
+    color: var(--teal-accent) !important;
+}
+
+[data-theme="dark"] .map-day-filter-btn.active,
+[data-theme="dark"] .map-day-filter-btn.btn-forest {
+    background: var(--primary-teal) !important;
+    border-color: var(--primary-teal) !important;
+    color: #ffffff !important;
+}
+
+/* 9. Timeline Cards & Itinerary Elevation */
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.4rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.timeline-content:hover {
+    border-color: var(--teal-accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .timeline-content {
+    background: rgba(16, 16, 16, 0.85) !important;
+    border-color: #262626 !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .timeline-content:hover {
+    background: rgba(22, 22, 22, 0.95) !important;
+    border-color: var(--teal-accent) !important;
+}
+
+.timeline-item.active-marker-highlight .timeline-content {
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.28) !important;
+}
+
+[data-theme="dark"] .timeline-item.active-marker-highlight .timeline-content {
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 0 0 3px rgba(57, 198, 178, 0.35) !important;
+}
+
+/* 10. Performance & Reduced Motion Protection */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* =========================================================
+   VOYAGECRAFT — COMPREHENSIVE LUXURY POLISH & DARK THEME SUITE
+   Complete visual parity with Homepage across all templates
+   ========================================================= */
+
+/* 1. Trip Details Routing Components */
+[data-theme="dark"] .round-trip-card {
+    background: #101010 !important;
+    border-color: #292929 !important;
+    border-left: 5px solid var(--teal-accent) !important;
+    color: #F5F5F5 !important;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .round-trip-card-header h6 {
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .rt-metric-box {
+    background: #161616 !important;
+    border: 1px solid #262626 !important;
+    border-radius: var(--radius-md);
+}
+
+[data-theme="dark"] .rt-metric-val {
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .total-box {
+    background: #181818 !important;
+    border: 1px solid #2D2D2D !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .total-box strong {
+    color: #39C6B2 !important;
+}
+
+[data-theme="dark"] .smart-stops-dropbox-card {
+    background: #101010 !important;
+    border-color: #292929 !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .smart-stops-dropbox-content {
+    background: #141414 !important;
+    border-color: #262626 !important;
+}
+
+[data-theme="dark"] .day-itinerary-card {
+    background: #101010 !important;
+    border-color: #292929 !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .alternative-route-card {
+    background: #101010 !important;
+    border-color: #292929 !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .btn-round-trip {
+    background: #141414 !important;
+    border-color: #2E2E2E !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .btn-round-trip:hover {
+    background: #1C1C1C !important;
+    border-color: var(--teal-accent) !important;
+    color: var(--teal-accent) !important;
+}
+
+[data-theme="dark"] .timeline-time-badge {
+    background: #171717 !important;
+    border-color: #292929 !important;
+    color: #D4D4D8 !important;
+}
+
+[data-theme="dark"] .legend-item {
+    color: #D4D4D8 !important;
+}
+
+/* 2. Dashboard Luxury Enhancements */
+.nav-pills-custom .nav-link {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    padding: 0.55rem 1.15rem;
+    transition: var(--transition-fast);
+}
+
+.nav-pills-custom .nav-link:hover {
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+    background: #ffffff;
+    transform: translateY(-1px);
+}
+
+.nav-pills-custom .nav-link.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="dark"] .nav-pills-custom .nav-link {
+    background: rgba(20, 20, 20, 0.85);
+    border-color: #2E2E2E;
+    color: #D4D4D8;
+}
+
+[data-theme="dark"] .nav-pills-custom .nav-link:hover {
+    background: rgba(28, 28, 28, 0.95);
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+}
+
+[data-theme="dark"] .nav-pills-custom .nav-link.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.5);
+}
+
+[data-theme="dark"] .nav-pills-custom .nav-link .badge {
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: #F5F5F5 !important;
+}
+
+.trip-card {
+    border-radius: var(--radius-xl) !important;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.trip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px -8px rgba(11, 19, 43, 0.12) !important;
+    border-color: var(--teal-accent) !important;
+}
+
+.trip-card:hover .trip-cover-img {
+    transform: scale(1.05);
+}
+
+[data-theme="dark"] .trip-card {
+    background: rgba(16, 16, 16, 0.88) !important;
+    border-color: #262626 !important;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .trip-card:hover {
+    background: rgba(22, 22, 22, 0.95) !important;
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .trip-title-link {
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .trip-title-link:hover {
+    color: var(--teal-accent) !important;
+}
+
+/* 3. Universal Modal Dark Mode Support */
+[data-theme="dark"] .modal-content {
+    background: #121212 !important;
+    border: 1px solid #292929 !important;
+    color: #F5F5F5 !important;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.85) !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: #262626 !important;
+}
+
+[data-theme="dark"] .modal-title {
+    color: #F5F5F5 !important;
+}
+
+/* 4. Dropdowns in Dark Mode */
+[data-theme="dark"] .dropdown-menu {
+    background: #161616 !important;
+    border: 1px solid #292929 !important;
+    color: #F5F5F5 !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #D4D4D8 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background: #222222 !important;
+    color: #FFFFFF !important;
+}
+
+/* 5. Autocomplete Dropdown in Dark Mode */
+[data-theme="dark"] .autocomplete-dropdown {
+    background: #161616 !important;
+    border: 1.5px solid #292929 !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .autocomplete-item {
+    color: #F5F5F5 !important;
+    border-bottom: 1px solid #222222 !important;
+}
+
+[data-theme="dark"] .autocomplete-item:hover {
+    background: #222222 !important;
+    color: var(--teal-accent) !important;
+}
+
+[data-theme="dark"] .autocomplete-item-city {
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .autocomplete-item-state {
+    color: #A1A1AA !important;
+}
+
+/* 6. Destination Nodes & Sequence Bar */
+.draggable-destination-node {
+    transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .draggable-destination-node {
+    background: #141414 !important;
+    border-color: #292929 !important;
+    color: #F5F5F5 !important;
+}
+
+[data-theme="dark"] .draggable-destination-node:hover {
+    border-color: var(--teal-accent) !important;
+    background: #1A1A1A !important;
+}
+
+[data-theme="dark"] .draggable-destination-node.active-marker-highlight {
+    border-color: var(--teal-accent) !important;
+    box-shadow: 0 0 0 3px rgba(57, 198, 178, 0.35) !important;
+}
+
+
+/* Mobile Refinements for Page Banners & Step Cards */
+@media (max-width: 480px) {
+    .page-cinematic-banner {
+        padding: 3rem 0 2rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    .page-banner-title {
+        font-size: 1.75rem !important;
+    }
+    .page-banner-subtitle {
+        font-size: 0.88rem !important;
+    }
+    .step-card {
+        padding: 1.25rem 1rem !important;
+    }
+    .ai-planner-card {
+        padding: 1.25rem 1rem !important;
+    }
+}

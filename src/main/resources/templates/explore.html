@@ -77,27 +77,28 @@
         </div>
     </nav>
 
-    <!-- Header Banner -->
-    <header class="py-5 border-bottom frosted-section">
-        <div class="container text-center">
-            <span class="badge-sage mb-2 d-inline-flex align-items-center gap-1">
-                <i class="bi bi-compass"></i> Curated Destinations Catalog
-            </span>
-            <h1 class="fw-bold tracking-tight mb-2">Explore Incredible Destinations</h1>
-            <p class="text-muted mb-4" style="max-width: 680px; margin: 0 auto;">
-                Browse authentic landmarks, national parks, hill retreats, and heritage circuits across India with verified coordinates and ideal visit durations.
+    <!-- Cinematic Header Banner -->
+    <header class="page-cinematic-banner text-center position-relative">
+        <div class="container position-relative" style="z-index: 2;">
+            <div class="d-inline-flex align-items-center gap-2 hero-feature-badge mb-2 hero-animate-1">
+                <i class="bi bi-compass text-warning"></i>
+                <span>Curated Destinations Catalog &bull; Incredible India Routes</span>
+            </div>
+            <h1 class="page-banner-title mb-2 hero-animate-1">Explore Extraordinary Destinations</h1>
+            <p class="page-banner-subtitle mb-4 hero-animate-2">
+                Browse iconic landmarks, mist-covered hill retreats, coastal highways, and heritage circuits with verified coordinates and ideal visit durations.
             </p>
 
-            <!-- Search and Filter Bar -->
-            <div class="mx-auto" style="max-width: 650px;">
-                <div class="input-group shadow-sm">
-                    <span class="input-group-text border-end-0 text-muted">
-                        <i class="bi bi-search"></i>
+            <!-- Search Bar -->
+            <div class="mx-auto" style="max-width: 640px;">
+                <div class="input-group shadow-md rounded-pill overflow-hidden border border-white border-opacity-25" style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);">
+                    <span class="input-group-text border-0 bg-transparent text-muted ps-3">
+                        <i class="bi bi-search text-primary"></i>
                     </span>
-                    <input type="text" id="exploreSearchInput" class="form-control border-start-0 py-2" 
+                    <input type="text" id="exploreSearchInput" class="form-control border-0 bg-transparent py-2" 
                            placeholder="Search destination, city, or state (e.g., Jaipur, Wayanad, Taj Mahal)..." 
                            oninput="filterDestinations()">
-                    <button class="btn btn-forest px-4" type="button" onclick="filterDestinations()">
+                    <button class="btn btn-forest px-4 rounded-pill m-1 fw-semibold" type="button" onclick="filterDestinations()">
                         Search
                     </button>
                 </div>
