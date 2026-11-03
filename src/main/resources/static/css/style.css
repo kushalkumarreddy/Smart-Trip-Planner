@@ -42,10 +42,13 @@
     --primary-teal: #0D9488;
     --primary-teal-hover: #0F766E;
     --primary-teal-subtle: #CCFBF1;
+    --teal-accent: #0D9488;
     --primary-blue: #0284C7;
     --primary-blue-hover: #0369A1;
     --primary-blue-subtle: #E0F2FE;
     --champagne-gold: #C5A059;
+    --champagne-accent: #D6BD8A;
+    --muted-gold: #B99A63;
     --champagne-gold-light: #F9F5EA;
     --champagne-gold-subtle: #FFFBEB;
 
@@ -114,20 +117,23 @@
     --text-muted: #A1A1AA;
     --text-light: #71717A;
 
-    --border-color: #262626;
+    --border-color: #292929;
     --border-subtle: #1E1E1E;
-    --border-focus: #2DD4BF;
+    --border-focus: #39C6B2;
 
-    /* Brand Accents */
-    --primary-teal: #2DD4BF;
+    /* Brand Accents — Luxury Dark Identity */
+    --primary-teal: #39C6B2;
     --primary-teal-hover: #5EEAD4;
-    --primary-teal-subtle: rgba(45, 212, 191, 0.12);
+    --primary-teal-subtle: rgba(57, 198, 178, 0.14);
+    --teal-accent: #39C6B2;
     --primary-blue: #38BDF8;
     --primary-blue-hover: #7DD3FC;
     --primary-blue-subtle: rgba(56, 189, 248, 0.12);
-    --champagne-gold: #E2B774;
+    --champagne-gold: #D6BD8A;
+    --champagne-accent: #D6BD8A;
+    --muted-gold: #B99A63;
     --champagne-gold-light: #1E1B15;
-    --champagne-gold-subtle: rgba(226, 183, 116, 0.15);
+    --champagne-gold-subtle: rgba(214, 189, 138, 0.16);
 
     --forest-green: #2DD4BF;
     --forest-green-hover: #5EEAD4;
@@ -4112,4 +4118,435 @@ footer.bg-white {
 [data-theme="dark"] .timeline-dot.timeline-dot-hotel     { border-color: #94A3B8 !important; color: #E2E8F0 !important; background: rgba(148, 163, 184, 0.12) !important; }
 [data-theme="dark"] .timeline-dot.timeline-dot-overnight { border-color: #818CF8 !important; color: #818CF8 !important; background: rgba(129, 140, 248, 0.12) !important; }
 [data-theme="dark"] .timeline-dot.timeline-dot-return    { border-color: #FB7185 !important; color: #FB7185 !important; background: rgba(251, 113, 133, 0.12) !important; }
+
+/* =========================================================
+   CINEMATIC LUXURY & SIGNATURE TRAVEL-TECH ENHANCEMENTS
+   ========================================================= */
+
+/* 1. Universal Glassmorphism Panels */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 219, 206, 0.85);
+    box-shadow: 0 16px 40px -10px rgba(11, 19, 43, 0.08);
+    border-radius: var(--radius-xl);
+}
+
+[data-theme="dark"] .glass-panel {
+    background: rgba(18, 18, 18, 0.72) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6) !important;
+    color: #F5F5F5;
+}
+
+.glass-panel-elevated {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(226, 219, 206, 0.95);
+    box-shadow: 0 25px 60px -12px rgba(11, 19, 43, 0.12);
+    border-radius: var(--radius-xl);
+}
+
+[data-theme="dark"] .glass-panel-elevated {
+    background: rgba(23, 23, 23, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8) !important;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-lg);
+    transition: var(--transition);
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--teal-accent);
+}
+
+[data-theme="dark"] .glass-card {
+    background: rgba(16, 16, 16, 0.78);
+    border-color: #292929;
+}
+
+[data-theme="dark"] .glass-card:hover {
+    border-color: var(--teal-accent);
+    background: rgba(23, 23, 23, 0.88);
+}
+
+/* 2. Hero Cinematic Animations & Ambient Accents */
+@keyframes heroFadeUp {
+    0% {
+        opacity: 0;
+        transform: translateY(28px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-animate-1 { animation: heroFadeUp 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.hero-animate-2 { animation: heroFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards; opacity: 0; }
+.hero-animate-3 { animation: heroFadeUp 1.05s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards; opacity: 0; }
+
+.hero-feature-badge {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+/* 3. Cinematic Map Route Visualization & Moving Journey Vehicle */
+.leaflet-animated-path {
+    stroke-dasharray: 8, 12;
+    animation: routeFlow 25s linear infinite;
+}
+
+@keyframes routeFlow {
+    from { stroke-dashoffset: 400; }
+    to { stroke-dashoffset: 0; }
+}
+
+.vehicle-moving-marker {
+    background: #000000;
+    border: 2px solid #39C6B2;
+    color: #39C6B2;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 0 16px rgba(57, 198, 178, 0.75), 0 0 0 4px rgba(57, 198, 178, 0.25);
+    transition: transform 0.15s ease-out;
+    z-index: 1000 !important;
+}
+
+.destination-marker-luxury {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 11px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    border: 2px solid #FFFFFF;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .destination-marker-luxury {
+    border-color: #000000;
+}
+
+.destination-marker-luxury:hover,
+.destination-marker-luxury.active-marker {
+    transform: scale(1.3);
+    z-index: 1000 !important;
+    box-shadow: 0 0 20px rgba(57, 198, 178, 0.9), 0 0 0 4px rgba(57, 198, 178, 0.3);
+}
+
+.map-floating-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 0.75rem 1rem;
+    z-index: 500;
+}
+
+[data-theme="dark"] .map-floating-panel {
+    background: rgba(16, 16, 16, 0.88);
+    border-color: #292929;
+    color: #F5F5F5;
+}
+
+/* 4. AI Travel Concierge Floating Trigger & Drawer */
+.ai-concierge-trigger {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1050;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 10px 30px rgba(13, 148, 136, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+[data-theme="dark"] .ai-concierge-trigger {
+    background: linear-gradient(135deg, #39C6B2 0%, #38BDF8 100%);
+    color: #000000;
+    box-shadow: 0 10px 30px rgba(57, 198, 178, 0.45);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ai-concierge-trigger:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 14px 40px rgba(13, 148, 136, 0.6);
+}
+
+.ai-concierge-drawer {
+    position: fixed;
+    bottom: 96px;
+    right: 24px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    height: 540px;
+    max-height: calc(100vh - 120px);
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-concierge-drawer.active {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ai-concierge-chat-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.ai-concierge-msg {
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    max-width: 88%;
+}
+
+.ai-concierge-msg.user {
+    background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);
+    color: #FFFFFF;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+[data-theme="dark"] .ai-concierge-msg.user {
+    background: linear-gradient(135deg, #39C6B2 0%, #38BDF8 100%);
+    color: #000000;
+}
+
+.ai-concierge-msg.assistant {
+    background: var(--card-bg-subtle);
+    border: 1px solid var(--border-color);
+    color: var(--dark-text);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+[data-theme="dark"] .ai-concierge-msg.assistant {
+    background: #171717;
+    border-color: #292929;
+    color: #F5F5F5;
+}
+
+.ai-quick-chip {
+    background: var(--card-bg-tint);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 0.32rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    color: var(--secondary-text);
+}
+
+.ai-quick-chip:hover {
+    border-color: var(--teal-accent);
+    color: var(--teal-accent);
+    background: var(--primary-teal-subtle);
+}
+
+/* 5. Trip Budget & Expense Dashboard */
+.budget-metric-card {
+    background: var(--card-bg-tint);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.budget-metric-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--teal-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .budget-metric-card {
+    background: #141414;
+    border-color: #292929;
+    color: #F5F5F5;
+}
+
+/* 6. Weather-Aware Journey Forecast */
+.weather-day-card {
+    background: var(--card-bg-tint);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    text-align: center;
+    transition: var(--transition-fast);
+    flex: 1;
+    min-width: 110px;
+}
+
+.weather-day-card:hover {
+    border-color: var(--primary-blue);
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .weather-day-card {
+    background: #141414;
+    border-color: #292929;
+    color: #F5F5F5;
+}
+
+/* 7. Digital Travel Journal */
+.journal-entry-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: var(--transition-fast);
+}
+
+.journal-entry-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--teal-accent);
+}
+
+[data-theme="dark"] .journal-entry-card {
+    background: #101010;
+    border-color: #292929;
+    color: #F5F5F5;
+}
+
+/* 8. Interactive Trip Checklist */
+.checklist-category-card {
+    background: var(--card-bg-tint);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem;
+    margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .checklist-category-card {
+    background: #141414;
+    border-color: #292929;
+}
+
+.checklist-item-row {
+    padding: 0.5rem 0.65rem;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.checklist-item-row:hover {
+    background: rgba(13, 148, 136, 0.08);
+}
+
+[data-theme="dark"] .checklist-item-row:hover {
+    background: rgba(57, 198, 178, 0.1);
+}
+
+/* 9. Smart Route Comparison Visualizer */
+.route-compare-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.route-compare-card:hover {
+    border-color: var(--teal-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.route-compare-card.selected {
+    border-color: var(--teal-accent);
+    background: var(--primary-teal-subtle);
+    box-shadow: 0 0 0 3px rgba(57, 198, 178, 0.25);
+}
+
+[data-theme="dark"] .route-compare-card {
+    background: #101010;
+    border-color: #292929;
+}
+
+[data-theme="dark"] .route-compare-card.selected {
+    background: rgba(57, 198, 178, 0.12);
+    border-color: var(--teal-accent);
+    box-shadow: 0 0 0 3px rgba(57, 198, 178, 0.3);
+}
+
+/* 10. Printable Trip Book Export Dossier */
+@media print {
+    body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    .no-print, nav, footer, .btn, .ai-concierge-trigger, .ai-concierge-drawer, .map-floating-panel, #mapColumn {
+        display: none !important;
+    }
+    .print-trip-book {
+        display: block !important;
+        page-break-after: always;
+    }
+}
 

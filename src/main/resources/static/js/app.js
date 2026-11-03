@@ -1214,3 +1214,572 @@ window.VoyageCraftLoader = VoyageCraftLoader;
 
 
 
+
+
+// =========================================================
+// VoyageCraft — Cinematic Luxury & Travel-Tech Engine Suite
+// Route Simulation, AI Concierge, Budget Optimizer,
+// Weather Forecasts, Travel Journal, Checklists & Dossier
+// =========================================================
+
+// --- 1. Real-Highway Road Route Vehicle Simulation ---
+window._isJourneySimulating = false;
+window._simulationInterval = null;
+window._simulationIndex = 0;
+window._vehicleMarker = null;
+
+function toggleJourneySimulation() {
+    const btn = document.getElementById("btnSimulateJourney");
+    const btnText = document.getElementById("simulateDriveText");
+
+    if (window._isJourneySimulating) {
+        // Stop Simulation
+        stopJourneySimulation();
+        return;
+    }
+
+    // Start Simulation
+    const coords = window._currentRouteCoordinates;
+    if (!coords || coords.length < 2) {
+        showToast("Route coordinates not available for animation", "warning");
+        return;
+    }
+
+    if (!window._currentLeafletMap) {
+        showToast("Map instance is not active", "warning");
+        return;
+    }
+
+    window._isJourneySimulating = true;
+    if (btnText) btnText.textContent = "Pause Drive";
+    if (btn) btn.classList.add("active");
+
+    // Create or reuse vehicle marker
+    if (!window._vehicleMarker) {
+        const vehicleIcon = L.divIcon({
+            className: 'vehicle-moving-marker',
+            html: `<div style="background: linear-gradient(135deg, #C5A059 0%, #E2B774 100%); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 0 15px rgba(226, 183, 116, 0.8), 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #FFF;"><i class="bi bi-car-front-fill"></i></div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+        window._vehicleMarker = L.marker(coords[0], { icon: vehicleIcon, zIndexOffset: 1000 }).addTo(window._currentLeafletMap);
+    } else {
+        window._vehicleMarker.addTo(window._currentLeafletMap);
+    }
+
+    // Reset index if already completed
+    if (window._simulationIndex >= coords.length - 1) {
+        window._simulationIndex = 0;
+    }
+
+    const stepSpeed = Math.max(25, Math.min(100, Math.floor(6000 / coords.length)));
+
+    window._simulationInterval = setInterval(() => {
+        if (!window._isJourneySimulating) return;
+
+        window._simulationIndex++;
+        if (window._simulationIndex >= coords.length) {
+            stopJourneySimulation();
+            window._simulationIndex = 0;
+            showToast("Journey route simulation complete!", "success");
+            return;
+        }
+
+        const currentPos = coords[window._simulationIndex];
+        if (window._vehicleMarker && currentPos) {
+            window._vehicleMarker.setLatLng(currentPos);
+            // Pan map gently every 8 steps to keep vehicle in view
+            if (window._simulationIndex % 8 === 0 && window._currentLeafletMap) {
+                window._currentLeafletMap.panTo(currentPos, { animate: true, duration: 0.2 });
+            }
+        }
+    }, stepSpeed);
+}
+
+function stopJourneySimulation() {
+    window._isJourneySimulating = false;
+    if (window._simulationInterval) {
+        clearInterval(window._simulationInterval);
+        window._simulationInterval = null;
+    }
+    const btn = document.getElementById("btnSimulateJourney");
+    const btnText = document.getElementById("simulateDriveText");
+    if (btnText) btnText.textContent = "Animate Route";
+    if (btn) btn.classList.remove("active");
+}
+
+window.toggleJourneySimulation = toggleJourneySimulation;
+window.stopJourneySimulation = stopJourneySimulation;
+
+
+// --- 2. Smart Route Comparison Engine ---
+let currentSelectedRouteType = 'fastest';
+
+function openRouteCompareModal() {
+    const modalEl = document.getElementById('routeCompareModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function selectRouteComparisonOption(type) {
+    currentSelectedRouteType = type;
+    const cards = document.querySelectorAll('.route-compare-card');
+    cards.forEach(card => card.classList.remove('selected'));
+
+    const btns = document.querySelectorAll('.route-select-btn');
+    btns.forEach(b => {
+        b.className = 'btn btn-sm btn-outline-forest w-100 route-select-btn';
+        b.textContent = 'Select Route';
+    });
+
+    const activeDesc = document.getElementById('routeActiveDescription');
+
+    if (type === 'fastest') {
+        const card = document.getElementById('routeOptionFastest');
+        if (card) {
+            card.classList.add('selected');
+            const btn = card.querySelector('.route-select-btn');
+            if (btn) {
+                btn.className = 'btn btn-sm btn-forest w-100 route-select-btn';
+                btn.textContent = 'Active Route';
+            }
+        }
+        if (activeDesc) activeDesc.textContent = 'Fastest Corridor (Expressway & National Highway)';
+    } else if (type === 'scenic') {
+        const card = document.getElementById('routeOptionScenic');
+        if (card) {
+            card.classList.add('selected');
+            const btn = card.querySelector('.route-select-btn');
+            if (btn) {
+                btn.className = 'btn btn-sm btn-forest w-100 route-select-btn';
+                btn.textContent = 'Selected Scenic';
+            }
+        }
+        if (activeDesc) activeDesc.textContent = 'Panoramic Scenic Byway (Mountain & River Passes)';
+    } else if (type === 'shortest') {
+        const card = document.getElementById('routeOptionShortest');
+        if (card) {
+            card.classList.add('selected');
+            const btn = card.querySelector('.route-select-btn');
+            if (btn) {
+                btn.className = 'btn btn-sm btn-forest w-100 route-select-btn';
+                btn.textContent = 'Selected Shortest';
+            }
+        }
+        if (activeDesc) activeDesc.textContent = 'Direct State Highway (Lowest Distance & Tolls)';
+    }
+}
+
+function applySelectedRouteOption() {
+    const modalEl = document.getElementById('routeCompareModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+    showToast(`Journey updated to ${currentSelectedRouteType.toUpperCase()} route corridor!`, "success");
+}
+
+window.openRouteCompareModal = openRouteCompareModal;
+window.selectRouteComparisonOption = selectRouteComparisonOption;
+window.applySelectedRouteOption = applySelectedRouteOption;
+
+
+// --- 3. Trip Budget & Fuel Expense Optimizer ---
+function openTripBudgetModal() {
+    const modalEl = document.getElementById('tripBudgetModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        recalculateTripBudget();
+    }
+}
+
+function getTripDistanceKm() {
+    if (typeof tripData !== 'undefined' && tripData && tripData.totalDistanceKm) {
+        return parseFloat(tripData.totalDistanceKm);
+    }
+    const distEl = document.getElementById('compareFastestDistance');
+    if (distEl) {
+        const parsed = parseFloat(distEl.textContent.replace(/[^0-9.]/g, ''));
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return 320; // sensible default
+}
+
+function getTripDays() {
+    if (typeof tripData !== 'undefined' && tripData && tripData.totalDays) {
+        return parseInt(tripData.totalDays, 10);
+    }
+    return 3;
+}
+
+function getTravelers() {
+    if (typeof tripData !== 'undefined' && tripData && tripData.travelersCount) {
+        return parseInt(tripData.travelersCount, 10);
+    }
+    return 2;
+}
+
+function recalculateTripBudget() {
+    const distanceKm = getTripDistanceKm();
+    const days = getTripDays();
+    const nights = Math.max(1, days - 1);
+    const travelers = getTravelers();
+
+    const mileage = parseFloat(document.getElementById('inputMileage')?.value || 14);
+    const fuelPrice = parseFloat(document.getElementById('inputFuelPrice')?.value || 102);
+    const hotelNight = parseFloat(document.getElementById('inputHotelPerNight')?.value || 3400);
+    const dailyFood = parseFloat(document.getElementById('inputDailyFood')?.value || 950);
+    const tolls = parseFloat(document.getElementById('inputHighwayTolls')?.value || 550);
+
+    const fuelLitres = Math.round((distanceKm / (mileage || 14)) * 10) / 10;
+    const fuelCost = Math.round(fuelLitres * (fuelPrice || 102));
+    const hotelCost = Math.round(nights * (hotelNight || 3400));
+    const foodCost = Math.round(days * (dailyFood || 950) * travelers);
+    const totalCost = fuelCost + hotelCost + foodCost + tolls;
+    const perPerson = Math.round(totalCost / travelers);
+
+    // Update displays
+    const totalEl = document.getElementById('budgetTotalCostDisplay');
+    const fuelEl = document.getElementById('budgetFuelDisplay');
+    const fuelLtrEl = document.getElementById('budgetFuelLitres');
+    const hotelsEl = document.getElementById('budgetHotelsDisplay');
+    const perPersonEl = document.getElementById('budgetPerPersonDisplay');
+
+    if (totalEl) totalEl.textContent = `₹${totalCost.toLocaleString('en-IN')}`;
+    if (fuelEl) fuelEl.textContent = `₹${fuelCost.toLocaleString('en-IN')}`;
+    if (fuelLtrEl) fuelLtrEl.textContent = `~${fuelLitres} Litres`;
+    if (hotelsEl) hotelsEl.textContent = `₹${hotelCost.toLocaleString('en-IN')}`;
+    if (perPersonEl) perPersonEl.textContent = `₹${perPerson.toLocaleString('en-IN')}`;
+
+    // Update Progress Allocation Bars
+    if (totalCost > 0) {
+        const pFuel = Math.round((fuelCost / totalCost) * 100);
+        const pHotels = Math.round((hotelCost / totalCost) * 100);
+        const pFood = Math.round((foodCost / totalCost) * 100);
+        const pTolls = Math.max(0, 100 - pFuel - pHotels - pFood);
+
+        const bFuel = document.getElementById('barFuel');
+        const bHotels = document.getElementById('barHotels');
+        const bDining = document.getElementById('barDining');
+        const bTolls = document.getElementById('barTolls');
+
+        if (bFuel) { bFuel.style.width = pFuel + '%'; bFuel.title = `Fuel (${pFuel}%)`; }
+        if (bHotels) { bHotels.style.width = pHotels + '%'; bHotels.title = `Hotels (${pHotels}%)`; }
+        if (bDining) { bDining.style.width = pFood + '%'; bDining.title = `Dining (${pFood}%)`; }
+        if (bTolls) { bTolls.style.width = pTolls + '%'; bTolls.title = `Tolls & Activities (${pTolls}%)`; }
+    }
+}
+
+function resetBudgetDefaults() {
+    const inMileage = document.getElementById('inputMileage');
+    const inFuel = document.getElementById('inputFuelPrice');
+    const inHotel = document.getElementById('inputHotelPerNight');
+    const inFood = document.getElementById('inputDailyFood');
+    const inTolls = document.getElementById('inputHighwayTolls');
+
+    if (inMileage) inMileage.value = 14;
+    if (inFuel) inFuel.value = 102;
+    if (inHotel) inHotel.value = 3400;
+    if (inFood) inFood.value = 950;
+    if (inTolls) inTolls.value = 550;
+
+    recalculateTripBudget();
+    showToast("Budget parameters reset to regional standards", "info");
+}
+
+window.openTripBudgetModal = openTripBudgetModal;
+window.recalculateTripBudget = recalculateTripBudget;
+window.resetBudgetDefaults = resetBudgetDefaults;
+
+
+// --- 4. Weather-Aware Journey Forecast ---
+function openWeatherModal() {
+    const modalEl = document.getElementById('weatherModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+window.openWeatherModal = openWeatherModal;
+
+
+// --- 5. Digital Travel Journal & Memories ---
+let activeJournalRating = 5;
+
+function openTravelJournalModal() {
+    const modalEl = document.getElementById('travelJournalModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        renderJournalEntries();
+    }
+}
+
+function setJournalRating(stars) {
+    activeJournalRating = stars;
+    const buttons = document.querySelectorAll('#journalRatingStars button');
+    buttons.forEach((btn, idx) => {
+        if ((stars === 5 && idx === 0) || (stars === 4 && idx === 1) || (stars === 3 && idx === 2)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function getTripKey() {
+    return (typeof tripData !== 'undefined' && tripData && tripData.id) ? String(tripData.id) : 'guest';
+}
+
+function saveJournalEntry() {
+    const destInput = document.getElementById('journalDestinationInput');
+    const notesInput = document.getElementById('journalNotesInput');
+    const destination = destInput ? destInput.value.trim() : '';
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    if (!destination && !notes) {
+        showToast("Please enter a destination name or memory notes", "warning");
+        return;
+    }
+
+    const key = 'voyagecraft_journal_' + getTripKey();
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+
+    const newEntry = {
+        id: Date.now(),
+        destination: destination || 'Journey Milestone',
+        notes: notes || 'Splendid views and memorable roads.',
+        rating: activeJournalRating,
+        date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+
+    existing.unshift(newEntry);
+    localStorage.setItem(key, JSON.stringify(existing));
+
+    if (destInput) destInput.value = '';
+    if (notesInput) notesInput.value = '';
+
+    renderJournalEntries();
+    showToast("Moment recorded in your Digital Travel Journal!", "success");
+}
+
+function deleteJournalEntry(id) {
+    const key = 'voyagecraft_journal_' + getTripKey();
+    let existing = JSON.parse(localStorage.getItem(key) || '[]');
+    existing = existing.filter(e => e.id !== id);
+    localStorage.setItem(key, JSON.stringify(existing));
+    renderJournalEntries();
+}
+
+function renderJournalEntries() {
+    const container = document.getElementById('journalEntriesContainer');
+    if (!container) return;
+
+    const key = 'voyagecraft_journal_' + getTripKey();
+    const entries = JSON.parse(localStorage.getItem(key) || '[]');
+
+    if (entries.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted bg-light-subtle rounded-3 border">
+                <i class="bi bi-journal-plus fs-2 text-primary mb-2 d-block"></i>
+                <div class="fw-semibold">No journal entries yet</div>
+                <small>Record your first impression, favourite cafe or scenic sunset above!</small>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = entries.map(entry => `
+        <div class="journal-entry-card p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+                <div>
+                    <strong class="text-dark fs-6">${escapeHtml(entry.destination)}</strong>
+                    <span class="text-warning ms-2">${'★'.repeat(entry.rating)}${'☆'.repeat(5 - entry.rating)}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted extra-small">${escapeHtml(entry.date)}</span>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteJournalEntry(${entry.id})" title="Delete entry">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="text-muted small mb-0 lh-base">${escapeHtml(entry.notes)}</p>
+        </div>
+    `).join('');
+}
+
+function generateAiMemoryNote() {
+    const destInput = document.getElementById('journalDestinationInput');
+    const notesInput = document.getElementById('journalNotesInput');
+    const destination = (destInput && destInput.value.trim()) || 'the mountain pass';
+
+    const sampleReflections = [
+        `Breath-taking vistas greeted us as we traversed ${destination}. Crisp morning air, sweeping horizons, and the sheer thrill of open highway made this an unforgettable travel memory.`,
+        `A true travel gem. Paused near ${destination} to savor authentic regional flavors and capture the dramatic shifting cloud cover over the peaks. Highly recommended for any traveler.`,
+        `Unmatched tranquility around ${destination}. The road winding through the valley offered scenic vistas at every turn—an absolute highlight of our VoyageCraft journey.`
+    ];
+
+    const randomReflection = sampleReflections[Math.floor(Math.random() * sampleReflections.length)];
+    if (notesInput) {
+        notesInput.value = randomReflection;
+    }
+}
+
+window.openTravelJournalModal = openTravelJournalModal;
+window.setJournalRating = setJournalRating;
+window.saveJournalEntry = saveJournalEntry;
+window.deleteJournalEntry = deleteJournalEntry;
+window.generateAiMemoryNote = generateAiMemoryNote;
+
+
+// --- 6. Pre-Trip Departure Checklist ---
+function openTripChecklistModal() {
+    const modalEl = document.getElementById('tripChecklistModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        loadChecklistState();
+    }
+}
+
+function updateChecklistProgress() {
+    const checkboxes = document.querySelectorAll('.trip-checklist-chk');
+    let checkedCount = 0;
+    const state = {};
+
+    checkboxes.forEach(chk => {
+        if (chk.checked) checkedCount++;
+        state[chk.id] = chk.checked;
+    });
+
+    const total = checkboxes.length || 16;
+    const pct = Math.round((checkedCount / total) * 100);
+
+    const countEl = document.getElementById('checklistReadyCount');
+    const barEl = document.getElementById('checklistProgressBar');
+    const pctEl = document.getElementById('checklistPctText');
+
+    if (countEl) countEl.textContent = checkedCount;
+    if (barEl) barEl.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = `${pct}% Ready`;
+
+    // Persist
+    localStorage.setItem('voyagecraft_checklist_' + getTripKey(), JSON.stringify(state));
+}
+
+function loadChecklistState() {
+    const raw = localStorage.getItem('voyagecraft_checklist_' + getTripKey());
+    if (!raw) {
+        updateChecklistProgress();
+        return;
+    }
+
+    try {
+        const state = JSON.parse(raw);
+        const checkboxes = document.querySelectorAll('.trip-checklist-chk');
+        checkboxes.forEach(chk => {
+            if (state[chk.id] !== undefined) {
+                chk.checked = !!state[chk.id];
+            }
+        });
+        updateChecklistProgress();
+    } catch(e) {
+        console.warn("Could not parse checklist state", e);
+    }
+}
+
+window.openTripChecklistModal = openTripChecklistModal;
+window.updateChecklistProgress = updateChecklistProgress;
+window.loadChecklistState = loadChecklistState;
+
+
+// --- 7. Luxury Trip Book Dossier ---
+function openTripBookModal() {
+    const modalEl = document.getElementById('tripBookModal');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+window.openTripBookModal = openTripBookModal;
+
+
+// --- 8. Floating AI Concierge Companion ---
+function toggleAiConcierge() {
+    const drawer = document.getElementById('aiConciergeDrawer');
+    if (!drawer) return;
+    drawer.classList.toggle('open');
+    if (drawer.classList.contains('open')) {
+        const input = document.getElementById('aiConciergeInput');
+        if (input) setTimeout(() => input.focus(), 250);
+    }
+}
+
+function sendConciergeQuickPrompt(prompt) {
+    const input = document.getElementById('aiConciergeInput');
+    if (input) {
+        input.value = prompt;
+        sendConciergeMessage();
+    }
+}
+
+function sendConciergeMessage() {
+    const input = document.getElementById('aiConciergeInput');
+    if (!input) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    const container = document.getElementById('aiConciergeMessages');
+    if (!container) return;
+
+    // User Message Bubble
+    const userDiv = document.createElement('div');
+    userDiv.className = 'ai-message user';
+    userDiv.textContent = msg;
+    container.appendChild(userDiv);
+    container.scrollTop = container.scrollHeight;
+
+    // Typing Indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'ai-message assistant';
+    typingDiv.innerHTML = '<span class="spinner-grow spinner-grow-sm text-primary me-1"></span> <em>Concierge analyzing route...</em>';
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
+
+    setTimeout(() => {
+        const reply = generateConciergeReply(msg);
+        typingDiv.innerHTML = `
+            <div class="fw-semibold text-primary mb-1"><i class="bi bi-stars text-warning me-1"></i> VoyageCraft Intelligence</div>
+            ${reply}
+        `;
+        container.scrollTop = container.scrollHeight;
+    }, 600);
+}
+
+function generateConciergeReply(query) {
+    const lower = query.toLowerCase();
+
+    if (lower.includes('coffee') || lower.includes('cafe')) {
+        return `I recommend scheduling a coffee stop around mid-morning! Look for artisanal roasters or scenic highway cafes right after the 90 km mark—they offer fresh pour-overs, clean washrooms, and relaxing outdoor seating overlooking the foothills.`;
+    } else if (lower.includes('lunch') || lower.includes('dining') || lower.includes('food') || lower.includes('restaurant')) {
+        return `For an exceptional lunch experience, I suggest exploring authentic heritage eateries or top-rated highway dining complexes. They offer freshly prepared thalis, tandoori specialties, and quick service without derailing your afternoon itinerary.`;
+    } else if (lower.includes('viewpoint') || lower.includes('photo') || lower.includes('scenic') || lower.includes('waterfall')) {
+        return `There is a spectacular panoramic viewpoint just 8 minutes off the main highway corridor! The golden hour (around 4:45 PM - 5:30 PM) offers immaculate lighting for photography and cool mountain breezes.`;
+    } else if (lower.includes('pace') || lower.includes('fatigue') || lower.includes('day 2') || lower.includes('schedule')) {
+        return `To maintain high energy and avoid highway driving fatigue, I recommend the <strong>2:15 Rhythm</strong>: drive for 2 hours and 15 minutes, followed by a 15-minute stretch and hydration pause. We've balanced your Day 2 schedule with relaxed afternoon museum and garden walks.`;
+    } else if (lower.includes('toll') || lower.includes('fastag') || lower.includes('expense')) {
+        return `All expressways along your itinerary support high-speed electronic Fastag toll lanes. Keep at least ₹800 in your wallet to ensure zero delay at toll plazas. Speed limits are strictly monitored by radar cameras on elevated sections.`;
+    } else {
+        return `Understood! I've analyzed your current itinerary and route dynamics. Your travel pace looks well-balanced with ample buffer for scenic detours. Let me know if you would like me to adjust any activity timings or add specialized stops!`;
+    }
+}
+
+window.toggleAiConcierge = toggleAiConcierge;
+window.sendConciergeQuickPrompt = sendConciergeQuickPrompt;
+window.sendConciergeMessage = sendConciergeMessage;

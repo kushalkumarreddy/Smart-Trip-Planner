@@ -77,28 +77,29 @@
         </div>
     </nav>
 
-    <!-- Large Scenic Hero Section (Requirement 1 & 3) -->
-    <section class="scenic-hero text-center">
-        <div class="container">
+    <!-- Cinematic Travel Hero Section -->
+    <section class="scenic-hero text-center position-relative">
+        <div class="container position-relative" style="z-index: 2;">
             <div class="row justify-content-center">
                 <div class="col-lg-10 col-xl-9">
-                    <span class="badge-sage d-inline-flex align-items-center gap-1 mb-3">
-                        <i class="bi bi-compass"></i> AI Smart Travel Planner &amp; Route Optimizer
-                    </span>
-                    <h1 class="scenic-hero-title mb-3">Your Journey. Beautifully Planned.</h1>
-                    <p class="scenic-hero-subtitle mb-4">
-                        Discover scenic routes, calculate real driving road distances, insert intermediate stops, and generate realistic daily itineraries tailored to your travel style.
+                    <div class="d-inline-flex align-items-center gap-2 hero-feature-badge mb-3 hero-animate-1">
+                        <i class="bi bi-compass text-warning"></i>
+                        <span>AI Smart Travel Planner &bull; Autonomous Route Optimizer</span>
+                    </div>
+                    <h1 class="scenic-hero-title mb-3 hero-animate-1">Every Journey Has a Story.</h1>
+                    <p class="scenic-hero-subtitle mb-4 hero-animate-2">
+                        Discover extraordinary destinations, explore beautiful routes, and let AI design a journey worth remembering.
                     </p>
 
-                    <!-- Prominent Trip Planner Bar -->
-                    <div class="planner-search-card text-start mx-auto mb-4" style="max-width: 980px;">
+                    <!-- Floating Glassmorphism Trip Planner -->
+                    <div class="planner-search-card glass-panel text-start mx-auto mb-4 hero-animate-3" style="max-width: 980px;">
                         <form id="heroPlannerForm" onsubmit="handleHeroQuickPlan(event)">
                             <div class="row g-2 align-items-center">
                                 <div class="col-lg-3 col-md-6">
                                     <div class="planner-input-group">
                                         <label for="heroStartLoc"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Starting Location</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroStartLoc" placeholder="e.g. Hyderabad" required autocomplete="off">
+                                            <input type="text" id="heroStartLoc" placeholder="e.g. Hyderabad or Delhi" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -106,7 +107,7 @@
                                     <div class="planner-input-group">
                                         <label for="heroDestLoc"><i class="bi bi-pin-map-fill text-primary me-1"></i>Destination</label>
                                         <div class="autocomplete-wrapper">
-                                            <input type="text" id="heroDestLoc" placeholder="e.g. Bengaluru" required autocomplete="off">
+                                            <input type="text" id="heroDestLoc" placeholder="e.g. Bengaluru or Agra" required autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -118,13 +119,13 @@
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-sm-6">
                                     <div class="planner-input-group">
-                                        <label for="heroStartTime"><i class="bi bi-clock me-1"></i>Start Time</label>
+                                        <label for="heroStartTime"><i class="bi bi-clock me-1"></i>Departure</label>
                                         <input type="time" id="heroStartTime" value="08:00" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-4 col-12">
                                     <button type="submit" class="btn btn-forest w-100 py-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm">
-                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan Trip</span>
+                                        <span class="fw-bold fs-6"><i class="bi bi-compass me-1"></i> Plan Journey</span>
                                     </button>
                                 </div>
                             </div>
@@ -149,12 +150,12 @@
                         </form>
                     </div>
 
-                    <!-- AI Trip-Planning Entry Point (Clearly Separated) -->
-                    <div class="ai-planner-card text-start mx-auto" style="max-width: 980px;">
+                    <!-- AI Natural Language Prompt Glass Panel -->
+                    <div class="ai-planner-card glass-panel text-start mx-auto hero-animate-3" style="max-width: 980px;">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Assistant</span>
-                                <span class="small fw-semibold">Plan with Natural Language</span>
+                                <span class="badge-forest"><i class="bi bi-stars"></i> AI Travel Concierge</span>
+                                <span class="small fw-semibold">Natural Language Trip Design</span>
                             </div>
                             <span class="text-muted extra-small d-none d-sm-inline">Instant Multi-City Route Extraction</span>
                         </div>
@@ -166,23 +167,29 @@
                                 <input type="text" id="heroPromptInput" class="form-control border-start-0 py-2" 
                                        placeholder="e.g. 4-day road trip from Bengaluru to Wayanad, Munnar and Ooty">
                                 <button class="btn btn-forest px-4 fw-semibold" type="submit">
-                                    <i class="bi bi-magic me-1"></i> Generate with AI
+                                    <i class="bi bi-magic me-1"></i> Generate Journey
                                 </button>
                             </div>
                         </form>
                         <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
-                            <span class="text-muted small">Try:</span>
+                            <span class="text-muted small">Inspire me:</span>
                             <span class="ai-chip" onclick="fillHeroPrompt('4-day trip from Bengaluru to Wayanad, Munnar and Ooty')">
                                 📍 Bengaluru → Wayanad, Munnar &amp; Ooty
                             </span>
-                            <span class="ai-chip" onclick="fillHeroPrompt('3-day weekend trip from Bengaluru to Wayanad with nature and viewpoints')">
-                                🌿 Bengaluru → Wayanad (Nature)
+                            <span class="ai-chip" onclick="fillHeroPrompt('3-day weekend trip from Delhi to Agra and Jaipur with heritage and photography')">
+                                🏛️ Golden Triangle Heritage Trail
                             </span>
-                            <span class="ai-chip" onclick="fillHeroPrompt('4-day heritage road trip from Bengaluru to Mysore, Coorg and Ooty')">
-                                🏛️ Mysore, Coorg &amp; Ooty Circuit
+                            <span class="ai-chip" onclick="fillHeroPrompt('5-day scenic drive from Mumbai to Goa along the Konkan coast')">
+                                🌊 Mumbai → Goa Konkan Highway
                             </span>
                         </div>
                     </div>
+
+                    <!-- Ambient Scroll Down Indicator -->
+                    <a href="#discoverSection" class="btn btn-sm btn-link text-white-50 text-decoration-none mt-4 d-inline-flex flex-column align-items-center gap-1 hero-animate-3">
+                        <span class="extra-small text-uppercase tracking-wider">Explore Extraordinary Routes</span>
+                        <i class="bi bi-chevron-down fs-5"></i>
+                    </a>
 
                 </div>
             </div>
@@ -270,17 +277,117 @@
         </div>
     </section>
 
-    <!-- How VoyageCraft Works -->
+    <!-- SECTION 2: Explore Legendary Journeys -->
     <section class="py-5 frosted-section-alt border-bottom">
         <div class="container">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+                <div>
+                    <span class="badge-forest mb-2 d-inline-block">
+                        <i class="bi bi-map-fill me-1"></i> Signature Road Trips
+                    </span>
+                    <h2 class="fw-bold mb-1">Explore Legendary Journeys</h2>
+                    <p class="text-muted small mb-0">Iconic multi-day driving corridors with verified stop sequences and mountain passways.</p>
+                </div>
+                <a th:href="@{/create-trip}" class="btn btn-outline-forest btn-sm mt-3 mt-md-0">
+                    <i class="bi bi-plus-circle me-1"></i> Custom Route Builder
+                </a>
+            </div>
+
+            <div class="row g-4">
+                <!-- Journey 1 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card glass-card h-100 overflow-hidden d-flex flex-column">
+                        <div class="position-relative" style="height: 180px;">
+                            <img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=700&q=80" alt="Golden Triangle" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25">3 Days &bull; 480 km</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1">Golden Triangle Heritage</h6>
+                                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>Delhi &rarr; Mathura &rarr; Agra &rarr; Jaipur</p>
+                                <p class="text-muted extra-small mb-3">Marvel at Mughal fortresses, royal palaces of Rajasthan, and world wonders.</p>
+                            </div>
+                            <a th:href="@{'/create-trip?start=Delhi&stops=Mathura&stops=Agra&dest=Jaipur'}" class="btn btn-sand btn-sm w-100">
+                                <i class="bi bi-signpost-split me-1"></i> View Route &amp; Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Journey 2 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card glass-card h-100 overflow-hidden d-flex flex-column">
+                        <div class="position-relative" style="height: 180px;">
+                            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80" alt="Himalayan Passway" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25">5 Days &bull; 580 km</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1">Himalayan Trans-Valley Pass</h6>
+                                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>Chandigarh &rarr; Shimla &rarr; Manali</p>
+                                <p class="text-muted extra-small mb-3">High-altitude pine valleys, roaring alpine rivers, and ancient cedar shrines.</p>
+                            </div>
+                            <a th:href="@{'/create-trip?start=Chandigarh&stops=Shimla&dest=Manali'}" class="btn btn-sand btn-sm w-100">
+                                <i class="bi bi-signpost-split me-1"></i> View Route &amp; Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Journey 3 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card glass-card h-100 overflow-hidden d-flex flex-column">
+                        <div class="position-relative" style="height: 180px;">
+                            <img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=700&q=80" alt="Konkan Highway" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25">4 Days &bull; 590 km</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1">Konkan Coastal Highway</h6>
+                                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>Mumbai &rarr; Alibaug &rarr; Ratnagiri &rarr; Goa</p>
+                                <p class="text-muted extra-small mb-3">Coastal cliffs, secluded sandy beaches, and fresh Malvani seafood.</p>
+                            </div>
+                            <a th:href="@{'/create-trip?start=Mumbai&stops=Alibaug&stops=Ratnagiri&dest=Goa'}" class="btn btn-sand btn-sm w-100">
+                                <i class="bi bi-signpost-split me-1"></i> View Route &amp; Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Journey 4 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card glass-card h-100 overflow-hidden d-flex flex-column">
+                        <div class="position-relative" style="height: 180px;">
+                            <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=700&q=80" alt="Nilgiri Highlands" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white border border-light border-opacity-25">4 Days &bull; 520 km</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1">Nilgiri &amp; Western Ghats Way</h6>
+                                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>Bengaluru &rarr; Mysore &rarr; Wayanad &rarr; Ooty</p>
+                                <p class="text-muted extra-small mb-3">Rolling tea plantations, misty mountain viewpoints, and wildlife corridors.</p>
+                            </div>
+                            <a th:href="@{'/create-trip?start=Bengaluru&stops=Mysore&stops=Wayanad&dest=Ooty'}" class="btn btn-sand btn-sm w-100">
+                                <i class="bi bi-signpost-split me-1"></i> View Route &amp; Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: How VoyageCraft Works -->
+    <section class="py-5 frosted-section border-bottom">
+        <div class="container">
             <div class="text-center mb-5">
-                <span class="badge-sage mb-2 d-inline-block">Simple &bull; Accurate &bull; Autonomous</span>
+                <span class="badge-sage mb-2 d-inline-block">Autonomous Pacing &bull; Verified Road Networks</span>
                 <h2 class="fw-bold mt-1">How VoyageCraft Works</h2>
                 <p class="text-muted small" style="max-width: 600px; margin: 0 auto;">From high-level itinerary ideas to turn-by-turn driving realities in seconds.</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="card card-modern h-100 p-4 text-center">
+                    <div class="card glass-card h-100 p-4 text-center">
                         <div class="metric-icon blue mx-auto mb-3">
                             <i class="bi bi-geo-alt-fill"></i>
                         </div>
@@ -291,7 +398,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card card-modern h-100 p-4 text-center">
+                    <div class="card glass-card h-100 p-4 text-center">
                         <div class="metric-icon green mx-auto mb-3">
                             <i class="bi bi-diagram-3-fill"></i>
                         </div>
@@ -302,13 +409,13 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card card-modern h-100 p-4 text-center">
+                    <div class="card glass-card h-100 p-4 text-center">
                         <div class="metric-icon purple mx-auto mb-3">
                             <i class="bi bi-map-fill"></i>
                         </div>
                         <h5 class="fw-bold">3. Interactive Navigation</h5>
                         <p class="text-muted small mb-0">
-                            Explore daily timelines with explanatory travel segments, live Leaflet route geometry, and crew collaboration.
+                            Explore daily timelines with explanatory travel segments, live Leaflet route geometry, vehicle tracking, and concierge.
                         </p>
                     </div>
                 </div>
@@ -316,60 +423,170 @@
         </div>
     </section>
 
-    <!-- Core Features Section -->
+    <!-- SECTION 4: Smart Route Planning & Highway Comparison -->
+    <section class="py-5 frosted-section-alt border-bottom">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-5">
+                    <span class="badge-forest mb-2 d-inline-block">Real Road Geometries</span>
+                    <h2 class="fw-bold mb-3">Smart Route Planning &amp; Highway Analytics</h2>
+                    <p class="text-muted mb-4">
+                        VoyageCraft avoids crude straight-line approximations. Every trip computes real highway road corridors, turn-by-turn transitions, and traffic-aware speed windows.
+                    </p>
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded-circle bg-success bg-opacity-15 text-success">
+                                <i class="bi bi-check-lg fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Zero Backtracking Sequencing</h6>
+                                <div class="text-muted extra-small">Saves up to 35% driving fuel and 2.5 hours daily.</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded-circle bg-info bg-opacity-15 text-info">
+                                <i class="bi bi-speedometer2 fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Highway &amp; Scenic Comparison</h6>
+                                <div class="text-muted extra-small">Instantly compare Fastest NH Expressways vs Panoramic Mountain Routes.</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded-circle bg-warning bg-opacity-15 text-warning">
+                                <i class="bi bi-shield-check fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Daily Feasibility Balancing</h6>
+                                <div class="text-muted extra-small">Automated alerts prevent overloaded driving days and late-night arrivals.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a th:href="@{/create-trip}" class="btn btn-forest px-4">
+                        <i class="bi bi-compass me-1"></i> Try Route Optimizer
+                    </a>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card glass-panel-elevated p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <div>
+                                <span class="badge badge-sage">Live Route Optimization Simulation</span>
+                                <h5 class="fw-bold mb-0 mt-1">Delhi &rarr; Mathura &rarr; Agra</h5>
+                            </div>
+                            <span class="text-success fw-bold small"><i class="bi bi-lightning-charge-fill me-1"></i>-42 km Saved</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="route-compare-card p-3 h-100">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="badge bg-secondary">Original Sequence</span>
+                                        <span class="text-muted small">248 km</span>
+                                    </div>
+                                    <div class="small fw-semibold mb-2">Random / Unordered Stops</div>
+                                    <div class="text-muted extra-small mb-3">Estimated Travel: 5h 45m &bull; High backtracking on NH-19</div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-secondary" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="route-compare-card selected p-3 h-100">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="badge badge-forest">VoyageCraft Optimized</span>
+                                        <span class="text-primary fw-bold small">206 km</span>
+                                    </div>
+                                    <div class="small fw-bold mb-2 text-primary">Highway Flow Directional</div>
+                                    <div class="text-muted extra-small mb-3">Estimated Travel: 4h 10m &bull; Smooth corridor navigation</div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 55%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: Comprehensive Travel Planning Suite -->
     <section class="py-5 frosted-section border-top border-bottom">
         <div class="container">
             <div class="text-center mb-5">
-                <span class="badge-sage mb-2 d-inline-block">Engineered for Reality</span>
-                <h2 class="fw-bold mt-1">Real Road Travel Intelligence</h2>
-                <p class="text-muted small">No impossible timelines, phantom coordinates, or straight-line distance approximations.</p>
+                <span class="badge-sage mb-2 d-inline-block">Commercial-Grade Architecture</span>
+                <h2 class="fw-bold mt-1">Comprehensive Travel Planning Suite</h2>
+                <p class="text-muted small" style="max-width: 650px; margin: 0 auto;">Everything serious travelers and road-trippers need for seamless exploration.</p>
             </div>
 
             <div class="row g-4">
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon blue mx-auto mb-3">
-                            <i class="bi bi-search"></i>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon blue mb-3">
+                            <i class="bi bi-robot"></i>
                         </div>
-                        <h5 class="fw-bold">Places Autocomplete</h5>
+                        <h5 class="fw-bold">AI Travel Concierge</h5>
                         <p class="text-muted small mb-0">
-                            Instant location suggestions with verified coordinates as you type any city, hill station, or landmark.
+                            Context-aware travel assistant capable of adding waterfalls, scenic lunch breaks, or adjusting daily pace on demand.
                         </p>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon sand mx-auto mb-3">
-                            <i class="bi bi-speedometer2"></i>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon sand mb-3">
+                            <i class="bi bi-wallet2"></i>
                         </div>
-                        <h5 class="fw-bold">Accurate Highway Geometry</h5>
+                        <h5 class="fw-bold">Dynamic Trip Budget</h5>
                         <p class="text-muted small mb-0">
-                            Real driving mileage and transit times calculated using highway networks and turn-by-turn road geometry.
+                            Real-time fuel calculations based on vehicle mileage, highway tolls, stays, dining, and activity allocations.
                         </p>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon green mx-auto mb-3">
-                            <i class="bi bi-shuffle"></i>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon green mb-3">
+                            <i class="bi bi-cloud-sun"></i>
                         </div>
-                        <h5 class="fw-bold">Smart Route Optimization</h5>
+                        <h5 class="fw-bold">Weather-Aware Routing</h5>
                         <p class="text-muted small mb-0">
-                            Transparent side-by-side comparison of original vs recommended stop sequences with calculated savings.
+                            Dynamic weather forecasts across travel dates with activity suitability recommendations for outdoor sites.
                         </p>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-modern h-100 p-4 text-center">
-                        <div class="metric-icon purple mx-auto mb-3">
-                            <i class="bi bi-people"></i>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon purple mb-3">
+                            <i class="bi bi-journal-bookmark-fill"></i>
                         </div>
-                        <h5 class="fw-bold">Collaborative Crew Planning</h5>
+                        <h5 class="fw-bold">Digital Travel Journal</h5>
                         <p class="text-muted small mb-0">
-                            Share itineraries with companions using secure invite links, add sightseeing ideas, and vote on favorites together.
+                            Record visited landmarks, personal ratings, photos, and personal memories for every completed journey.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon forest mb-3">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">Luxury Trip Book PDF Export</h5>
+                        <p class="text-muted small mb-0">
+                            Generate formatted print-ready trip dossiers with full daily timetables, driving distances, and packing checklists.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="card glass-card h-100 p-4">
+                        <div class="metric-icon sand mb-3">
+                            <i class="bi bi-check2-square"></i>
+                        </div>
+                        <h5 class="fw-bold">Interactive Pre-Trip Checklists</h5>
+                        <p class="text-muted small mb-0">
+                            Curated checklists for travel documents, vehicle preparation, packing, and hotel confirmations.
                         </p>
                     </div>
                 </div>
@@ -377,34 +594,75 @@
         </div>
     </section>
 
-    <!-- Strong Final Call to Action -->
-    <section class="py-5 text-center text-white" style="background: linear-gradient(135deg, var(--deep-navy) 0%, #173B60 60%, var(--primary-blue) 100%);">
-        <div class="container py-4">
-            <span class="badge bg-white bg-opacity-15 text-white mb-3 px-3 py-2 rounded-pill small fw-semibold">
-                Start Exploring Today
+    <!-- SECTION 6: Cinematic Final Call to Action -->
+    <section class="py-5 text-center text-white position-relative overflow-hidden" 
+             style="background: linear-gradient(135deg, #0B132B 0%, #0F2036 50%, #0D9488 100%);">
+        <div class="container py-5 position-relative" style="z-index: 2;">
+            <span class="badge hero-feature-badge mb-3">
+                <i class="bi bi-stars text-warning"></i> Ready For Your Next Adventure?
             </span>
-            <h2 class="display-6 fw-bold text-white mb-3">Ready to craft your next unforgettable journey?</h2>
-            <p class="text-white-50 lead mb-4" style="max-width: 650px; margin: 0 auto;">
-                Experience travel planning built for real road realities, authentic landmarks, and time-balanced daily schedules.
+            <h2 class="display-5 fw-bold text-white mb-3">Your Journey Worth Remembering Starts Here.</h2>
+            <p class="text-white-50 lead mb-4" style="max-width: 680px; margin: 0 auto;">
+                Autonomous schedule balancing, verified road corridors, and luxury interactive navigation designed for discerning travelers.
             </p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
-                <a th:href="@{/create-trip}" class="btn btn-light text-primary fw-bold px-4 py-2 shadow-sm">
-                    <i class="bi bi-compass me-1"></i> Plan a Custom Trip
+                <a th:href="@{/create-trip}" class="btn btn-forest px-4 py-3 fw-bold shadow-lg">
+                    <i class="bi bi-compass me-1"></i> Plan Your Journey Now
                 </a>
-                <a th:href="@{/explore}" class="btn btn-outline-light fw-semibold px-4 py-2">
-                    <i class="bi bi-grid me-1"></i> Explore Indian Destinations
+                <a th:href="@{/explore}" class="btn btn-outline-forest px-4 py-3 fw-semibold text-white border-white">
+                    <i class="bi bi-grid me-1"></i> Browse Destinations
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="py-4 footer-custom border-top">
-        <div class="container text-center">
-            <p class="mb-1 text-muted small">
-                <i class="bi bi-compass text-primary me-1"></i> VoyageCraft &bull; AI Smart Travel Planner &amp; Route Optimizer
-            </p>
-            <p class="mb-0 text-muted extra-small" style="font-size: 0.78rem;">Your Journey. Beautifully Planned.</p>
+    <!-- SECTION 7: Elegant Luxury Footer -->
+    <footer class="py-5 footer-custom border-top">
+        <div class="container">
+            <div class="row g-4 text-start mb-4">
+                <div class="col-lg-4">
+                    <a class="navbar-brand d-inline-flex align-items-center gap-2 mb-2" th:href="@{/}">
+                        <i class="bi bi-compass-fill fs-4 text-primary"></i>
+                        <span class="fw-bold">VoyageCraft</span>
+                    </a>
+                    <p class="text-muted small mb-3" style="max-width: 320px;">
+                        The premium AI-powered smart travel planner &amp; highway route optimizer engineered for realistic road journeys.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <span class="badge badge-sand"><i class="bi bi-shield-check text-success me-1"></i> SSL Verified</span>
+                        <span class="badge badge-sand"><i class="bi bi-geo-alt text-primary me-1"></i> India Highways</span>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-2">
+                    <h6 class="fw-bold mb-3 small text-uppercase tracking-wider">Explore</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 text-muted">
+                        <li><a th:href="@{/explore}" class="text-decoration-none text-muted">All Destinations</a></li>
+                        <li><a th:href="@{'/explore?category=Heritage'}" class="text-decoration-none text-muted">Heritage Circuits</a></li>
+                        <li><a th:href="@{'/explore?category=Hill Stations'}" class="text-decoration-none text-muted">Hill Stations</a></li>
+                        <li><a th:href="@{'/explore?category=Beaches'}" class="text-decoration-none text-muted">Coastal Drives</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <h6 class="fw-bold mb-3 small text-uppercase tracking-wider">Planning Suite</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 text-muted">
+                        <li><a th:href="@{/create-trip}" class="text-decoration-none text-muted">Route Builder</a></li>
+                        <li><a th:href="@{/create-trip}" class="text-decoration-none text-muted">AI Travel Concierge</a></li>
+                        <li><a th:href="@{/create-trip}" class="text-decoration-none text-muted">Highway Optimizer</a></li>
+                        <li><a th:href="@{/create-trip}" class="text-decoration-none text-muted">Multi-Day Timelines</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h6 class="fw-bold mb-3 small text-uppercase tracking-wider">Platform Status</h6>
+                    <p class="text-muted extra-small mb-2">Real-time routing network and tile geometry operational.</p>
+                    <div class="p-2 rounded-2 border d-flex align-items-center justify-content-between small text-muted">
+                        <span><span class="legend-dot bg-success me-1"></span> Systems Operational</span>
+                        <span class="extra-small">v2.5 Luxury</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 border-top text-center text-muted extra-small">
+                &copy; 2026 VoyageCraft AI Smart Travel Planner. Every Journey Has a Story.
+            </div>
         </div>
     </footer>
 
