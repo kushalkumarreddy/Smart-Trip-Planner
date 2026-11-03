@@ -595,6 +595,21 @@ class TargetedBugFixesVerificationTest {
         com.example.tripplanner.dto.TimelineTransitionDto walkDto =
                 new com.example.tripplanner.dto.TimelineTransitionDto("bi-person-walking", "🚶 Walk to next attraction · 75 min · 3.5 km", "WALK", 3.5, 75);
         assertThat(walkDto.getText()).isEqualTo("Walk to next attraction · 1 hr 15 min · 3.5 km");
+
+        // Verify ItineraryItem entity getTransitionCaption & setTransitionCaption formats raw 468 min to 7 hr 48 min
+        com.example.tripplanner.entity.ItineraryItem entityItem = new com.example.tripplanner.entity.ItineraryItem();
+        entityItem.setTransitionCaption("🚗 🚙 Travel to next stop · 468 min · 566.5 km");
+        assertThat(entityItem.getTransitionCaption())
+                .as("Entity transitionCaption must format raw 468 min into hours and minutes and strip emojis")
+                .isEqualTo("Travel to next stop · 7 hr 48 min · 566.5 km");
+
+        // Verify ItineraryItemDto getFormattedTravelTime
+        it2.setTravelTimeMinutes(468);
+        assertThat(it2.getFormattedTravelTime()).isEqualTo("7 hr 48 min");
+        it2.setTravelTimeMinutes(60);
+        assertThat(it2.getFormattedTravelTime()).isEqualTo("1 hr");
+        it2.setTravelTimeMinutes(90);
+        assertThat(it2.getFormattedTravelTime()).isEqualTo("1 hr 30 min");
     }
 
     // =========================================================================

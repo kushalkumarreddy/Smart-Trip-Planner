@@ -1205,7 +1205,24 @@
                                             <button th:if="${seg.type == 'CONFLICT'}" type="button" class="btn btn-danger btn-sm py-0 px-2 fw-semibold ms-1" style="font-size: 0.70rem;" th:data-day="${day.dayNumber}" onclick="autoFixDaySchedule(this.dataset.day)">Fix Automatically</button>
                                         </span>
                                     </div>
+
+                                    <!-- Fallback for other segment types -->
+                                    <div th:if="${seg.type != 'TRAVEL' and seg.type != 'WALK' and seg.type != 'TRANSIT' and seg.type != 'BIKE' and seg.type != 'HOTEL_TRANSFER' and seg.type != 'FREE_TIME' and seg.type != 'BUFFER' and seg.type != 'CONFLICT'}" class="my-1 ms-2">
+                                        <span class="badge timeline-transition-badge d-inline-flex align-items-center gap-1 shadow-xs bg-light text-secondary border">
+                                            <i th:class="${'bi ' + seg.icon}"></i>
+                                            <span th:text="${seg.formattedText}"></span>
+                                        </span>
+                                    </div>
                                 </th:block>
+                            </div>
+
+                            <!-- Fallback if item has transitionCaption but transitionSegments is empty -->
+                            <div th:if="${!itemStat.first and (item.transitionSegments == null or item.transitionSegments.isEmpty()) and item.transitionCaption != null and !item.transitionCaption.isEmpty()}"
+                                 class="timeline-transition-block my-2" style="position: relative; z-index: 2; margin-left: 0.25rem;">
+                                <span class="badge timeline-transition-badge d-inline-flex align-items-center gap-1 shadow-xs bg-light text-secondary border">
+                                    <i class="bi bi-car-front text-primary"></i>
+                                    <span th:text="${item.transitionCaption}"></span>
+                                </span>
                             </div>
 
                             <div class="timeline-item"
@@ -6152,6 +6169,7 @@
                             <div class="text-muted small mt-1">
                                 <i class="bi bi-geo-alt me-1 text-primary"></i>${escapeHtml(item.location || '')}
                                 ${item.travelDistanceKm ? ` &bull; <i class="bi bi-signpost me-1"></i>${item.travelDistanceKm} km` : ''}
+                                ${item.travelTimeMinutes ? ` &bull; <i class="bi bi-car-front me-1"></i>${formatDurationJs(item.travelTimeMinutes)}` : ''}
                                 ${item.durationMinutes ? ` &bull; <i class="bi bi-hourglass-split me-1"></i>${formatDurationJs(item.durationMinutes)}` : ''}
                             </div>
                             ${item.notes ? `<div class="small text-muted mt-2 border-top pt-2"><i class="bi bi-info-circle me-1"></i>${escapeHtml(item.notes)}</div>` : ''}

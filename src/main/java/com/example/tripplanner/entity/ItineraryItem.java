@@ -250,11 +250,46 @@ public class ItineraryItem {
     }
 
     public String getTransitionCaption() {
-        return transitionCaption;
+        if (transitionCaption == null || transitionCaption.isEmpty()) {
+            return transitionCaption;
+        }
+        String clean = transitionCaption.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
+                                        .replaceAll("^[\\s·•-]+", "")
+                                        .trim();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)\\s*(?:mins|minutes|min)").matcher(clean);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            try {
+                int mins = Integer.parseInt(matcher.group(1));
+                matcher.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(com.example.tripplanner.util.TimeUtils.formatDuration(mins)));
+            } catch (Exception e) {
+                matcher.appendReplacement(sb, matcher.group(0));
+            }
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     public void setTransitionCaption(String transitionCaption) {
-        this.transitionCaption = transitionCaption;
+        if (transitionCaption == null || transitionCaption.isEmpty()) {
+            this.transitionCaption = transitionCaption;
+            return;
+        }
+        String clean = transitionCaption.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
+                                        .replaceAll("^[\\s·•-]+", "")
+                                        .trim();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)\\s*(?:mins|minutes|min)").matcher(clean);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            try {
+                int mins = Integer.parseInt(matcher.group(1));
+                matcher.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(com.example.tripplanner.util.TimeUtils.formatDuration(mins)));
+            } catch (Exception e) {
+                matcher.appendReplacement(sb, matcher.group(0));
+            }
+        }
+        matcher.appendTail(sb);
+        this.transitionCaption = sb.toString();
     }
 
     public String getProximityTier() {

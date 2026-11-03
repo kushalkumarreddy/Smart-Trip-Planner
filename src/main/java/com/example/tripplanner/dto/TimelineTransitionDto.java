@@ -38,28 +38,20 @@ public class TimelineTransitionDto implements Serializable {
 
     public TimelineTransitionDto(String icon, String text, String type, Double distanceKm, Integer durationMinutes) {
         this.icon = icon;
-        this.text = text;
         this.type = type;
         this.distanceKm = distanceKm;
         this.durationMinutes = durationMinutes;
+        this.text = formatTransitionText(text, durationMinutes, distanceKm);
     }
 
-    public String getIcon() {
-        return icon;
-    }
+    public static String formatTransitionText(String rawText, Integer durMins, Double dist) {
+        if (rawText != null && !rawText.isEmpty()) {
+            // Remove any emoji sequences (e.g. 🚗, 🚙, 🚘, 🏎️, 🚶, 🚌, 🚲, 🏨, 🕒, 🌤, ⚠️) and leading symbols/spaces
+            String clean = rawText.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
+                                  .replaceAll("^[\\s·•-]+", "")
+                                  .trim();
 
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-    public String getFormattedText() {
-        if (text != null && !text.isEmpty()) {
-            // Remove any emoji sequences (e.g. 🚗, 🚙, 🚶, 🚌, 🚲, 🏨, 🕒, 🌤, ⚠️) and leading symbols/spaces
-            String clean = text.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
-                               .replaceAll("^[\\s·•-]+", "")
-                               .trim();
-
-            // Match any (\d+)\s*min and format with TimeUtils.formatDuration (e.g. 468 min -> 7 hr 48 min)
+            // Match any (\\d+)\\s*(?:mins|minutes|min) and format with TimeUtils.formatDuration (e.g. 468 min -> 7 hr 48 min)
             Matcher matcher = MINUTES_PATTERN.matcher(clean);
             StringBuilder sb = new StringBuilder();
             while (matcher.find()) {
@@ -74,12 +66,12 @@ public class TimelineTransitionDto implements Serializable {
             return sb.toString();
         }
 
-        if (durationMinutes != null && durationMinutes > 0) {
-            String dur = TimeUtils.formatDuration(durationMinutes);
-            if (distanceKm != null && distanceKm > 0.05) {
-                String distStr = (distanceKm >= 1.0)
-                        ? String.format(Locale.US, "%.1f km", distanceKm)
-                        : Math.round(distanceKm * 1000) + " m";
+        if (durMins != null && durMins > 0) {
+            String dur = TimeUtils.formatDuration(durMins);
+            if (dist != null && dist > 0.05) {
+                String distStr = (dist >= 1.0)
+                        ? String.format(Locale.US, "%.1f km", dist)
+                        : Math.round(dist * 1000) + " m";
                 return "Travel to next stop · " + dur + " · " + distStr;
             }
             return "Travel to next stop · " + dur;
@@ -87,12 +79,24 @@ public class TimelineTransitionDto implements Serializable {
         return "";
     }
 
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String getFormattedText() {
+        return formatTransitionText(this.text, this.durationMinutes, this.distanceKm);
+    }
+
     public String getText() {
         return getFormattedText();
     }
 
     public void setText(String text) {
-        this.text = text;
+        this.text = formatTransitionText(text, this.durationMinutes, this.distanceKm);
     }
 
     public String getType() {
@@ -205,7 +209,7 @@ public class TimelineTransitionDto implements Serializable {
 
     public String getBufferLabel() {
         if (bufferLabel != null && !bufferLabel.isEmpty()) {
-            return bufferLabel;
+            return formatTransitionText(bufferLabel, bufferMinutes, 0.0);
         }
         if (bufferMinutes != null && bufferMinutes > 0) {
             return TimeUtils.formatDuration(bufferMinutes) + " arrival buffer before next activity";
@@ -214,7 +218,7 @@ public class TimelineTransitionDto implements Serializable {
     }
 
     public void setBufferLabel(String bufferLabel) {
-        this.bufferLabel = bufferLabel;
+        this.bufferLabel = formatTransitionText(bufferLabel, this.bufferMinutes, 0.0);
     }
 
     public Boolean getHasConflict() {
