@@ -11,7 +11,7 @@ public class TimelineTransitionDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Pattern MINUTES_PATTERN = Pattern.compile("(\\d+)\\s*min");
+    private static final Pattern MINUTES_PATTERN = Pattern.compile("(\\d+)\\s*(?:mins|minutes|min)");
 
     private String icon; // bi-car-front, bi-person-walking, bi-bus-front, bi-cup-hot, bi-sun, bi-clock, bi-building, bi-exclamation-triangle
     private String text; // e.g. "Travel to next stop · 25 min · 12 km"
@@ -208,7 +208,7 @@ public class TimelineTransitionDto implements Serializable {
             return bufferLabel;
         }
         if (bufferMinutes != null && bufferMinutes > 0) {
-            return bufferMinutes + " min arrival buffer before next activity";
+            return TimeUtils.formatDuration(bufferMinutes) + " arrival buffer before next activity";
         }
         return "Direct start on arrival";
     }

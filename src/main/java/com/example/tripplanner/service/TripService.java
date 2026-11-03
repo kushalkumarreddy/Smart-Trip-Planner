@@ -1178,6 +1178,46 @@ public class TripService {
     }
 
     @Transactional
+    public TripResponseDto autoBalanceTrip(Long tripId, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        TripResponseDto dto = getTripDtoById(tripId, user);
+        if (dto.getDayItineraries() != null && dto.getDayItineraries().size() > 1) {
+            boolean rebalanced = itineraryService.autoBalanceTripDays(trip, dto.getDayItineraries(), trip.getTransportMode());
+            if (rebalanced) {
+                List<ItineraryItem> allDbItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(trip.getId());
+                Map<Long, ItineraryItem> byId = allDbItems.stream().collect(Collectors.toMap(ItineraryItem::getId, it -> it));
+                for (DayItineraryDto dayDto : dto.getDayItineraries()) {
+                    for (ItineraryItemDto rItem : dayDto.getItems()) {
+                        if (rItem.getId() != null && byId.containsKey(rItem.getId())) {
+                            ItineraryItem entity = byId.get(rItem.getId());
+                            entity.setDayNumber(dayDto.getDayNumber());
+                            entity.setScheduleDate(dayDto.getDate());
+                            populateItineraryItemFields(entity, rItem);
+                            itineraryItemRepository.save(entity);
+                        }
+                    }
+                }
+                return getTripDtoById(tripId, user);
+            }
+        }
+        return dto;
+    }
+
+    public TripResponseDto autoBalanceGuestTrip(TripResponseDto guestTrip) {
+        if (guestTrip != null && guestTrip.getDayItineraries() != null && guestTrip.getDayItineraries().size() > 1) {
+            Trip trip = new Trip();
+            trip.setStartLocation(guestTrip.getStartLocation());
+            trip.setTransportMode(guestTrip.getTransportMode());
+            trip.setDailyStartTime(guestTrip.getDailyStartTime());
+            trip.setDailyEndTime(guestTrip.getDailyEndTime());
+            itineraryService.autoBalanceTripDays(trip, guestTrip.getDayItineraries(), guestTrip.getTransportMode());
+        }
+        return guestTrip;
+    }
+
     public TripResponseDto addDestinationToTrip(Long tripId, String destinationName, User user) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
@@ -1502,7 +1542,7 @@ public class TripService {
                 int extraMins = Math.max(0, totalWithStopMins - baselineMins);
 
                 if (extraKm <= limitKm) {
-                    String formatted = String.format("+%.1f km, +%d min detour", extraKm, extraMins);
+                    String formatted = String.format(java.util.Locale.US, "+%.1f km, +%s detour", extraKm, TimeUtils.formatDuration(extraMins));
                     PlaceAlongRouteDto dto = new PlaceAlongRouteDto(
                             cand.getName(),
                             cand.getCategory() != null ? cand.getCategory() : "Scenic Stop",
@@ -3306,5 +3346,238 @@ public class TripService {
         day.setUnallocatedTimeMinutes(recalculated.getUnallocatedTimeMinutes());
         day.setStatus(recalculated.getStatus());
         day.setWarningMessage(recalculated.getWarningMessage());
+    }
+
+    @Transactional
+    public TripResponseDto autoFixDaySchedule(Long tripId, Integer dayNumber, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        TripResponseDto tripDto = getTripDtoById(tripId, user);
+        DayItineraryDto targetDay = tripDto.getDayItineraries().stream()
+                .filter(d -> d.getDayNumber().equals(dayNumber))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Day " + dayNumber + " not found"));
+
+        itineraryService.autoCorrectDaySchedule(targetDay, trip.getTransportMode());
+
+        List<ItineraryItem> dbItems = itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(tripId);
+        Map<Long, ItineraryItem> itemMap = dbItems.stream().collect(Collectors.toMap(ItineraryItem::getId, it -> it));
+        for (ItineraryItemDto itemDto : targetDay.getItems()) {
+            if (itemDto.getId() != null && itemMap.containsKey(itemDto.getId())) {
+                ItineraryItem it = itemMap.get(itemDto.getId());
+                it.setStartTime(itemDto.getStartTime());
+                it.setEndTime(itemDto.getEndTime());
+                itineraryItemRepository.save(it);
+            }
+        }
+        return getTripDtoById(tripId, user);
+    }
+
+    public TripResponseDto guestAutoFixDaySchedule(TripResponseDto guestTrip, Integer dayNumber) {
+        if (guestTrip != null && guestTrip.getDayItineraries() != null) {
+            DayItineraryDto targetDay = guestTrip.getDayItineraries().stream()
+                    .filter(d -> d.getDayNumber().equals(dayNumber))
+                    .findFirst()
+                    .orElse(null);
+            if (targetDay != null) {
+                itineraryService.autoCorrectDaySchedule(targetDay, guestTrip.getTransportMode());
+            }
+        }
+        return guestTrip;
+    }
+
+    public Map<String, Object> previewCustomizedRoute(Long tripId, List<DestinationCustomizationDto> customizations, User user) {
+        Trip trip = (tripId != null && tripId > 0) ? tripRepository.findById(tripId).orElse(null) : null;
+        String startLoc = trip != null ? trip.getStartLocation() : "Origin";
+        String transportMode = trip != null ? trip.getTransportMode() : "CAR";
+
+        return buildRoutePreview(startLoc, customizations, transportMode);
+    }
+
+    public Map<String, Object> guestPreviewCustomizedRoute(TripResponseDto guestTrip, List<DestinationCustomizationDto> customizations) {
+        String startLoc = guestTrip != null ? guestTrip.getStartLocation() : "Origin";
+        String transportMode = guestTrip != null ? guestTrip.getTransportMode() : "CAR";
+        return buildRoutePreview(startLoc, customizations, transportMode);
+    }
+
+    private Map<String, Object> buildRoutePreview(String startLoc, List<DestinationCustomizationDto> customizations, String transportMode) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        if (customizations == null || customizations.isEmpty()) {
+            result.put("valid", false);
+            result.put("message", "No places provided for customized route.");
+            return result;
+        }
+
+        List<String> routeStops = new ArrayList<>();
+        routeStops.add(startLoc);
+        for (DestinationCustomizationDto c : customizations) {
+            if (c.getName() != null && !c.getName().trim().isEmpty()) {
+                routeStops.add(c.getName().trim());
+            }
+        }
+
+        double totalDistKm = 0.0;
+        int totalDurationMins = 0;
+        List<double[]> fullGeometry = new ArrayList<>();
+        List<Map<String, Object>> legSummaries = new ArrayList<>();
+
+        for (int i = 0; i < routeStops.size() - 1; i++) {
+            String from = routeStops.get(i);
+            String to = routeStops.get(i + 1);
+            double[] fromCoord = GeoUtils.getApproximateCoordinates(from);
+            double[] toCoord = GeoUtils.getApproximateCoordinates(to);
+
+            GeoUtils.RoadRouteResult leg = GeoUtils.calculateRealRoadRoute(fromCoord[0], fromCoord[1], toCoord[0], toCoord[1], transportMode);
+            double legDist = leg != null ? leg.getDistanceKm() : GeoUtils.calculateHaversineDistanceKm(fromCoord[0], fromCoord[1], toCoord[0], toCoord[1]);
+            int legTime = leg != null ? leg.getDurationMinutes() : (int) Math.round((legDist / 65.0) * 60);
+
+            totalDistKm += legDist;
+            totalDurationMins += legTime;
+
+            if (leg != null && leg.getGeometryCoordinates() != null) {
+                fullGeometry.addAll(leg.getGeometryCoordinates());
+            }
+
+            Map<String, Object> legInfo = new LinkedHashMap<>();
+            legInfo.put("from", from);
+            legInfo.put("to", to);
+            legInfo.put("distanceKm", Math.round(legDist * 10.0) / 10.0);
+            legInfo.put("durationMinutes", legTime);
+            legInfo.put("formattedDuration", TimeUtils.formatDuration(legTime));
+            legSummaries.add(legInfo);
+        }
+
+        result.put("valid", true);
+        result.put("totalDistanceKm", Math.round(totalDistKm * 10.0) / 10.0);
+        result.put("totalDurationMinutes", totalDurationMins);
+        result.put("formattedDuration", TimeUtils.formatDuration(totalDurationMins));
+        result.put("legs", legSummaries);
+        result.put("geometry", fullGeometry);
+        result.put("stopsCount", routeStops.size());
+        return result;
+    }
+
+    @Transactional
+    public TripResponseDto customizeTripRoute(Long tripId, List<DestinationCustomizationDto> customizations, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "EDITOR");
+
+        if (customizations == null || customizations.isEmpty()) {
+            return getTripDtoById(tripId, user);
+        }
+
+        destinationRepository.deleteAll(trip.getDestinations());
+        trip.getDestinations().clear();
+
+        int seq = 0;
+        for (DestinationCustomizationDto c : customizations) {
+            Destination d = new Destination(c.getName(), seq++);
+            d.setTrip(trip);
+            d.setStayDurationDays(c.getStayNights() != null ? c.getStayNights() : 1);
+            if (c.getHotelName() != null && !c.getHotelName().isEmpty()) {
+                d.setHotelName(c.getHotelName());
+            }
+            double[] coords = GeoUtils.getApproximateCoordinates(c.getName());
+            d.setLatitude(coords[0]);
+            d.setLongitude(coords[1]);
+            destinationRepository.save(d);
+            trip.getDestinations().add(d);
+        }
+        tripRepository.save(trip);
+
+        itineraryItemRepository.deleteAll(itineraryItemRepository.findByTripIdOrderByDayNumberAscStartTimeAsc(tripId));
+        TripResponseDto refreshed = getTripDtoById(tripId, user);
+        return itineraryService.autoBalanceTripDays(trip, refreshed.getDayItineraries(), trip.getTransportMode())
+                ? getTripDtoById(tripId, user)
+                : refreshed;
+    }
+
+    public TripResponseDto customizeGuestTripRoute(TripResponseDto guestTrip, List<DestinationCustomizationDto> customizations) {
+        if (guestTrip == null || customizations == null || customizations.isEmpty()) {
+            return guestTrip;
+        }
+
+        List<DestinationDto> newDests = new ArrayList<>();
+        int seq = 0;
+        for (DestinationCustomizationDto c : customizations) {
+            DestinationDto d = new DestinationDto();
+            d.setName(c.getName());
+            d.setSequenceOrder(seq++);
+            d.setStayDurationDays(c.getStayNights() != null ? c.getStayNights() : 1);
+            if (c.getHotelName() != null) d.setHotelName(c.getHotelName());
+            double[] coords = GeoUtils.getApproximateCoordinates(c.getName());
+            d.setLatitude(coords[0]);
+            d.setLongitude(coords[1]);
+            newDests.add(d);
+        }
+        guestTrip.setDestinations(newDests);
+
+        Trip dummyTrip = new Trip();
+        dummyTrip.setStartLocation(guestTrip.getStartLocation());
+        dummyTrip.setStartDate(guestTrip.getStartDate());
+        dummyTrip.setEndDate(guestTrip.getEndDate());
+        dummyTrip.setDailyStartTime(guestTrip.getDailyStartTime());
+        dummyTrip.setDailyEndTime(guestTrip.getDailyEndTime());
+        dummyTrip.setTransportMode(guestTrip.getTransportMode());
+
+        List<Destination> entityDests = new ArrayList<>();
+        for (DestinationDto dd : newDests) {
+            Destination entity = new Destination(dd.getName(), dd.getSequenceOrder());
+            entity.setStayDurationDays(dd.getStayDurationDays());
+            entity.setLatitude(dd.getLatitude());
+            entity.setLongitude(dd.getLongitude());
+            entity.setHotelName(dd.getHotelName());
+            entityDests.add(entity);
+        }
+        dummyTrip.setDestinations(entityDests);
+
+        List<DayItineraryDto> generated = itineraryService.generateItineraryPlan(dummyTrip, entityDests, guestTrip.getTransportMode());
+        guestTrip.setDayItineraries(generated);
+        return guestTrip;
+    }
+
+    public RoundTripDetailsDto customizeReturnJourney(Long tripId, List<String> returnStops, String returnDepartureTime, LocalDate returnDate, User user) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+        checkTripAccess(trip, user, "VIEWER");
+
+        List<String> destNames = trip.getDestinations().stream()
+                .sorted(Comparator.comparingInt(d -> d.getSequenceOrder() != null ? d.getSequenceOrder() : 0))
+                .map(Destination::getName)
+                .collect(Collectors.toList());
+
+        return routeService.calculateRoundTripDetails(
+                trip.getStartLocation(),
+                destNames,
+                returnStops,
+                returnDepartureTime,
+                returnDate != null ? returnDate : trip.getEndDate(),
+                trip.getTransportMode(),
+                null
+        );
+    }
+
+    public RoundTripDetailsDto guestCustomizeReturnJourney(TripResponseDto guestTrip, List<String> returnStops, String returnDepartureTime, LocalDate returnDate) {
+        if (guestTrip == null) return new RoundTripDetailsDto();
+
+        List<String> destNames = new ArrayList<>();
+        if (guestTrip.getDestinations() != null) {
+            for (DestinationDto dd : guestTrip.getDestinations()) {
+                destNames.add(dd.getName());
+            }
+        }
+
+        return routeService.calculateRoundTripDetails(
+                guestTrip.getStartLocation(),
+                destNames,
+                returnStops,
+                returnDepartureTime,
+                returnDate != null ? returnDate : guestTrip.getEndDate(),
+                guestTrip.getTransportMode(),
+                null
+        );
     }
 }

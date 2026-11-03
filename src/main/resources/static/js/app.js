@@ -57,6 +57,25 @@ function getCsrfHeaderName() {
 // 1. Google Maps-Style Custom Place Autocomplete Engine
 // =========================================================
 
+// High-speed LRU memory cache for suggestions to eliminate redundant API requests & lag
+const autocompleteCache = new Map();
+const MAX_AUTOCOMPLETE_CACHE_SIZE = 150;
+
+function getCachedAutocomplete(query) {
+    if (!query) return null;
+    return autocompleteCache.get(query.toLowerCase().trim()) || null;
+}
+
+function setCachedAutocomplete(query, suggestions) {
+    if (!query || !suggestions) return;
+    const key = query.toLowerCase().trim();
+    if (autocompleteCache.size >= MAX_AUTOCOMPLETE_CACHE_SIZE) {
+        const oldestKey = autocompleteCache.keys().next().value;
+        autocompleteCache.delete(oldestKey);
+    }
+    autocompleteCache.set(key, suggestions);
+}
+
 /**
  * Attaches real-time place suggestions with Google Maps-like dropdown UI
  * to any input element. Works out of the box with zero external API key required.
@@ -112,6 +131,13 @@ function attachPlaceAutocomplete(inputElement) {
             return;
         }
 
+        // Check instant cache hit first (zero network lag!)
+        const cached = getCachedAutocomplete(query);
+        if (cached) {
+            renderDropdown(cached, query);
+            return;
+        }
+
         // Show subtle loading state
         dropdown.innerHTML = `
             <div class="p-2 text-muted small text-center autocomplete-loading">
@@ -147,6 +173,7 @@ function attachPlaceAutocomplete(inputElement) {
                 if (controller.signal.aborted || inputElement.value.trim() !== query) {
                     return; // Stale query check
                 }
+                setCachedAutocomplete(query, suggestions);
                 renderDropdown(suggestions, query);
             } catch (err) {
                 if (err.name === "AbortError") {
@@ -165,7 +192,7 @@ function attachPlaceAutocomplete(inputElement) {
                     currentAbortController = null;
                 }
             }
-        }, 180);
+        }, 280);
     });
 
     // Keyboard navigation (ArrowDown, ArrowUp, Enter, Escape)

@@ -13,6 +13,7 @@ public class TripResponseDto {
     private Double startLng;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String formattedDateRange;
     private Integer totalDays;
     private String transportMode;
     private String travelStyle;
@@ -122,6 +123,74 @@ public class TripResponseDto {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public String getFormattedDateRange() {
+        if (formattedDateRange != null && !formattedDateRange.trim().isEmpty()) {
+            return formattedDateRange;
+        }
+        if (startDate == null) return "Full Span";
+        if (endDate == null || startDate.equals(endDate)) {
+            return com.example.tripplanner.util.TimeUtils.formatDate(startDate);
+        }
+        return com.example.tripplanner.util.TimeUtils.formatDate(startDate) + " to " + com.example.tripplanner.util.TimeUtils.formatDate(endDate);
+    }
+
+    public void setFormattedDateRange(String formattedDateRange) {
+        this.formattedDateRange = formattedDateRange;
+    }
+
+    public String getFormattedTotalDrivingTime() {
+        if (dayItineraries == null || dayItineraries.isEmpty()) {
+            return formattedTotalTravelTime != null ? formattedTotalTravelTime : "0 min";
+        }
+        int total = 0;
+        for (DayItineraryDto day : dayItineraries) {
+            if (day.getTravelTimeMinutes() != null) {
+                total += day.getTravelTimeMinutes();
+            }
+        }
+        return com.example.tripplanner.util.TimeUtils.formatDuration(total > 0 ? total : (totalTravelTimeMinutes != null ? totalTravelTimeMinutes : 0));
+    }
+
+    public String getFormattedTotalSightseeingTime() {
+        if (dayItineraries == null || dayItineraries.isEmpty()) {
+            return "0 min";
+        }
+        int total = 0;
+        for (DayItineraryDto day : dayItineraries) {
+            if (day.getSightseeingTimeMinutes() != null) {
+                total += day.getSightseeingTimeMinutes();
+            }
+        }
+        return com.example.tripplanner.util.TimeUtils.formatDuration(total);
+    }
+
+    public String getFormattedTotalBreakTime() {
+        if (dayItineraries == null || dayItineraries.isEmpty()) {
+            return "0 min";
+        }
+        int total = 0;
+        for (DayItineraryDto day : dayItineraries) {
+            if (day.getBreakTimeMinutes() != null) {
+                total += day.getBreakTimeMinutes();
+            }
+        }
+        return com.example.tripplanner.util.TimeUtils.formatDuration(total);
+    }
+
+    public String getFormattedTotalFreeTime() {
+        if (dayItineraries == null || dayItineraries.isEmpty()) {
+            return "0 min";
+        }
+        int total = 0;
+        for (DayItineraryDto day : dayItineraries) {
+            int planned = day.getTotalActiveMinutes();
+            int limit = 720;
+            int free = Math.max(0, limit - planned);
+            total += free;
+        }
+        return com.example.tripplanner.util.TimeUtils.formatDuration(total);
     }
 
     public Integer getTotalDays() {

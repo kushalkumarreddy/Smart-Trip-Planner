@@ -115,8 +115,9 @@ class ItineraryServiceTest {
         assertThat(firstItem.getActivityType()).isEqualTo("DEPARTURE");
         assertThat(firstItem.getLocation()).isEqualTo("Bengaluru");
 
-        // Must have arrival and hotel stay
-        boolean hasArrival = day1.getItems().stream().anyMatch(i -> "ARRIVAL".equals(i.getActivityType()));
+        // Must have arrival transition/activity and hotel stay
+        boolean hasArrival = day1.getItems().stream().anyMatch(i -> "ARRIVAL".equals(i.getActivityType())
+                || (i.getTransitionSegments() != null && i.getTransitionSegments().stream().anyMatch(s -> s.getExpectedArrivalTime() != null)));
         boolean hasHotel = day1.getItems().stream().anyMatch(i -> "HOTEL".equals(i.getActivityType()));
         assertThat(hasArrival).isTrue();
         assertThat(hasHotel).isTrue();

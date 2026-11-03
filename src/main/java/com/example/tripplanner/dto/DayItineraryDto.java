@@ -30,6 +30,7 @@ public class DayItineraryDto {
     private Integer totalPlacesCount = 0;
     private String destinationName;
     private List<ItineraryItemDto> items = new ArrayList<>();
+    private List<double[]> routeGeometry = new ArrayList<>();
 
     public DayItineraryDto() {
     }
@@ -232,14 +233,22 @@ public class DayItineraryDto {
         return String.format(Locale.US, "%.1f km", totalDistanceKm);
     }
 
+    public List<double[]> getRouteGeometry() {
+        if (routeGeometry == null) {
+            routeGeometry = new ArrayList<>();
+        }
+        return routeGeometry;
+    }
+
+    public void setRouteGeometry(List<double[]> routeGeometry) {
+        this.routeGeometry = routeGeometry;
+    }
+
     public String getFeasibilityState() {
-        if (status != null && (status.equalsIgnoreCase("Overcrowded") || status.equalsIgnoreCase("Overloaded"))) {
+        if (status != null && status.equalsIgnoreCase("Overloaded")) {
             return "Overloaded";
         }
-        if (unallocatedTimeMinutes != null && unallocatedTimeMinutes < 0) {
-            return "Overloaded";
-        }
-        if (totalDurationMinutes != null && totalDurationMinutes > 750) { // > 12.5 hrs
+        if (unallocatedTimeMinutes != null && unallocatedTimeMinutes < -45) {
             return "Overloaded";
         }
         if (items != null) {
@@ -249,7 +258,7 @@ public class DayItineraryDto {
                 }
             }
         }
-        if ((unallocatedTimeMinutes != null && unallocatedTimeMinutes < 45) || (totalDurationMinutes != null && totalDurationMinutes > 540) || (travelTimeMinutes != null && travelTimeMinutes > 240)) {
+        if ((unallocatedTimeMinutes != null && unallocatedTimeMinutes < 30) || (totalDurationMinutes != null && totalDurationMinutes > 600) || (travelTimeMinutes != null && travelTimeMinutes > 300)) {
             return "Busy";
         }
         return "Comfortable";

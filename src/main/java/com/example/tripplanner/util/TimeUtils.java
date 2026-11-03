@@ -1,5 +1,6 @@
 package com.example.tripplanner.util;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -11,6 +12,12 @@ public class TimeUtils {
 
     private static final DateTimeFormatter TIME_FORMATTER_24 = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter TIME_FORMATTER_12 = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
+
+    public static String formatDate(LocalDate date) {
+        if (date == null) return "";
+        return date.format(DATE_FORMATTER);
+    }
 
     public static String formatDuration(int totalMinutes) {
         if (totalMinutes <= 0) {
@@ -73,6 +80,16 @@ public class TimeUtils {
             return time.format(TIME_FORMATTER_12);
         } catch (Exception e) {
             return rawTime;
+        }
+    }
+
+    public static String to24Hour(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return "08:00";
+        try {
+            LocalTime t = parseTime(raw);
+            return t.format(TIME_FORMATTER_24);
+        } catch (Exception e) {
+            return raw;
         }
     }
 

@@ -245,6 +245,41 @@ public class TripApiController {
         return ResponseEntity.ok(details);
     }
 
+    @PostMapping("/{id}/auto-balance")
+    public ResponseEntity<TripResponseDto> autoBalanceTrip(@PathVariable("id") Long id,
+                                                           @AuthenticationPrincipal UserDetails userDetails,
+                                                           HttpSession session) {
+        if (id == null || id == 0L || userDetails == null) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+            if (guestTrip != null) {
+                TripResponseDto balanced = tripService.autoBalanceGuestTrip(guestTrip);
+                session.setAttribute("guest_trip", balanced);
+                return ResponseEntity.ok(balanced);
+            }
+        }
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto result = tripService.autoBalanceTrip(id, user);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{id}/recalculate")
+    public ResponseEntity<TripResponseDto> recalculateTripSchedule(@PathVariable("id") Long id,
+                                                                   @AuthenticationPrincipal UserDetails userDetails,
+                                                                   HttpSession session) {
+        return autoBalanceTrip(id, userDetails, session);
+    }
+
+    @PostMapping("/guest/auto-balance")
+    public ResponseEntity<TripResponseDto> autoBalanceGuestTrip(HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+        if (guestTrip != null) {
+            TripResponseDto balanced = tripService.autoBalanceGuestTrip(guestTrip);
+            session.setAttribute("guest_trip", balanced);
+            return ResponseEntity.ok(balanced);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
     @GetMapping("/guest/round-trip")
     public ResponseEntity<RoundTripDetailsDto> guestGetTripRoundTripDetails(HttpSession session) {
         return getTripRoundTripDetails(0L, null, session);
@@ -858,6 +893,124 @@ public class TripApiController {
         User user = resolveCurrentUser(userDetails);
         TripResponseDto restored = tripService.restoreVersion(id, versionId, user);
         return ResponseEntity.ok(restored);
+    }
+
+    @PostMapping("/{id}/days/{dayNumber}/auto-fix-schedule")
+    public ResponseEntity<TripResponseDto> autoFixDaySchedule(@PathVariable("id") Long id,
+                                                              @PathVariable("dayNumber") Integer dayNumber,
+                                                              @AuthenticationPrincipal UserDetails userDetails,
+                                                              HttpSession session) {
+        if (id == null || id == 0L || userDetails == null) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+            if (guestTrip != null) {
+                TripResponseDto fixed = tripService.guestAutoFixDaySchedule(guestTrip, dayNumber);
+                session.setAttribute("guest_trip", fixed);
+                return ResponseEntity.ok(fixed);
+            }
+        }
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto fixed = tripService.autoFixDaySchedule(id, dayNumber, user);
+        return ResponseEntity.ok(fixed);
+    }
+
+    @PostMapping("/guest/days/{dayNumber}/auto-fix-schedule")
+    public ResponseEntity<TripResponseDto> guestAutoFixDaySchedule(@PathVariable("dayNumber") Integer dayNumber,
+                                                                   HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+        if (guestTrip != null) {
+            TripResponseDto fixed = tripService.guestAutoFixDaySchedule(guestTrip, dayNumber);
+            session.setAttribute("guest_trip", fixed);
+            return ResponseEntity.ok(fixed);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    @PostMapping("/{id}/customize-route/preview")
+    public ResponseEntity<Map<String, Object>> previewCustomizedRoute(@PathVariable("id") Long id,
+                                                                      @RequestBody List<DestinationCustomizationDto> customizations,
+                                                                      @AuthenticationPrincipal UserDetails userDetails,
+                                                                      HttpSession session) {
+        if (id == null || id == 0L || userDetails == null) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+            return ResponseEntity.ok(tripService.guestPreviewCustomizedRoute(guestTrip, customizations));
+        }
+        User user = resolveCurrentUser(userDetails);
+        Map<String, Object> preview = tripService.previewCustomizedRoute(id, customizations, user);
+        return ResponseEntity.ok(preview);
+    }
+
+    @PostMapping("/guest/customize-route/preview")
+    public ResponseEntity<Map<String, Object>> guestPreviewCustomizedRoute(@RequestBody List<DestinationCustomizationDto> customizations,
+                                                                           HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+        return ResponseEntity.ok(tripService.guestPreviewCustomizedRoute(guestTrip, customizations));
+    }
+
+    @PostMapping("/{id}/customize-route")
+    public ResponseEntity<TripResponseDto> customizeRoute(@PathVariable("id") Long id,
+                                                          @RequestBody List<DestinationCustomizationDto> customizations,
+                                                          @AuthenticationPrincipal UserDetails userDetails,
+                                                          HttpSession session) {
+        if (id == null || id == 0L || userDetails == null) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+            if (guestTrip != null) {
+                TripResponseDto updated = tripService.customizeGuestTripRoute(guestTrip, customizations);
+                session.setAttribute("guest_trip", updated);
+                return ResponseEntity.ok(updated);
+            }
+        }
+        User user = resolveCurrentUser(userDetails);
+        TripResponseDto updated = tripService.customizeTripRoute(id, customizations, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/guest/customize-route")
+    public ResponseEntity<TripResponseDto> guestCustomizeRoute(@RequestBody List<DestinationCustomizationDto> customizations,
+                                                               HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+        if (guestTrip != null) {
+            TripResponseDto updated = tripService.customizeGuestTripRoute(guestTrip, customizations);
+            session.setAttribute("guest_trip", updated);
+            return ResponseEntity.ok(updated);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    @PostMapping("/{id}/return-journey/customize")
+    public ResponseEntity<RoundTripDetailsDto> customizeReturnJourney(@PathVariable("id") Long id,
+                                                                      @RequestBody Map<String, Object> body,
+                                                                      @AuthenticationPrincipal UserDetails userDetails,
+                                                                      HttpSession session) {
+        @SuppressWarnings("unchecked")
+        List<String> returnStops = (List<String>) body.get("returnIntermediateStops");
+        String returnDepartureTime = (String) body.get("returnDepartureTime");
+        String returnDateStr = (String) body.get("returnStartDate");
+        java.time.LocalDate returnDate = returnDateStr != null && !returnDateStr.isEmpty() ? java.time.LocalDate.parse(returnDateStr) : null;
+
+        if (id == null || id == 0L || userDetails == null) {
+            TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+            RoundTripDetailsDto res = tripService.guestCustomizeReturnJourney(guestTrip, returnStops, returnDepartureTime, returnDate);
+            session.setAttribute("guest_round_trip", res);
+            return ResponseEntity.ok(res);
+        }
+        User user = resolveCurrentUser(userDetails);
+        RoundTripDetailsDto res = tripService.customizeReturnJourney(id, returnStops, returnDepartureTime, returnDate, user);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/guest/return-journey/customize")
+    public ResponseEntity<RoundTripDetailsDto> guestCustomizeReturnJourney(@RequestBody Map<String, Object> body,
+                                                                           HttpSession session) {
+        TripResponseDto guestTrip = (TripResponseDto) session.getAttribute("guest_trip");
+        @SuppressWarnings("unchecked")
+        List<String> returnStops = (List<String>) body.get("returnIntermediateStops");
+        String returnDepartureTime = (String) body.get("returnDepartureTime");
+        String returnDateStr = (String) body.get("returnStartDate");
+        java.time.LocalDate returnDate = returnDateStr != null && !returnDateStr.isEmpty() ? java.time.LocalDate.parse(returnDateStr) : null;
+
+        RoundTripDetailsDto res = tripService.guestCustomizeReturnJourney(guestTrip, returnStops, returnDepartureTime, returnDate);
+        session.setAttribute("guest_round_trip", res);
+        return ResponseEntity.ok(res);
     }
 
     private User resolveCurrentUser(UserDetails userDetails) {

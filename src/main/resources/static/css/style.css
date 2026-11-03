@@ -80,53 +80,54 @@
 
 /* =========================================================
    Complete Dark Theme Design Tokens
-   Deep Navy & Precision Slate Palette
+   Pitch-Black Theme Palette
    ========================================================= */
 [data-theme="dark"] {
-    --bg-main: #0B132B;
-    --card-bg: #101E36;
-    --card-bg-elevated: #162744;
-    --card-bg-subtle: #13223A;
-    --deep-navy: #0B132B;
-    --deep-navy-surface: #101E36;
-    --dark-text: #F8FAFC;
-    --secondary-text: #94A3B8;
-    --text-primary: #F8FAFC;
-    --text-muted: #94A3B8;
-    --text-light: #64748B;
-    --border-color: #1F3354;
-    --border-subtle: #182A45;
+    --bg-main: #000000;
+    --secondary-bg: #080808;
+    --card-bg: #111111;
+    --card-bg-elevated: #181818;
+    --card-bg-subtle: #141414;
+    --deep-navy: #FFFFFF;
+    --deep-navy-surface: #111111;
+    --dark-text: #FFFFFF;
+    --secondary-text: #A3A3A3;
+    --text-primary: #FFFFFF;
+    --text-muted: #A3A3A3;
+    --text-light: #737373;
+    --border-color: #292929;
+    --border-subtle: #202020;
     --border-focus: #38BDF8;
 
     --primary-blue: #38BDF8;
     --primary-blue-hover: #7DD3FC;
     --primary-blue-active: #BAE6FD;
-    --primary-blue-subtle: #122B48;
+    --primary-blue-subtle: #082F49;
 
     --forest-green: #38BDF8;
     --forest-green-hover: #7DD3FC;
-    --deep-green: #08101E;
-    --sage-green: #122B48;
-    --sage-green-light: #0E223A;
-    --warm-cream: #13223A;
-    --warm-cream-dark: #0E1A2E;
-    --warm-cream-light: #162744;
-    --warm-sand: #13223A;
-    --warm-sand-light: #0B132B;
-    --warm-sand-dark: #1F3354;
+    --deep-green: #000000;
+    --sage-green: #181818;
+    --sage-green-light: #111111;
+    --warm-cream: #111111;
+    --warm-cream-dark: #080808;
+    --warm-cream-light: #181818;
+    --warm-sand: #111111;
+    --warm-sand-light: #000000;
+    --warm-sand-dark: #292929;
 
     --success: #22C55E;
-    --success-subtle: #064E3B;
+    --success-subtle: #052e16;
     --warning: #FBBF24;
-    --warning-subtle: #78350F;
+    --warning-subtle: #451a03;
     --danger: #F87171;
-    --danger-subtle: #7F1D1D;
+    --danger-subtle: #450a0a;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6);
-    --shadow-xl: 0 20px 36px rgba(0, 0, 0, 0.7);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.7);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.8);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.9);
+    --shadow-xl: 0 20px 36px rgba(0, 0, 0, 0.95);
 }
 
 /* Base Setup */
@@ -176,7 +177,7 @@ h6 {
 }
 
 [data-theme="dark"] .navbar-custom {
-    background: rgba(16, 30, 54, 0.94);
+    background: rgba(8, 8, 8, 0.96);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -809,7 +810,7 @@ h6 {
     border-radius: var(--radius-md);
     padding: 1.15rem;
     box-shadow: var(--shadow-sm);
-    transition: var(--transition);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .timeline-content.is-visited {
@@ -2839,5 +2840,244 @@ input:focus-visible:not(.planner-input-group input) {
     outline: 2px solid #059669;
     border-radius: 12px;
     background-color: rgba(5, 150, 105, 0.08);
-    transition: all 0.3s ease;
+    transition: outline-color 0.2s ease, background-color 0.2s ease;
 }
+
+/* =========================================================
+   Pitch-Black Dark Mode Theme Comprehensive Overrides
+   True Black #000000, Cards #111111, Elevated #181818, Borders #292929
+   ========================================================= */
+[data-theme="dark"] body {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-light {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-modern {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .daily-metric-tile {
+    background-color: #181818 !important;
+    border-color: #292929 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .daily-metric-tile .text-dark {
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .daily-travel-overview {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .timeline-travel-card {
+    background-color: #141414 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .timeline-travel-card:hover {
+    background-color: #1c1c1c !important;
+}
+
+[data-theme="dark"] .timeline-travel-dot {
+    background-color: #111111 !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .travel-flow-strip {
+    background: #181818 !important;
+    color: #A3A3A3 !important;
+}
+
+[data-theme="dark"] .travel-flow-strip .text-dark {
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .timeline-item {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .timeline-item:hover {
+    background-color: #181818 !important;
+}
+
+[data-theme="dark"] .timeline-item-title,
+[data-theme="dark"] .text-dark {
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .text-secondary {
+    color: #A3A3A3 !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #D4D4D4 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: #1C1C1C !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #141414 !important;
+    border-color: #292929 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    border-color: #38BDF8 !important;
+    box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #181818 !important;
+    border-color: #292929 !important;
+    color: #A3A3A3 !important;
+}
+
+[data-theme="dark"] .table {
+    color: #FFFFFF !important;
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .table > :not(caption) > * > * {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .daily-distribution-bar {
+    background: #262626 !important;
+}
+
+[data-theme="dark"] .day-nav-wrapper .card {
+    background-color: #111111 !important;
+    border-color: #292929 !important;
+}
+
+[data-theme="dark"] .btn-outline-forest {
+    color: #38bdf8 !important;
+    border-color: #292929 !important;
+    background-color: #141414 !important;
+}
+
+[data-theme="dark"] .btn-outline-forest:hover,
+[data-theme="dark"] .btn-outline-forest.active {
+    background-color: #38bdf8 !important;
+    color: #000000 !important;
+    border-color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-top,
+[data-theme="dark"] .border-bottom,
+[data-theme="dark"] .border-start,
+[data-theme="dark"] .border-end {
+    border-color: #292929 !important;
+}
+
+/* =========================================================
+   Travel-Themed Itinerary Background (Scenic Landscape)
+   ========================================================= */
+.itinerary-travel-backdrop {
+    position: relative;
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    padding: 1.5rem;
+    background-color: var(--bg-main, #f8fafc);
+    background-image: 
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 252, 0.96) 100%),
+        url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1800&q=80');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: local;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: var(--shadow-sm);
+    transition: background 0.3s ease;
+}
+
+[data-theme="dark"] .itinerary-travel-backdrop {
+    background-color: #000000;
+    background-image: 
+        linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(10, 10, 10, 0.95) 100%),
+        url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1800&q=80');
+    border-color: #292929;
+}
+
+.journey-mode-pill {
+    padding: 0.5rem 1.15rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.journey-mode-pill.active {
+    background: var(--forest-green);
+    color: #ffffff;
+    border-color: var(--forest-green);
+    box-shadow: 0 2px 8px rgba(8, 127, 193, 0.25);
+}
+
+.return-journey-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.custom-route-item {
+    background: var(--card-bg-subtle, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.65rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-route-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--forest-green);
+}
+

@@ -14,9 +14,16 @@ import java.util.*;
 public class RouteService {
 
     private final GoogleMapsService googleMapsService;
+    private final ItineraryService itineraryService;
 
     public RouteService(GoogleMapsService googleMapsService) {
+        this(googleMapsService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RouteService(GoogleMapsService googleMapsService, @org.springframework.context.annotation.Lazy ItineraryService itineraryService) {
         this.googleMapsService = googleMapsService;
+        this.itineraryService = itineraryService;
     }
 
     public RouteSummaryDto calculateCompleteRoute(String startLocation, List<String> destinations, String transportMode) {
@@ -167,6 +174,13 @@ public class RouteService {
      */
     public RoundTripDetailsDto calculateRoundTripDetails(String startLocation, List<String> destinations,
                                                          String transportMode, RouteSummaryDto outboundSummary) {
+        return calculateRoundTripDetails(startLocation, destinations, Collections.emptyList(), "08:30 AM", null, transportMode, outboundSummary);
+    }
+
+    public RoundTripDetailsDto calculateRoundTripDetails(String startLocation, List<String> destinations,
+                                                         List<String> returnIntermediateStops, String departureTime,
+                                                         java.time.LocalDate returnDate,
+                                                         String transportMode, RouteSummaryDto outboundSummary) {
         RoundTripDetailsDto roundTrip = new RoundTripDetailsDto();
         String mode = (transportMode != null && !transportMode.trim().isEmpty()) ? transportMode.trim().toUpperCase() : "CAR";
         roundTrip.setTransportMode(mode);
@@ -218,23 +232,61 @@ public class RouteService {
         roundTrip.setOutboundDurationMinutes(outboundTime);
         roundTrip.setFormattedOutboundDuration(TimeUtils.formatDuration(outboundTime));
 
-        // Calculate return journey: from finalDest back to origin
-        GoogleMapsService.RouteCalculationResult returnLeg = googleMapsService.calculateRouteSegment(finalDest, origin, mode);
-        if (returnLeg == null || !returnLeg.isSuccess()) {
-            roundTrip.setSuccess(false);
-            String err = (returnLeg != null && returnLeg.getErrorMessage() != null)
-                    ? returnLeg.getErrorMessage()
-                    : "Routing provider temporarily unable to obtain road route from " + finalDest + " back to " + origin;
-            roundTrip.setErrorMessage(err);
-            roundTrip.setReturnDistanceKm(0.0);
-            roundTrip.setReturnDurationMinutes(0);
-            roundTrip.setTotalRoundTripDistanceKm(roundTrip.getOutboundDistanceKm());
-            roundTrip.setTotalRoundTripDurationMinutes(roundTrip.getOutboundDurationMinutes());
-            return roundTrip;
+        // Filter valid return intermediate stops
+        List<String> cleanReturnStops = new ArrayList<>();
+        if (returnIntermediateStops != null) {
+            for (String s : returnIntermediateStops) {
+                if (s != null && !s.trim().isEmpty() && !s.equalsIgnoreCase(origin) && !s.equalsIgnoreCase(finalDest)) {
+                    cleanReturnStops.add(s.trim());
+                }
+            }
+        }
+        roundTrip.setReturnIntermediateStops(cleanReturnStops);
+
+        // Calculate return journey: from finalDest -> cleanReturnStops -> origin
+        List<String> returnPath = new ArrayList<>();
+        returnPath.add(finalDest);
+        returnPath.addAll(cleanReturnStops);
+        returnPath.add(origin);
+
+        double returnDist = 0.0;
+        int returnMins = 0;
+        List<double[]> returnGeometry = new ArrayList<>();
+        String verifiedProvider = "OSRM Highway Routing Engine";
+
+        for (int i = 0; i < returnPath.size() - 1; i++) {
+            String from = returnPath.get(i);
+            String to = returnPath.get(i + 1);
+
+            GoogleMapsService.RouteCalculationResult leg = googleMapsService.calculateRouteSegment(from, to, mode);
+            if (leg != null && leg.isSuccess()) {
+                returnDist += leg.getDistanceKm();
+                returnMins += leg.getDurationMinutes();
+                if (leg.getVerifiedProvider() != null) verifiedProvider = leg.getVerifiedProvider();
+                if (leg.getGeometryCoords() != null) {
+                    for (double[] pt : leg.getGeometryCoords()) {
+                        if (returnGeometry.isEmpty() ||
+                                Math.abs(returnGeometry.get(returnGeometry.size() - 1)[0] - pt[0]) > 0.0001 ||
+                                Math.abs(returnGeometry.get(returnGeometry.size() - 1)[1] - pt[1]) > 0.0001) {
+                            returnGeometry.add(pt);
+                        }
+                    }
+                }
+            }
         }
 
-        double returnDist = Math.round(returnLeg.getDistanceKm() * 10.0) / 10.0;
-        int returnMins = returnLeg.getDurationMinutes();
+        if (returnDist <= 0.0) {
+            // Fallback direct leg
+            GoogleMapsService.RouteCalculationResult returnLeg = googleMapsService.calculateRouteSegment(finalDest, origin, mode);
+            if (returnLeg != null && returnLeg.isSuccess()) {
+                returnDist = returnLeg.getDistanceKm();
+                returnMins = returnLeg.getDurationMinutes();
+                if (returnLeg.getGeometryCoords() != null) returnGeometry = returnLeg.getGeometryCoords();
+                if (returnLeg.getVerifiedProvider() != null) verifiedProvider = returnLeg.getVerifiedProvider();
+            }
+        }
+
+        returnDist = Math.round(returnDist * 10.0) / 10.0;
 
         roundTrip.setSuccess(true);
         roundTrip.setReturnDistanceKm(returnDist);
@@ -248,9 +300,43 @@ public class RouteService {
         roundTrip.setTotalRoundTripDurationMinutes(totalMins);
         roundTrip.setFormattedTotalRoundTripDuration(TimeUtils.formatDuration(totalMins));
 
-        roundTrip.setRoutingProvider(returnLeg.getVerifiedProvider());
-        roundTrip.setReturnRouteGeometry(returnLeg.getGeometryCoords());
+        roundTrip.setRoutingProvider(verifiedProvider);
+        roundTrip.setReturnRouteGeometry(returnGeometry);
         roundTrip.setGoogleMapsReturnUrl(GeoUtils.buildGoogleMapsUrl(finalDest, origin, mode));
+
+        // Generate return itinerary items & day plan
+        String depTimeStr = (departureTime != null && !departureTime.isEmpty()) ? departureTime : "08:30 AM";
+        java.time.LocalDate effReturnDate = (returnDate != null) ? returnDate : java.time.LocalDate.now().plusDays(2);
+        roundTrip.setReturnDepartureTime(depTimeStr);
+        roundTrip.setReturnStartDate(TimeUtils.formatDate(effReturnDate));
+
+        if (itineraryService != null) {
+            com.example.tripplanner.dto.DayItineraryDto returnDay = itineraryService.generateReturnItinerary(
+                    finalDest, origin, cleanReturnStops, depTimeStr, effReturnDate, mode);
+            if (returnDay != null) {
+                roundTrip.setReturnDayItineraries(Collections.singletonList(returnDay));
+                roundTrip.setReturnItems(returnDay.getItems());
+                if (returnDay.getItems() != null && !returnDay.getItems().isEmpty()) {
+                    roundTrip.setExpectedArrivalTime(returnDay.getItems().get(returnDay.getItems().size() - 1).getStartTime());
+                }
+                if (returnDay.getRouteGeometry() != null && !returnDay.getRouteGeometry().isEmpty()) {
+                    roundTrip.setReturnRouteGeometry(returnDay.getRouteGeometry());
+                }
+            }
+        }
+
+        // Cost estimates
+        double liters = Math.round((totalDist / 14.0) * 10.0) / 10.0;
+        double fuelCost = Math.round(liters * 105.0);
+        double tollCost = Math.round((totalDist / 65.0) * 85.0);
+        roundTrip.setFuelLitersEstimate(liters);
+        roundTrip.setFuelCostEstimate(fuelCost);
+        roundTrip.setTollCostEstimate(tollCost);
+
+        if (returnMins > 360 || returnDist > 600) {
+            roundTrip.setHasOvernightStay(true);
+            roundTrip.setOvernightStayLocation("Highway Transit Hub");
+        }
 
         return roundTrip;
     }

@@ -40,6 +40,19 @@ public class RoundTripDetailsDto {
     // External navigation link for the return leg
     private String googleMapsReturnUrl;
 
+    // Dedicated Return Journey Architecture (Requirement 3)
+    private String returnStartDate;
+    private String returnDepartureTime = "08:30 AM";
+    private String expectedArrivalTime;
+    private List<String> returnIntermediateStops = new ArrayList<>();
+    private List<ItineraryItemDto> returnItems = new ArrayList<>();
+    private List<DayItineraryDto> returnDayItineraries = new ArrayList<>();
+    private Double tollCostEstimate = 0.0;
+    private Double fuelCostEstimate = 0.0;
+    private Double fuelLitersEstimate = 0.0;
+    private Boolean hasOvernightStay = false;
+    private String overnightStayLocation;
+
     public RoundTripDetailsDto() {
     }
 
@@ -194,6 +207,97 @@ public class RoundTripDetailsDto {
 
     public String getReturnDestination() {
         return startLocation;
+    }
+
+    public String getReturnStartDate() {
+        return returnStartDate;
+    }
+
+    public void setReturnStartDate(String returnStartDate) {
+        this.returnStartDate = returnStartDate;
+    }
+
+    public String getReturnDepartureTime() {
+        return returnDepartureTime;
+    }
+
+    public void setReturnDepartureTime(String returnDepartureTime) {
+        this.returnDepartureTime = returnDepartureTime;
+    }
+
+    public String getExpectedArrivalTime() {
+        return expectedArrivalTime;
+    }
+
+    public void setExpectedArrivalTime(String expectedArrivalTime) {
+        this.expectedArrivalTime = expectedArrivalTime;
+    }
+
+    public List<String> getReturnIntermediateStops() {
+        if (returnIntermediateStops == null) returnIntermediateStops = new ArrayList<>();
+        return returnIntermediateStops;
+    }
+
+    public void setReturnIntermediateStops(List<String> returnIntermediateStops) {
+        this.returnIntermediateStops = returnIntermediateStops;
+    }
+
+    public List<ItineraryItemDto> getReturnItems() {
+        if (returnItems == null) returnItems = new ArrayList<>();
+        return returnItems;
+    }
+
+    public void setReturnItems(List<ItineraryItemDto> returnItems) {
+        this.returnItems = returnItems;
+    }
+
+    public List<DayItineraryDto> getReturnDayItineraries() {
+        if (returnDayItineraries == null) returnDayItineraries = new ArrayList<>();
+        return returnDayItineraries;
+    }
+
+    public void setReturnDayItineraries(List<DayItineraryDto> returnDayItineraries) {
+        this.returnDayItineraries = returnDayItineraries;
+    }
+
+    public Double getTollCostEstimate() {
+        return tollCostEstimate;
+    }
+
+    public void setTollCostEstimate(Double tollCostEstimate) {
+        this.tollCostEstimate = tollCostEstimate;
+    }
+
+    public Double getFuelCostEstimate() {
+        return fuelCostEstimate;
+    }
+
+    public void setFuelCostEstimate(Double fuelCostEstimate) {
+        this.fuelCostEstimate = fuelCostEstimate;
+    }
+
+    public Double getFuelLitersEstimate() {
+        return fuelLitersEstimate;
+    }
+
+    public void setFuelLitersEstimate(Double fuelLitersEstimate) {
+        this.fuelLitersEstimate = fuelLitersEstimate;
+    }
+
+    public Boolean getHasOvernightStay() {
+        return hasOvernightStay;
+    }
+
+    public void setHasOvernightStay(Boolean hasOvernightStay) {
+        this.hasOvernightStay = hasOvernightStay;
+    }
+
+    public String getOvernightStayLocation() {
+        return overnightStayLocation;
+    }
+
+    public void setOvernightStayLocation(String overnightStayLocation) {
+        this.overnightStayLocation = overnightStayLocation;
     }
 }
 

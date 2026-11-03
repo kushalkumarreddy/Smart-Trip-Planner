@@ -360,7 +360,7 @@
                     <div id="routeOptSavingsAlert" class="savings-highlight mb-4">
                         <i class="bi bi-lightning-charge-fill fs-4"></i>
                         <div id="routeOptSavingsText">
-                            Calculated savings: 0 km &amp; 0 minutes.
+                            Calculated savings: 0 km &amp; 0 min.
                         </div>
                     </div>
 
@@ -874,6 +874,15 @@
             }
         }
 
+        function formatDurationJs(totalMinutes) {
+            if (!totalMinutes || totalMinutes <= 0) return '0 min';
+            const hrs = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            if (hrs === 0) return `${mins} min`;
+            if (mins === 0) return `${hrs} hr`;
+            return `${hrs} hr ${mins} min`;
+        }
+
         // Side-by-Side Smart Route Optimization Preview (Requirement 5)
         async function checkAndOptimizePreview() {
             const startLoc = document.getElementById('startLocationInput').value.trim();
@@ -907,7 +916,7 @@
 
                     // Populate modal side by side
                     const savingsText = document.getElementById('routeOptSavingsText');
-                    savingsText.innerHTML = `<strong>Shorter Route Discovered!</strong> Saves <strong>${summary.potentialSavingsKm} km</strong> &bull; <strong>${summary.potentialSavingsMinutes} minutes</strong> of driving.`;
+                    savingsText.innerHTML = `<strong>Shorter Route Discovered!</strong> Saves <strong>${summary.potentialSavingsKm} km</strong> &bull; <strong>${formatDurationJs(summary.potentialSavingsMinutes)}</strong> of driving.`;
 
                     // Original route
                     document.getElementById('originalDistanceText').textContent = `${summary.totalDistanceKm} km`;
@@ -1057,6 +1066,9 @@
                 }
 
                 const result = await response.json();
+                try {
+                    sessionStorage.setItem('voyagecraft_layout_mode', 'itinerary-map');
+                } catch(e) {}
                 if (!isUserLoggedIn) {
                     try {
                         localStorage.setItem('voyagecraft_guest_trip', JSON.stringify(result));

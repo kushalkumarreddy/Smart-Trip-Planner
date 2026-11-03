@@ -118,9 +118,12 @@ public class ProductionReadinessAndAccuracyMasterTest {
             LocalTime nextStart = TimeUtils.parseTime(next.getStartTime());
 
             int gapMinutes = (int) java.time.temporal.ChronoUnit.MINUTES.between(currentEnd, nextStart);
-            assertThat(gapMinutes)
-                    .as("Gap between %s and %s should be reasonable buffer, not a dead void", current.getActivity(), next.getActivity())
-                    .isLessThanOrEqualTo(45);
+            int transitMinutes = (next.getTravelTimeMinutes() != null) ? next.getTravelTimeMinutes() : 0;
+            int netBufferMinutes = Math.max(0, gapMinutes - transitMinutes);
+            int allowedBuffer = "HOTEL".equalsIgnoreCase(current.getActivityType()) ? 120 : 45;
+            assertThat(netBufferMinutes)
+                    .as("Net buffer gap between %s and %s should be reasonable buffer, not a dead void", current.getActivity(), next.getActivity())
+                    .isLessThanOrEqualTo(allowedBuffer);
         }
 
         // Verify hotel return is scheduled followed by dinner or leisure

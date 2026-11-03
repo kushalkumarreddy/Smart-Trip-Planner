@@ -28,6 +28,22 @@ public class ItineraryItemDto {
     private java.util.List<TimelineTransitionDto> transitionSegments = new java.util.ArrayList<>();
     private String proximityTier; // IN_DESTINATION, NEARBY_ATTRACTION, NEARBY_TOWN, REGIONAL_OPTIONAL
     private String townOrArea;
+    private String googleMapsUrl;
+
+    public String getGoogleMapsUrl() {
+        if (googleMapsUrl != null && !googleMapsUrl.isEmpty()) return googleMapsUrl;
+        if (latitude != null && longitude != null && latitude != 0.0 && longitude != 0.0) {
+            return String.format(java.util.Locale.US, "https://www.google.com/maps/search/?api=1&query=%.6f,%.6f", latitude, longitude);
+        }
+        if (location != null && !location.isEmpty()) {
+            return "https://www.google.com/maps/search/?api=1&query=" + java.net.URLEncoder.encode(location, java.nio.charset.StandardCharsets.UTF_8);
+        }
+        return null;
+    }
+
+    public void setGoogleMapsUrl(String googleMapsUrl) {
+        this.googleMapsUrl = googleMapsUrl;
+    }
 
     public ItineraryItemDto() {
     }
@@ -199,7 +215,7 @@ public class ItineraryItemDto {
         String clean = transitionCaption.replaceAll("[\\p{So}\\p{Cn}\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", "")
                                         .replaceAll("^[\\s·•-]+", "")
                                         .trim();
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)\\s*min").matcher(clean);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)\\s*(?:mins|minutes|min)").matcher(clean);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             try {
